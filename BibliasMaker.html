@@ -582,13 +582,17 @@
     </label>
 
     <label>Nombre para guardar
-      <input type="text" id="customStyleName" placeholder="¿Cómo se llamará tu estilo?">
+      <input type="text" id="customStyleName"
+             style="height: 30px; padding: 7px 1.5px;
+                    font-size: 14px;" placeholder="¿Cómo se llamará tu estilo?">
     </label>
 
     <button onclick="saveCustomStyle()">Guardar estilo personalizado</button>
   </div>
 
-  <button id="closeStyleBtn" onclick="hideTextStyleOptions()">Cerrar</button>
+  <button id="closeStyleBtn"
+          style="height: 40px; padding: 9px 1.5px;
+                 font-size: 14px;" onclick="hideTextStyleOptions()">Cerrar</button>
 </div>
 
 <script>
