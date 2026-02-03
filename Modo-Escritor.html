@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Modo Escritor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="Estilos/ModoEscritor.css" rel="stylesheet" type="text/css">
+  <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/earlyaccess/notosanscjkkr.css" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+
+<script>
+  // AutoSave.js
+(function () {
+// Variables únicas para evitar conflictos
+const AUTO_SAVE_KEY = 'biblias_maker_auto_save';
+const AUTO_SAVE_TEXTAREA_ID = 'texto';
+const AUTO_SAVE_DB_NAME = 'BibliasMakerDB';
+const AUTO_SAVE_STORE_NAME = 'textStore';
+let autoSaveTextArea = null;
+let autoSaveDb = null;
+
+// Inicializar IndexedDB
+function initIndexedDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(AUTO_SAVE_DB_NAME, 1);
+
+    request.onupgradeneeded = function (event) {
+      const db = event.target.result;
+      db.createObjectStore(AUTO_SAVE_STORE_NAME, { keyPath: 'id' });
+    };
+
+    request.onsuccess = function (event) {
+      autoSaveDb = event.target.result;
+      resolve();
+    };
+
+    request.onerror = function () {
+      console.error('Error al abrir IndexedDB');
+      reject();
+    };
+  });
+}
+
+// Guardar texto en IndexedDB
+function saveTextToDB(text) {
+  return new Promise((resolve, reject) => {
+    const transaction = autoSaveDb.transaction([AUTO_SAVE_STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(AUTO_SAVE_STORE_NAME);
+    const data = { id: AUTO_SAVE_KEY, text: text };
+
+    const request = store.put(data);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject();
+  });
+}
+
+// Cargar texto desde IndexedDB
+function loadTextFromDB() {
+  return new Promise((resolve, reject) => {
+    const transaction = autoSaveDb.transaction([AUTO_SAVE_STORE_NAME], 'readonly');
+    const store = transaction.objectStore(AUTO_SAVE_STORE_NAME);
+    const request = store.get(AUTO_SAVE_KEY);
+
+    request.onsuccess = function (event) {
+      const data = event.target.result;
+      resolve(data ? data.text : '');
+    };
+    request.onerror = function () {
+      reject('');
+    };
+  });
+}
+
+// Debounce para limitar guardado
+function debounceAutoSave(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
+
+// Función de autoguardado
+function autoSaveText() {
+  if (autoSaveTextArea) {
+    const text = autoSaveTextArea.value;
+    saveTextToDB(text).catch(err => console.error('Error al guardar texto:', err));
+  }
+}
+
+// Crear burbuja de notificación
+function showNotification(message, isOnline) {
+  const existingBubble = document.querySelector('.auto-save-notification');
+  if (existingBubble) {
+    existingBubble.remove();
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = `auto-save-notification ${isOnline ? 'online' : 'offline'}`;
+  bubble.textContent = message;
+  document.body.appendChild(bubble);
+
+  setTimeout(() => {
+    bubble.classList.add('fade-out');
+    setTimeout(() => bubble.remove(), 500);
+  }, 4000);
+}
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', async () => {
+  autoSaveTextArea = document.getElementById(AUTO_SAVE_TEXTAREA_ID);
+  if (!autoSaveTextArea) {
+    console.error('No se encontró el textarea con id "texto"');
+    return;
+  }
+
+  try {
+    await initIndexedDB();
+    const savedText = await loadTextFromDB();
+    autoSaveTextArea.value = savedText;
+  } catch (err) {
+    console.error('Error al cargar texto guardado:', err);
+  }
+
+  // Configurar autoguardado
+  const debouncedAutoSave = debounceAutoSave(autoSaveText, 500);
+  autoSaveTextArea.addEventListener('input', debouncedAutoSave);
+
+  // Detectar cambios de conexión
+  window.addEventListener('online', () => {
+    showNotification('¡Conexión restaurada! Tu texto está seguro y sigue guardándose.', true);
+  });
+
+  window.addEventListener('offline', () => {
+    showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
+  });
+
+  // Verificar estado inicial
+  if (!navigator.onLine) {
+    showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
+  }
+});
+})();
+</script>
+
+<style>
+  /* AutoSave.css */
+.auto-save-notification {
+position: fixed;
+top: 20px;
+left: 50%;
+transform: translateX(-50%);
+padding: 12px 24px;
+background: rgba(20, 20, 20, 0.9);
+border: 1px solid var(--theme-color, #ff0000);
+border-radius: 25px;
+color: #ffffff;
+font-family: 'Lora', serif;
+font-size: 14px;
+font-weight: 500;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+z-index: 20000;
+opacity: 0;
+animation: fadeIn 0.3s ease forwards;
+}
+
+.auto-save-notification.offline {
+border-color: var(--theme-color, #ff0000);
+}
+
+.auto-save-notification.online {
+border-color: var(--theme-color, #ff0000);
+}
+
+.auto-save-notification.fade-out {
+animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+}
+to {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+}
+
+@keyframes fadeOut {
+from {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+}
+}
+</style>
+</head>
+<body>
+  <div class="writer-mode-container">
+        <div class="top-bar">
+      <button class="button" onclick="deactivateFullscreenMode()" aria-label="Salir del modo de pantalla completa">↲</button>
+      <button class="button" onclick="openCalculator()" aria-label="Abrir calculadora">☣</button> 
+      <button class="button voice-button" onclick="toggleVoiceReader()">⏯︎</button>
+
+</div>
+        <textarea id="texto" placeholder="Escribe tu turno aquí... uwu" aria-label="Área de texto"></textarea>
+<!-- Barra de control de voz -->
+<div class="voice-control-bar" id="voiceControlBar">
+  <div class="no-voices-message" id="noVoicesMessage">No se encontraron voces en español o inglés.</div>
+  <button onclick="playPauseVoice()">⏯︎</button>
+  <button onclick="rewindVoice()">⏮︎</button>
+  <button onclick="fastForwardVoice()">⏭︎</button>
+  <div class="progress-bar-container">
+    <div class="selected-text" id="selectedTextBar"></div>
+    <input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0" step="0.1">
+  </div>
+  <select id="voiceSelect" onchange="changeVoice()"></select>
+  <div class="speed-select-container">
+    <select id="speedSelect" onchange="changeSpeed()">
+      <option value="1">1x</option>
+      <option value="1.2">1.2x</option>
+      <option value="1.5">1.5x</option>
+      <option value="1.7">1.7x</option>
+      <option value="2">2x</option>
+      <option value="2.5">2.5x</option>
+      <option value="3">3x</option>
+    </select>
+  </div>
+  <span class="time-info" id="timeInfo">0:00 / 0:00</span>
+</div>
+
+<style>
+  .voice-control-bar {
+    display: none !important;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1002;
+    width: 90%;
+    max-width: 800px;
+    font-family: 'Lora', serif;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .voice-control-bar.active {
+    display: flex !important;
+  }
+
+  .voice-control-bar button {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    background-color: var(--theme-color, #ff0000);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .voice-control-bar button:hover {
+    background-color: var(--theme-hover-color, #c70000);
+  }
+
+  .voice-control-bar select {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-family: 'Lora', serif;
+    max-width: 300px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-shadow: 0 0 5px var(--theme-color-alpha, rgba(255, 0, 0, 0.4));
+  }
+
+  .voice-control-bar select.no-voices {
+    color: #ff5555;
+    border-color: #ff5555;
+    cursor: help;
+  }
+
+  .voice-control-bar select option {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .voice-control-bar .speed-select-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .voice-control-bar .speed-select-container select {
+    width: 60px;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    position: relative;
+    height: 20px;
+    order: -1;
+  }
+
+  .progress-bar {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    outline: none;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .progress-bar::-webkit-slider-runnable-track {
+    background: #1a1a1a;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--theme-color, #ff0000);
+    border-radius: 50%;
+    margin-top: -5px;
+    box-shadow: 0 0 12px var(--theme-color-alpha, rgba(255, 0, 0, 1));
+  }
+
+  .progress-bar::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--theme-color, #ff0000);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--theme-color-alpha, rgba(255, 0, 0, 1));
+  }
+
+  .progress-bar::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, var(--theme-color, #ff0000) var(--progress), #1a1a1a var(--progress));
+  }
+
+  .progress-bar::-moz-range-track {
+    background: #1a1a1a;
+  }
+
+  .progress-bar::-moz-range-progress {
+    background: var(--theme-color, #ff0000);
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .selected-text {
+    position: absolute;
+    top: 7px;
+    height: 6px;
+    background-color: rgba(255, 165, 0, 0.5);
+    z-index: 0;
+  }
+
+  .time-info {
+    color: #ffffff;
+    font-size: 14px;
+    margin-left: 10px;
+    font-family: 'Lora', serif;
+  }
+
+  .no-voices-message {
+    display: none;
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1a1a1a;
+    color: #ff5555;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: 'Lora', serif;
+    z-index: 1003;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px var(--theme-color-alpha, rgba(255, 0, 0, 0.6));
+  }
+
+  .no-voices-message.visible {
+    display: block;
+  }
+</style>
+
+<script>
+  let voices = [];
+  let utterance = null;
+  let isSpeaking = false;
+  let isBarVisible = false;
+  let totalDuration = 0;
+  let currentTime = 0;
+  let startTime = 0;
+  let animationFrameId = null;
+  let currentWordIndex = 0;
+  const textInput = document.getElementById('texto');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const speedSelect = document.getElementById('speedSelect');
+  const voiceControlBar = document.getElementById('voiceControlBar');
+  const progressBar = document.getElementById('progressBar');
+  const selectedTextBar = document.getElementById('selectedTextBar');
+  const timeInfo = document.getElementById('timeInfo');
+  const noVoicesMessage = document.getElementById('noVoicesMessage');
+
+  // Inicialización
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!textInput) {
+      console.error('Textarea con ID "texto" no encontrado.');
+      return;
+    }
+    voiceControlBar.classList.remove('active');
+    isBarVisible = false;
+    loadVoices();
+  });
+
+  // Cargar voces en español e inglés
+  function loadVoices() {
+    voices = speechSynthesis.getVoices().filter(voice => voice.lang.includes('es') || voice.lang.includes('en'));
+    voiceSelect.innerHTML = '';
+    if (voices.length === 0) {
+      console.warn('No se encontraron voces en español o inglés.');
+      const option = document.createElement('option');
+      option.textContent = 'No hay voces en español o inglés';
+      voiceSelect.appendChild(option);
+      voiceSelect.classList.add('no-voices');
+      voiceSelect.addEventListener('mouseover', () => noVoicesMessage.classList.add('visible'));
+      voiceSelect.addEventListener('mouseout', () => noVoicesMessage.classList.remove('visible'));
+    } else {
+      voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+      voiceSelect.classList.remove('no-voices');
+    }
+  }
+
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  // Estimar duración del texto
+  function estimateDuration(text, rate, lang) {
+    const wordsPerMinute = lang.includes('es') ? 130 : 150; // Español: 130 palabras/min, Inglés: 150 palabras/min
+    const words = text.trim().split(/\s+/).length;
+    return (words / wordsPerMinute) * 60 / rate;
+  }
+
+  // Formatear tiempo (mm:ss)
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Actualizar barra de progreso
+  function updateProgress() {
+    if (isSpeaking) {
+      currentTime = (Date.now() - startTime) / 1000;
+      const progress = Math.min((currentWordIndex / utterance.text.split(/\s+/).length) * 100, 100);
+      progressBar.value = progress;
+      progressBar.style.setProperty('--progress', `${progress}%`);
+      timeInfo.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)}`;
+      animationFrameId = requestAnimationFrame(updateProgress);
+    }
+  }
+
+  // Resaltar texto seleccionado
+  function updateSelectedText() {
+    if (!textInput) return;
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      const totalText = textInput.value;
+      const startPos = textInput.selectionStart / totalText.length;
+      const endPos = textInput.selectionEnd / totalText.length;
+      const selectedDuration = estimateDuration(selection, parseFloat(speedSelect.value), utterance?.lang || 'es-ES');
+      selectedTextBar.style.left = `${startPos * 100}%`;
+      selectedTextBar.style.width = `${(endPos - startPos) * 100}%`;
+      timeInfo.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)} (Sel: ${formatTime(selectedDuration)})`;
+    } else {
+      selectedTextBar.style.width = '0%';
+    }
+  }
+
+  // Reproducir texto
+  function speakText(text) {
+    if (!textInput) return;
+    speechSynthesis.cancel();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    isSpeaking = false;
+    utterance = new SpeechSynthesisUtterance(text);
+    const selectedVoice = voices[voiceSelect.value];
+    utterance.voice = selectedVoice || voices[0] || null;
+    utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+    utterance.rate = parseFloat(speedSelect.value);
+    totalDuration = estimateDuration(text, utterance.rate, utterance.lang);
+    currentTime = 0;
+    currentWordIndex = 0;
+    startTime = Date.now();
+
+    utterance.onboundary = (event) => {
+      if (event.name === 'word') {
+        currentWordIndex++;
+        updateProgress();
+      }
+    };
+
+    utterance.onend = () => {
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+      currentWordIndex = 0;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    };
+
+    speechSynthesis.speak(utterance);
+    isSpeaking = true;
+    updateProgress();
+  }
+
+  // Iniciar/pausar lectura
+  function toggleVoiceReader() {
+    if (!textInput) {
+      console.error('Textarea con ID "texto" no encontrado.');
+      alert('Error: No se encontró el área de texto.');
+      return;
+    }
+    if (!isBarVisible) {
+      const text = textInput.value;
+      if (text.trim() === '') {
+        alert('Por favor, escribe algo en el área de texto.');
+        return;
+      }
+      voiceControlBar.classList.add('active');
+      isBarVisible = true;
+      speakText(text);
+    } else {
+      speechSynthesis.cancel();
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+      currentWordIndex = 0;
+    }
+  }
+
+  // Reanudar/pausar
+  function playPauseVoice() {
+    if (!textInput) return;
+    if (speechSynthesis.paused) {
+      speechSynthesis.resume();
+      isSpeaking = true;
+      startTime = Date.now() - currentTime * 1000;
+      updateProgress();
+    } else if (isSpeaking) {
+      if (speechSynthesis.pause) {
+        speechSynthesis.pause();
+        isSpeaking = false;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      } else {
+        speechSynthesis.cancel();
+        isSpeaking = false;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      }
+    }
+  }
+
+  // Retroceder 10 segundos
+  function rewindVoice() {
+    if (!textInput) return;
+    const newTime = Math.max(0, currentTime - 10);
+    seekTo(newTime);
+  }
+
+  // Avanzar 10 segundos
+  function fastForwardVoice() {
+    if (!textInput) return;
+    const newTime = Math.min(totalDuration, currentTime + 10);
+    seekTo(newTime);
+  }
+
+  // Mover a un tiempo específico
+  function seekTo(newTime) {
+    if (!textInput) return;
+    speechSynthesis.cancel();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    isSpeaking = false;
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = utterance.lang.includes('es') ? (130 / 60) : (150 / 60);
+    const startIndex = Math.floor(wordsPerSecond * newTime * utterance.rate);
+    const textToSpeak = startIndex < words.length ? words.slice(startIndex).join(' ') : '';
+    if (textToSpeak) {
+      currentWordIndex = startIndex;
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.voice = voices[voiceSelect.value] || voices[0];
+      utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+      utterance.rate = parseFloat(speedSelect.value);
+      totalDuration = estimateDuration(textToSpeak, utterance.rate, utterance.lang);
+      currentTime = newTime;
+      startTime = Date.now() - currentTime * 1000;
+
+      utterance.onboundary = (event) => {
+        if (event.name === 'word') {
+          currentWordIndex++;
+          updateProgress();
+        }
+      };
+
+      utterance.onend = () => {
+        isSpeaking = false;
+        isBarVisible = false;
+        voiceControlBar.classList.remove('active');
+        progressBar.value = 0;
+        progressBar.style.setProperty('--progress', '0%');
+        timeInfo.textContent = '0:00 / 0:00';
+        currentTime = 0;
+        currentWordIndex = 0;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = null;
+        }
+      };
+
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+    } else {
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+      currentWordIndex = 0;
+    }
+  }
+
+// Cambiar voz
+function changeVoice() {
+  if (isSpeaking || speechSynthesis.paused) {
+    speechSynthesis.pause(); // Pausar la reproducción actual
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = (120 / 60) * parseFloat(speedSelect.value); // Palabras por segundo
+    const currentWordIndex = Math.floor(wordsPerSecond * currentTime); // Estimar palabra actual
+    const textToSpeak = currentWordIndex < words.length ? words.slice(currentWordIndex).join(' ') : '';
+
+    if (textToSpeak) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      const selectedVoice = voices[voiceSelect.value];
+      utterance.voice = selectedVoice || voices[0] || null;
+      utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+      utterance.rate = parseFloat(speedSelect.value); // Mantener velocidad actual
+      totalDuration = estimateDuration(textToSpeak, utterance.rate);
+      startTime = Date.now() - currentTime * 1000; // Ajustar startTime para mantener continuidad
+      speechSynthesis.cancel(); // Cancelar el utterance anterior
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+      if (!speechSynthesis.paused) {
+        speechSynthesis.resume(); // Reanudar si no estaba pausado
+      }
+    } else {
+      // Si no hay texto restante, detener
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+}
+
+// Cambiar velocidad
+function changeSpeed() {
+  if (isSpeaking || speechSynthesis.paused) {
+    speechSynthesis.pause(); // Pausar la reproducción actual
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = (120 / 60) * parseFloat(speedSelect.value); // Usar nueva velocidad
+    const currentWordIndex = Math.floor(wordsPerSecond * currentTime); // Estimar palabra actual
+    const textToSpeak = currentWordIndex < words.length ? words.slice(currentWordIndex).join(' ') : '';
+
+    if (textToSpeak) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      const selectedVoice = voices[voiceSelect.value];
+      utterance.voice = selectedVoice || voices[0] || null; // Mantener voz actual
+      utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+      utterance.rate = parseFloat(speedSelect.value); // Aplicar nueva velocidad
+      totalDuration = estimateDuration(textToSpeak, utterance.rate);
+      startTime = Date.now() - currentTime * 1000; // Ajustar startTime para mantener continuidad
+      speechSynthesis.cancel(); // Cancelar el utterance anterior
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+      if (!speechSynthesis.paused) {
+        speechSynthesis.resume(); // Reanudar si no estaba pausado
+      }
+    } else {
+      // Si no hay texto restante, detener
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+}
+
+  // Mover barra de progreso manualmente
+  progressBar.addEventListener('input', () => {
+    const progress = parseFloat(progressBar.value);
+    const newTime = (progress / 100) * totalDuration;
+    seekTo(newTime);
+  });
+
+  // Detectar selección de texto
+  textInput.addEventListener('select', updateSelectedText);
+  textInput.addEventListener('click', updateSelectedText);
+  textInput.addEventListener('keyup', updateSelectedText);
+
+// Menú contextual mejorado
+function addContextMenuOption() {
+  if (!textInput) return;
+
+  // Crear un contenedor para el botón flotante
+  const floatingButton = document.createElement('button');
+  floatingButton.textContent = 'Reproducir';
+  floatingButton.style.position = 'absolute';
+  floatingButton.style.display = 'none';
+  floatingButton.style.backgroundColor = '#1a1a1a';
+  floatingButton.style.color = '#ffffff';
+  floatingButton.style.border = '1px solid var(--theme-color, #ff0000)';
+  floatingButton.style.padding = '5px 10px';
+  floatingButton.style.zIndex = '10000';
+  floatingButton.style.fontFamily = "'Lora', serif";
+  floatingButton.style.fontSize = '14px';
+  floatingButton.style.cursor = 'pointer';
+  document.body.appendChild(floatingButton);
+
+  // Mostrar botón flotante al seleccionar texto
+  function showFloatingButton(e) {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      const rect = textInput.getBoundingClientRect();
+      const x = e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width / 2;
+      const y = e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height;
+      floatingButton.style.left = `${x}px`;
+      floatingButton.style.top = `${y + 10}px`;
+      floatingButton.style.display = 'block';
+    } else {
+      floatingButton.style.display = 'none';
+    }
+  }
+
+  // Ocultar botón al hacer clic fuera
+  function hideFloatingButton() {
+    floatingButton.style.display = 'none';
+  }
+
+  // Acción al hacer clic en el botón flotante
+  floatingButton.onclick = () => {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      if (!isBarVisible) {
+        voiceControlBar.classList.add('active');
+        isBarVisible = true;
+      }
+      speakText(selection);
+      hideFloatingButton();
+    }
+  };
+
+  // Detectar selección de texto en escritorio
+  textInput.addEventListener('contextmenu', (e) => {
+    showFloatingButton(e);
+    // No usamos e.preventDefault() para preservar el menú nativo
+  });
+
+  // Detectar selección de texto en dispositivos móviles (mantener presionado)
+  let touchTimeout;
+  textInput.addEventListener('touchstart', (e) => {
+    touchTimeout = setTimeout(() => {
+      showFloatingButton(e);
+      // No usamos e.preventDefault() para permitir el menú nativo
+    }, 500);
+  });
+
+  textInput.addEventListener('touchend', () => {
+    clearTimeout(touchTimeout);
+  });
+
+  // Ocultar botón al hacer clic fuera o al cambiar selección
+  document.addEventListener('click', hideFloatingButton);
+  textInput.addEventListener('select', showFloatingButton);
+  textInput.addEventListener('selectionchange', () => {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (!selection) hideFloatingButton();
+  });
+}
+
+// Reproducir texto seleccionado
+window.playSelectedText = function() {
+  if (!textInput) return;
+  const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+  if (selection) {
+    if (!isBarVisible) {
+      voiceControlBar.classList.add('active');
+      isBarVisible = true;
+    }
+    speakText(selection);
+  }
+};
+
+// Inicializar menú contextual
+addContextMenuOption();
+</script>
+
+    <div class="action-bar">
+      <button class="button" id="undoButton" aria-label="Deshacer">↜</button>
+      <button class="button" id="redoButton" aria-label="Rehacer">↝</button>
+      <button class="button" onclick="showActionContainer()" aria-label="Mostrar contenedor de acción">↯</button>
+      <button class="button" id="togglePrefixBtn" onclick="togglePrefixes()" aria-label="Activar prefijos">[ʙ]</button>
+      <button class="button" onclick="showOptions('themes')" aria-label="Mostrar temas">✨</button>
+      <button class="button" onclick="togglePreview()" aria-label="Previsualizar">〆</button>
+    </div>
+    <div id="preview-container" class="preview-container">
+        <div class="preview-content"></div>
+      </div>
+     <style>
+.bubble {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  background-color: #ff0000;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 16px;
+  box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.8);
+  z-index: 1002; /* Mayor que el botón de voz (1001) para evitar superposición */
+  cursor: move; /* Indica que es arrastrable */
+  user-select: none; /* Evita seleccionar texto al arrastrar */
+  width: auto; /* Tamaño automático según contenido */
+  height: auto; /* Tamaño automático según contenido */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; /* Evita que el texto se envuelva */
+}
+
+.bubble.hidden {
+  display: none; /* Oculta la burbuja cuando está en un borde */
+}
+
+.control-button {
+  position: fixed;
+  background-color: #ff0000;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0px 0px 5px rgba(255, 0, 0, 0.8);
+  z-index: 1003; /* Mayor que la burbuja para ser visible */
+  display: none; /* Oculto por defecto */
+}
+
+.control-button.visible {
+  display: flex; /* Mostrar cuando la burbuja está oculta */
+}
+
+.control-button:hover {
+  background-color: #c70000;
+}
+      </style>
+<div class="bubble" id="contador-container">Contador: +<span id="contador">0</span></div>
+<div class="control-button" id="controlButton"></div>
+<script>
+  (function () {
+    const bubble = document.getElementById('contador-container');
+    const controlButton = document.getElementById('controlButton');
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+    let isHidden = false;
+    let hiddenEdge = null;
+
+    // Guardar dimensiones originales para evitar deformación
+    const originalWidth = bubble.offsetWidth;
+    const originalHeight = bubble.offsetHeight;
+
+    // Inicializar posición desde el CSS (top: 90px, right: 20px)
+    currentX = window.innerWidth - originalWidth - 65; // right: 20px
+    currentY = 10; // top: 90px
+    bubble.style.left = `${currentX}px`;
+    bubble.style.top = `${currentY}px`;
+    bubble.style.right = 'auto';
+    bubble.style.bottom = 'auto';
+
+    // Eventos para mouse
+    bubble.addEventListener('mousedown', startDragging);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDragging);
+
+    // Eventos para touch
+    bubble.addEventListener('touchstart', startDraggingTouch);
+    document.addEventListener('touchmove', dragTouch, { passive: false });
+    document.addEventListener('touchend', stopDraggingTouch);
+
+    function startDragging(e) {
+        initialX = e.clientX - currentX;
+        initialY = e.clientY - currentY;
+        isDragging = true;
+    }
+
+    function startDraggingTouch(e) {
+        const touch = e.touches[0];
+        initialX = touch.clientX - currentX;
+        initialY = touch.clientY - currentY;
+        isDragging = true;
+        e.preventDefault();
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            currentX = e.clientX - initialX;
+            currentY = e.clientY - initialY;
+            updateBubblePosition();
+            checkEdges();
+        }
+    }
+
+    function dragTouch(e) {
+        if (isDragging) {
+            const touch = e.touches[0];
+            currentX = touch.clientX - initialX;
+            currentY = touch.clientY - initialY;
+            updateBubblePosition();
+            checkEdges();
+            e.preventDefault();
+        }
+    }
+
+    function stopDragging() {
+        isDragging = false;
+    }
+
+    function stopDraggingTouch() {
+        isDragging = false;
+    }
+
+    function updateBubblePosition() {
+        // Asegurar que la burbuja no se salga de la ventana
+        currentX = Math.max(0, Math.min(currentX, window.innerWidth - originalWidth));
+        currentY = Math.max(0, Math.min(currentY, window.innerHeight - originalHeight));
+
+        bubble.style.left = `${currentX}px`;
+        bubble.style.top = `${currentY}px`;
+        bubble.style.right = 'auto';
+        bubble.style.bottom = 'auto';
+    }
+
+    function checkEdges() {
+        const bubbleRect = bubble.getBoundingClientRect();
+        const threshold = 10; // Distancia en píxeles para considerar un borde
+
+        if (!isHidden) {
+            if (bubbleRect.left <= threshold) {
+                hideBubble('left');
+            } else if (bubbleRect.right >= window.innerWidth - threshold) {
+                hideBubble('right');
+            } else if (bubbleRect.top <= threshold) {
+                hideBubble('top');
+            } else if (bubbleRect.bottom >= window.innerHeight - threshold) {
+                hideBubble('bottom');
+            }
+        }
+    }
+
+    function hideBubble(edge) {
+        isHidden = true;
+        hiddenEdge = edge;
+        bubble.classList.add('hidden');
+        controlButton.classList.add('visible');
+
+        // Posicionar y configurar el botón de control según el borde
+        const bubbleRect = bubble.getBoundingClientRect();
+        controlButton.style.left = '';
+        controlButton.style.right = '';
+        controlButton.style.top = '';
+        controlButton.style.bottom = '';
+
+        if (edge === 'left') {
+            controlButton.style.left = '5px';
+            controlButton.style.top = `${bubbleRect.top}px`;
+            controlButton.innerHTML = '>';
+        } else if (edge === 'right') {
+            controlButton.style.right = '5px';
+            controlButton.style.top = `${bubbleRect.top}px`;
+            controlButton.innerHTML = '<';
+        } else if (edge === 'top') {
+            controlButton.style.top = '5px';
+            controlButton.style.left = `${bubbleRect.left}px`;
+            controlButton.innerHTML = 'v';
+        } else if (edge === 'bottom') {
+            controlButton.style.bottom = '5px';
+            controlButton.style.left = `${bubbleRect.left}px`;
+            controlButton.innerHTML = '^';
+        }
+    }
+
+    function showBubble() {
+        isHidden = false;
+        bubble.classList.remove('hidden');
+        controlButton.classList.remove('visible');
+
+        // Restaurar posición cerca del borde, pero visible
+        const offset = 20; // Margen desde el borde
+        if (hiddenEdge === 'left') {
+            currentX = offset;
+            currentY = currentY;
+        } else if (hiddenEdge === 'right') {
+            currentX = window.innerWidth - originalWidth - offset;
+            currentY = currentY;
+        } else if (hiddenEdge === 'top') {
+            currentX = currentX;
+            currentY = offset;
+        } else if (hiddenEdge === 'bottom') {
+            currentX = currentX;
+            currentY = window.innerHeight - originalHeight - offset;
+        }
+        updateBubblePosition();
+        hiddenEdge = null;
+    }
+
+    // Evento para mostrar la burbuja al hacer clic o tocar el botón
+    controlButton.addEventListener('click', showBubble);
+    controlButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showBubble();
+    });
+
+    // Asegurar que la burbuja no se deforme al redimensionar la ventana
+    window.addEventListener('resize', () => {
+        if (!isHidden) {
+            currentX = Math.max(0, Math.min(currentX, window.innerWidth - originalWidth));
+            currentY = Math.max(0, Math.min(currentY, window.innerHeight - originalHeight));
+            updateBubblePosition();
+        }
+    });
+})();
+</script>
+<button class="control-button" id="controlButton"></button>
+    <div class="options-container" id="themes-container">
+      <button onclick="changeTheme('#ff0000')" aria-label="Cambiar a tema rojo">Rojo</button>
+      <button onclick="changeTheme('#0000ff')" aria-label="Cambiar a tema azul">Azul</button>
+      <button onclick="changeTheme('#00ff00')" aria-label="Cambiar a tema verde">Verde</button>
+      <button onclick="changeTheme('#ffff00')" aria-label="Cambiar a tema amarillo">Amarillo</button>
+      <button onclick="changeTheme('#ff00ff')" aria-label="Cambiar a tema rosa">Rosa</button>
+      <button onclick="changeTheme('#00ffff')" aria-label="Cambiar a tema cian">Cian</button>
+      <button onclick="changeTheme('#800080')" aria-label="Cambiar a tema morado">Morado</button>
+      <button onclick="changeTheme('#ffa500')" aria-label="Cambiar a tema naranja">Naranja</button>
+      <button onclick="changeTheme('#ffffff')" aria-label="Cambiar a tema blanco">Blanco</button>
+      <button onclick="changeTheme('#000000')" aria-label="Cambiar a tema negro">Negro</button>
+    </div>
+
+    <div class="prefix-popup-container" id="prefix-popup-container">
+      <div class="confirmation-bubble">¿Qué prefijos deseas usar?</div>
+      <label><input type="checkbox" id="bold-prefix"> [B] Negritas</label>
+      <label><input type="checkbox" id="center-prefix"> [C] Centrado</label>
+      <label><input type="checkbox" id="italic-prefix"> [I] Cursiva</label>
+      <label><input type="checkbox" id="underline-prefix"> [U] Subrayar</label>
+      <label><input type="checkbox" id="strikethrough-prefix"> [S] Tachar</label>
+      <button onclick="applyPrefixes()">Listo</button>
+      <button onclick="hidePrefixPopup()">Cancelar</button>
+    </div>
+
+    <div id="actionContainer" class="action-container">
+      <div class="close-action" onclick="closeActionContainer()" aria-label="Cerrar contenedor de acción">✘</div>
+      <h3>Gestión de Arcos de Acción</h3>
+      <div>
+        <span class="file-label" aria-hidden="true"></span>
+        <input type="file" id="uploadActionFile" accept=".txt" style="display:none;" />
+        <button class="button" onclick="document.getElementById('uploadActionFile').click();" aria-label="Subir arco de acción .txt">Sube un marco de acción .txt</button>
+        <button class="button" onclick="pasteFromClipboard()" aria-label="Pegar desde el portapapeles">Pegar del portapapeles</button>
+      </div>
+      <input type="text" id="actionName" placeholder="Nombre del marco de acción" aria-label="Nombre del arco de acción" />
+      <button onclick="saveAction()" aria-label="Guardar marco">Guardar arco</button>
+      <div id="actionList"></div>
+    </div>
+  </div>
+
+  <script src="Funciones/ModoEscritor.js"></script>
+</body>
+</html>

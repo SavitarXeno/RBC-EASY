@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contacto - Savitar</title>
+  <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url('FSH.png') center/cover no-repeat;
+      font-family: 'Arial', sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.85); 
+      border: 2px solid #a00000; 
+      border-radius: 15px;
+      padding: 30px; 
+      max-width: 600px; 
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); 
+      text-align: center;
+    }
+    h1 {
+      color: #FF0000; 
+      margin-bottom: 20px;
+      font-size: 32px; 
+      text-transform: uppercase; 
+    }
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      margin: 15px 0;
+    }
+    a {
+      color: #FF0000;
+      text-decoration: none;
+      font-weight: bold; 
+      transition: color 0.3s ease, text-shadow 0.3s ease; 
+    }
+    a:hover {
+      color: #fff;
+      text-shadow: 0 0 8px #FF0000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Contacto</h1>
+    <p>¡Bienvenido a nuestro portal de contacto!</p>
+    <p>Para comunicarte con Savitar, envía un correo a: <a href="mailto:savitarxeno@gmail.com">savitarxeno@gmail.com</a></p>
+    <p>Visita también nuestras plataformas:</p>
+    <p><a href="http://aminoapps.com/p/6ef8q5" target="_blank">Crea y lee libros gratis | AminoApps | Venus Art</a></p>
+    <p><a href="https://www.whatsapp.com/channel/0029VaTRAtgInlqW5dnwbG2K" target="_blank">WhatsApp Channel</a></p>
+    <p><a href="https://www.facebook.com/share/H84WiYzaNQsJgMWR/?mibextid=LQQJ4d" target="_blank">Facebook</a></p>
+    <p><a href="https://x.com/IAMSAVITARXENO" target="_blank">X/Twitter</a></p>
+    <p><a href="https://youtube.com/@savitarxeno?si=JWZoHSu4vyEFc8nT" target="_blank">YouTube</a></p>
+    <p><a href="https://www.instagram.com/iamsavitarxeno/" target="_blank">Instagram</a></p>
+    <p><a href="https://www.threads.net/@iamsavitarxeno" target="_blank">Threads</a></p>
+    <p><a href="https://www.tiktok.com/@savitar.xeno?_t=8o0hcObzyyb&_r=1" target="_blank">TikTok</a></p>
+  </div>
+</body>
+</html>

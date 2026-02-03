@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Mis proyectos</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #111;
+      background-image: url('Estilos/Assest/FNP.png');
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: overlay;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .container {
+      text-align: center;
+    }
+    h1 {
+      color: #FF0000;
+      margin-bottom: 20px;
+    }
+    .calculate-button, .create-more-button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #FF0000;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 10px;
+    }
+    .calculate-button:hover, .create-more-button:hover {
+      background-color: #FF3333;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: rgba(0, 0, 0, 0.8);
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .sidebar h2 {
+      color: #FF0000;
+      font-size: 18px;
+    }
+    .sidebar button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #FF0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .sidebar button:hover {
+      background-color: #FF3333;
+    }
+    .close-button {
+      margin-top: auto;
+      width: 80%;
+      padding: 8px;
+      background-color: #444;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .close-button:hover {
+      background-color: #666;
+    }
+    .file-list {
+      margin-top: 20px;
+      list-style-type: none;
+      padding: 0;
+    }
+    .file-list li {
+      padding: 10px;
+      background-color: #222;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .file-list li:hover {
+      background-color: #333;
+    }
+    #toggle-menu {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #FF0000;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px;
+      cursor: pointer;
+    }
+    #toggle-menu:hover {
+      background-color: #FF3333;
+    }
+  </style>
+  <title>Proyectos</title>
+</head>
+<body>
+  <button id="toggle-menu">Cargar Proyectos</button>
+  <div class="sidebar">
+    <h2>Cargar Proyectos</h2>
+    <button id="load-files">Subir turno .txt</button>
+    <ul id="file-list" class="file-list"></ul>
+    <button id="close-menu" class="close-button">Cerrar</button>
+  </div>
+  <div class="container">
+    <h1>Mis Proyectos</h1>
+    <a href="Calculadora_Científica.html" class="calculate-button">Calcular</a>
+    <a href="BibliasMaker.html" class="create-more-button">Escribir</a>
+  </div>
+  <script>
+
+    let db;
+    const dbName = "FileStorageDB";
+    const storeName = "files";
+  
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+  
+        request.onupgradeneeded = function (event) {
+          db = event.target.result;
+          db.createObjectStore(storeName, { keyPath: "name" });
+        };
+  
+        request.onsuccess = function (event) {
+          db = event.target.result;
+          resolve(db);
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al abrir IndexedDB:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+    function saveFile(fileName, fileContent) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        const fileData = { name: fileName, content: fileContent, timestamp: new Date() };
+        const request = store.put(fileData);
+  
+        request.onsuccess = function () {
+          resolve();
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al guardar archivo:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+    function loadFiles() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+  
+        request.onsuccess = function (event) {
+          resolve(event.target.result);
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al cargar archivos:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+    function displayFiles(files) {
+      const fileList = document.getElementById("file-list");
+      fileList.innerHTML = "";
+  
+      files.forEach((file) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = file.name;
+        listItem.dataset.filename = file.name;
+        listItem.dataset.filecontent = file.content;
+        listItem.addEventListener("click", function () {
+          localStorage.setItem("currentFileName", file.name);
+          localStorage.setItem("currentFileContent", file.content);
+          window.location.href = "BibliasMaker.html";
+        });
+        fileList.appendChild(listItem);
+      });
+    }
+  
+    document.addEventListener("DOMContentLoaded", async function () {
+      try {
+        await initDB();
+        const files = await loadFiles();
+        displayFiles(files);
+      } catch (error) {
+        console.error("Error al inicializar la página:", error);
+      }
+  
+
+      document.getElementById("toggle-menu").addEventListener("click", function () {
+        document.querySelector(".sidebar").style.display = "flex";
+      });
+  
+      document.getElementById("close-menu").addEventListener("click", function () {
+        document.querySelector(".sidebar").style.display = "none";
+      });
+  
+      document.getElementById("load-files").addEventListener("click", function () {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".txt";
+        fileInput.multiple = true;
+        fileInput.style.display = "none";
+  
+        fileInput.addEventListener("change", async function (event) {
+          const files = event.target.files;
+  
+          for (let file of files) {
+            if (file.name.endsWith(".txt")) {
+              const reader = new FileReader();
+              reader.onload = async function (e) {
+                try {
+                  await saveFile(file.name, e.target.result);
+                  const updatedFiles = await loadFiles();
+                  displayFiles(updatedFiles);
+                } catch (error) {
+                  console.error("Error al procesar archivo:", file.name, error);
+                }
+              };
+              reader.readAsText(file);
+            }
+          }
+        });
+  
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+      });
+    });
+  </script>
+</body>
+</html>
