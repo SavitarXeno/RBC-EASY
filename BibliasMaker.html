@@ -661,13 +661,13 @@
   });
 
   function populateStyleSelect() {
-    styleSelect.innerHTML = '<option value="" disabled selected>Elige un estilo...</option>';
+    styleSelect.innerHTML = '<option value="" disabled selected>Elige un estilo... Si no sabes qué poner, elige los oficiales</option>';
 
     // Predeterminados
     Object.keys(presets).forEach(key => {
       const opt = document.createElement('option');
       opt.value = key;
-      opt.textContent = presets[key].name + ' (predeterminado)';
+      opt.textContent = presets[key].name + ' (Oficial)';
       styleSelect.appendChild(opt);
     });
 
