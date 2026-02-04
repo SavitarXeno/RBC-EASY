@@ -132,7 +132,7 @@ textarea#texto {
   background-color: transparent;
   border: none;
   color: #ff0000;
-  font-size: 29px; /* Como proporcionaste */
+  font-size: 29px;
   cursor: pointer;
   transition: color 0.3s ease;
 }
@@ -539,7 +539,7 @@ textarea#texto {
     z-index: 40;
     padding: 15px; 
     border-radius: 10px;
-    overflow-y: auto;
+    overflow-y: hidden;
     box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.7);
   }
   
@@ -563,73 +563,184 @@ textarea#texto {
     border-radius: 8px;
   }
   
-  .action-container input:focus,
-  .action-container button:hover {
+  .action-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 20px;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+    opacity: 0.9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+  }
+
+  .action-container input[type="text"] {
+    width: 80%;
+    padding: 10px;
+    margin: 10px auto;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    background-color: #333;
+    color: #fff;
+  }
+
+  .action-container button {
     background-color: #ff0000;
     color: #ffffff;
-  }
-  
-  .action-container input[type="text"] {
-    width: calc(100% - 22px); 
-  }
-  
-  .action-container .close-action {
-    color: #ff0000;
-    font-size: 24px;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 30px;
     cursor: pointer;
-    text-align: right;
-    margin-top: -10px;
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s;
+    display: inline-block;
+    font-family: 'Lora', serif;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
-  
 
-  @media only screen and (max-width: 600px) {
-    .action-container {
-      width: 90%;
-      max-width: 320px; 
-      max-height: 75%;
-      padding: 10px; 
-      top: 50%;
-      transform: translate(-50%, -50%);
-    }
-  
-    .action-container h3 {
-      font-size: 18px; 
-    }
-  
-    .action-container input,
-    .action-container button {
-      font-size: 14px; 
-      padding: 8px; 
-    }
-  
-    .action-container input[type="text"] {
-      width: calc(100% - 18px);
-    }
+  .action-container button:hover {
+    background-color: #c70000;
+    font-family: 'Lora', serif;
   }
-  
 
-  @media only screen and (min-width: 601px) {
-    .action-container {
-      width: 75%;
-      max-width: 380px; 
-      max-height: 65%; 
-    }
-  
-    .action-container h3 {
-      font-size: 22px; 
-    }
-  
-    .action-container input,
-    .action-container button {
-      font-size: 18px; 
-      padding: 12px; 
-    }
-  
-    .action-container input[type="text"] {
-      width: calc(100% - 24px);
-    }
+  .action-item {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Lora', serif;
   }
+
+  .action-item:hover {
+    background-color: #444;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .edit-action,
+  .action-item .delete-action {
+    margin-left: 10px;
+    cursor: pointer;
+    color: #ff0000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .edit-action:hover {
+    color: #c70000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .delete-action:hover {
+    color: #900000;
+    font-family: 'Lora', serif;
+  }
+
+  .close-action {
+    background-color: #ff0000;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-family: 'Lora', serif;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .close-action:hover {
+    background-color: #c70000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-list {
+  margin-top: 15px;
+
+  max-height: 250px;        /* 5 marcos visibles */
+  overflow-y: auto;         /* Scroll automático */
+  padding-right: 5px;
+
+  scrollbar-gutter: stable; /* Evita saltos de layout */
+}
+
+  .editor-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  z-index: 10000;
+}
+
+.hidden {
+  display: none;
+}
+
+.editor-modal textarea {
+  height: 200px;
+  resize: vertical;
+  background: #111;
+  color: rgb(255, 0, 0);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgb(255, 0, 0);
+}
+
+.action-name {
+  flex: 1;
+  cursor: pointer;
+  color: rgb(255, 0, 0);
+}
   
+.action-list::-webkit-scrollbar {
+  width: 6px;          /* MUY delgada */
+}
+
+.action-list::-webkit-scrollbar-track {
+  background: #0b0b0b; /* Negro casi puro */
+  border-radius: 10px;
+}
+
+.action-list::-webkit-scrollbar-thumb {
+  background: #2a2a2a; /* Gris oscuro */
+  border-radius: 10px;
+  box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.4);
+}
+
+.action-list::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+.action-list {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #0b0b0b;
+}
+
+.action-list {
+  overflow-y: hidden;
+}
+
+.action-list:hover {
+  overflow-y: auto;
+}
+
   .preview-container {
     display: none;
     position: fixed;

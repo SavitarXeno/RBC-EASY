@@ -448,6 +448,48 @@ background-color: #555;
     font-family: 'Lora', serif;
   }
 
+  .action-list {
+  margin-top: 15px;
+
+  max-height: 250px;        /* 5 marcos visibles */
+  overflow-y: auto;         /* Scroll automático */
+  padding-right: 5px;
+
+  scrollbar-gutter: stable; /* Evita saltos de layout */
+}
+
+  .editor-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  z-index: 10000;
+}
+
+.hidden {
+  display: none;
+}
+
+.editor-modal textarea {
+  height: 200px;
+  resize: vertical;
+  background: #111;
+  color: rgb(255, 0, 0);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgb(255, 0, 0);
+}
+
+.action-name {
+  flex: 1;
+  cursor: pointer;
+  color: rgb(255, 0, 0);
+}
+
   .file-label {
     font-family: 'Lora', serif;
     color: #fff;

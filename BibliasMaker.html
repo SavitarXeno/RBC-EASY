@@ -271,6 +271,45 @@
   scrollbar-width: thin;
 }
 
+.action-list::-webkit-scrollbar {
+  width: 12px;
+}
+
+.action-list::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 15px;
+}
+
+.action-list::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 1px solid #ff0000;
+  border-radius: 15px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.action-list::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+.action-list::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+.action-list {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+.action-list {
+  overflow-y: hidden;
+}
+
+.action-list:hover {
+  overflow-y: auto;
+}
+
+
 #texto {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 16px;
@@ -316,7 +355,7 @@
       <button class="button" onclick="togglePreview()">Ver vista previa</button>
       <button class="button" onclick="showOptions('themes')">Temas</button>
       <button class="button" onclick="showTextStyleOptions()">Estilos de texto</button>
-      <button class="button" onclick="showActionContainer()">Cargar arco de acción</button>
+      <button class="button" id="openActionBtn">Cargar arco de acción</button>
       <button class="button" onclick="showConfirmation('create-bibles')">Crear biblias</button>
       <button class="button" id="togglePrefixBtn" onclick="togglePrefixes()">Habilitar a prefijos</button>
       <button class="button" onclick="copyText()">Copiar todo el texto</button>
@@ -1445,23 +1484,36 @@ addContextMenuOption();
       <button onclick="changeTheme('#ffa500')">Naranja</button>
       <button onclick="changeTheme('#ffffff')">Blanco</button>
       <button onclick="changeTheme('#000000')">Negro</button>
-      <button id="closeThemesBtn" onclick="hideOptions()">Cerrar</button>
+      <button id="closeThemesBtn" class="close-btn" aria-label="Cerrar">Cerrar</button>
     </div>
 
+<script>
+  const closeBtn = document.getElementById("closeThemesBtn");
+const themesContainer = document.getElementById("themes-container");
+
+closeBtn.addEventListener("click", () => {
+  themesContainer.style.display = "none";
+});
+
+</script>
+    
     <style>
-      #closeThemesBtn {
-  margin-top: 20px;
-  padding: 14px;
-  width: 100%;
-  background: #333333;
-  color: #e0e0e0;
-  border: 1px solid var(--theme-color, #ff0000);
-  border-radius: 12px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.3s;
+
+      .options-container {
+  display: none; /* o none por defecto */
 }
-#closeThemesBtn:hover {
+
+      #close-btn {
+    margin-top: 20px;
+    padding: 14px;
+    background: #333333;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#close-btn:hover {
   background: #555555;
 }
     </style>
@@ -1493,19 +1545,276 @@ addContextMenuOption();
     </div>
   </div>
   
-  <div id="actionContainer" class="action-container">
-    <div class="close-action" onclick="closeActionContainer()">✘</div>
-    <h3>Gestión de Arcos de Acción</h3>
-    <div>
-      <span class="file-label"></span>
-      <input type="file" id="uploadActionFile" accept=".txt" style="display:none;" />
-      <button class="button" onclick="document.getElementById('uploadActionFile').click();">Sube un arco de acción .txt</button>
-      <button class="button" onclick="pasteFromClipboard()">Pegar del portapapeles</button>
-    </div>
-    <input type="text" id="actionName" placeholder="Nombre del arco de acción" />
-    <button onclick="saveAction()">Guardar arco</button>
-    <div id="actionList"></div>
-    
+<!-- CONTENEDOR PRINCIPAL -->
+<div id="actionContainer" class="action-container neon-scale">
+  <div class="close-action" id="closeAction">✘</div>
+  <h3>Gestión de Marcos</h3>
+
+  <div class="action-buttons">
+    <input type="file" id="uploadActionFile" accept=".txt" hidden />
+    <button id="uploadTxtBtn">Subir .txt</button>
+    <button id="pasteClipboardBtn">Crear o Pegar</button>
+  </div>
+
+  <div id="actionList" class="action-list"></div>
+</div>
+
+<!-- MODAL EDITOR -->
+<div id="editorModal" class="editor-modal hidden neon-scale">
+  <h3 id="editorTitle">Editar Marco</h3>
+  <input type="text" id="editorName" placeholder="Nombre del marco" />
+  <textarea id="editorContent" placeholder="Contenido del marco"></textarea>
+
+  <script>
+    if (!editorName.value.trim()) {
+  editorName.classList.add("error");
+  editorName.focus();
+  return;
+}
+
+  </script>
+  <style>
+
+#editorContent {
+  width: 100%;
+  max-width: 420px;
+  min-height: 220px;
+  max-height: 320px;
+
+  margin: 10px auto 0 auto;
+  padding: 14px 16px;
+
+  background: #0d0d0d;
+  color: #eaeaea;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 15px;
+  font-family: 'Lora', serif;
+  line-height: 1.6;
+
+  resize: none;              /* Control total */
+  overflow-y: auto;          /* Scroll vertical */
+  outline: none;
+
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+#editorContent:focus {
+  border-color: #ff0000;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorContent::-webkit-scrollbar {
+  width: 12px;
+}
+
+#editorContent::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 15px;
+}
+
+#editorContent::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 1px solid #ff0000;
+  border-radius: 15px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+#editorContent::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+#editorContent::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+#editorContent {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 600px) {
+  #editorContent {
+    max-width: 100%;
+    min-height: 180px;
+    max-height: 240px;
+
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  #editorName,
+  #editorContent {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #editorContent {
+    max-height: 45vh; /* nunca excede la pantalla */
+  }
+
+  .editor-modal {
+    padding: 16px;
+  }
+
+}
+
+
+    #editorName {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 10px auto;
+  padding: 12px 18px;
+
+  background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+  color: #ffffff;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 16px;
+  font-family: 'Lora', serif;
+  letter-spacing: 0.5px;
+
+  outline: none;
+
+  box-shadow:
+    inset 0 0 6px rgba(0, 0, 0, 0.8),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: all 0.25s ease;
+}
+
+#editorName::placeholder {
+  color: #777777;
+  letter-spacing: 0.4px;
+}
+
+#editorName:focus {
+  border-color: #ff0000;
+
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorName:hover {
+  border-color: #555555;
+}
+
+#editorName {
+  animation: nameFadeIn 0.3s ease;
+}
+
+@keyframes nameFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#editorName.error {
+  border-color: #ff0000;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.9);
+}
+
+    .editor-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+    #saveEditor {
+  background: linear-gradient(145deg, #ff0000, #a00000);
+  color: #ffffff;
+  border: 1px solid #ff0000;
+  border-radius: 30px;
+  padding: 12px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow:
+    0 0 6px rgba(255, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.6);
+
+  transition: all 0.25s ease;
+}
+
+#saveEditor:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 0 12px rgba(255, 0, 0, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.8);
+}
+
+#saveEditor:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 0 4px rgba(255, 0, 0, 0.5);
+}
+
+#cancelEditor {
+  background: transparent;
+  color: #cccccc;
+  border: 1px solid #444444;
+  border-radius: 30px;
+  padding: 12px 26px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow: inset 0 0 0 rgba(0,0,0,0);
+  transition: all 0.25s ease;
+}
+
+#cancelEditor:hover {
+  color: #ffffff;
+  border-color: #ff0000;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+#cancelEditor:active {
+  transform: scale(0.96);
+}
+
+@keyframes saveGlow {
+  0%   { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+  50%  { box-shadow: 0 0 12px rgba(255,0,0,.8); }
+  100% { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+}
+
+#saveEditor {
+  animation: saveGlow 2.5s infinite ease-in-out;
+}
+
+  </style>
+  <div class="editor-actions">
+    <button id="saveEditor">Guardar</button>
+    <button id="cancelEditor" class="secondary">Cancelar</button>
+  </div>
+</div>
+  
     <script>
       function activateFullscreenMode() {
         const textContent = document.getElementById('texto').value;

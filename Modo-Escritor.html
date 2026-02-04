@@ -229,6 +229,21 @@ to {
 
 </div>
         <textarea id="texto" placeholder="Escribe tu turno aquí... uwu" aria-label="Área de texto"></textarea>
+<style>
+  #texto {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            letter-spacing: normal;
+            word-spacing: normal;
+            padding: 12px;
+            font-style: normal;
+            font-variant: normal;
+            font-weight: normal;
+            text-transform: none;
+        }
+    </style>
+
 <!-- Barra de control de voz -->
 <div class="voice-control-bar" id="voiceControlBar">
   <div class="no-voices-message" id="noVoicesMessage">No se encontraron voces en español o inglés.</div>
@@ -907,11 +922,418 @@ addContextMenuOption();
     <div class="action-bar">
       <button class="button" id="undoButton" aria-label="Deshacer">↜</button>
       <button class="button" id="redoButton" aria-label="Rehacer">↝</button>
-      <button class="button" onclick="showActionContainer()" aria-label="Mostrar contenedor de acción">↯</button>
+      <button class="button" id="openActionBtn" click="showActionContainer()" aria-label="Mostrar contenedor de acción">↯</button>
       <button class="button" id="togglePrefixBtn" onclick="togglePrefixes()" aria-label="Activar prefijos">[ʙ]</button>
       <button class="button" onclick="showOptions('themes')" aria-label="Mostrar temas">✨</button>
+      <button class="button" onclick="showTextStyleOptions()">🪶</button>
       <button class="button" onclick="togglePreview()" aria-label="Previsualizar">〆</button>
     </div>
+
+<style>
+  /* Mejoras generales al popup */
+  #text-style-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #111111, #1a1a1a);
+    border: 2px solid var(--theme-color, #ff0000);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 
+                0 0 20px var(--theme-color); /* Glow dinámica con el tema */
+    z-index: 30000;
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+    color: #e0e0e0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  #text-style-container h3 {
+    margin: 0 0 15px 0;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Select bonito y unificado */
+  #styleSelect {
+    width: 100%;
+    padding: 14px 15px;
+    background: #222222;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Controles custom más elegantes y oscuros */
+  .custom-section label {
+    display: block;
+    margin: 18px 0 8px;
+    font-weight: 500;
+    color: #cccccc;
+  }
+
+  .custom-section input[type="range"],
+  .custom-section input[type="color"],
+  .custom-section select,
+  .custom-section input[type="text"],
+  .custom-section input[type="number"] {
+    width: 100%;
+    height: 46px;
+    background: #222222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 15px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .custom-section input[type="range"] {
+    height: 8px;
+    padding: 0;
+  }
+
+  .custom-section input[type="color"] {
+    height: 50px;
+    padding: 4px;
+  }
+
+  /* Select de fuentes más compacto */
+  #customFontFamily {
+    height: 42px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .custom-section input[type="number"]::-webkit-outer-spin-button,
+  .custom-section input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Scrollbar personalizada para popup, menú de botones y select de fuentes */
+  #text-style-container::-webkit-scrollbar,
+  #botones::-webkit-scrollbar,
+  #customFontFamily::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  #text-style-container::-webkit-scrollbar-track,
+  #botones::-webkit-scrollbar-track,
+  #customFontFamily::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 15px;
+  }
+
+  #text-style-container::-webkit-scrollbar-thumb,
+  #botones::-webkit-scrollbar-thumb,
+  #customFontFamily::-webkit-scrollbar-thumb {
+    background: #333333;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 15px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  }
+
+  #text-style-container::-webkit-scrollbar-thumb:hover,
+  #botones::-webkit-scrollbar-thumb:hover,
+  #customFontFamily::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+    box-shadow: 0 0 10px var(--theme-color, #ff0000);
+  }
+
+  #text-style-container,
+  #botones,
+  #customFontFamily {
+    scrollbar-color: #333333 #1a1a1a;
+    scrollbar-width: thin;
+  }
+
+  /* Botón cerrar bonito */
+  #closeStyleBtn {
+    margin-top: 20px;
+    padding: 14px;
+    background: #333333;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  #closeStyleBtn:hover {
+    background: #555555;
+  }
+</style>
+
+<div class="options-container" id="text-style-container">
+  <h3>Estilos de texto</h3>
+
+  <select id="styleSelect" onchange="applySelectedStyle()">
+    <option value="" disabled selected>Elige un estilo...</option>
+  </select>
+
+  <div class="custom-section">
+    <label>Tamaño de fuente
+      <div class="number-wrapper">
+        <input type="range" id="customFontSize" min="12" max="40" value="16">
+        <input type="number" id="customFontSizeNum" min="12" max="40" value="16"
+               style="height: 30px; padding: 7px 1.5px;
+                       font-size: 14px;">
+      </div>
+    </label>
+
+    <label>Interlineado
+      <div class="number-wrapper">
+        <input type="range" id="customLineHeight" min="1" max="3" step="0.05" value="1.5">
+        <input type="number" id="customLineHeightNum" min="1" max="3" step="0.05" value="1.5"
+               style="height: 30px; padding: 7px 1.5px;
+                       font-size: 14px;">
+      </div>
+    </label>
+
+    <label>Fuente
+      <select id="customFontFamily">
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Roboto', sans-serif">Roboto</option>
+        <option value="'Open Sans', sans-serif">Open Sans</option>
+        <option value="'Montserrat', sans-serif">Montserrat</option>
+        <option value="'Lora', serif">Lora</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Raleway', sans-serif">Raleway</option>
+        <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+        <option value="'Ubuntu', sans-serif">Ubuntu</option>
+        <option value="'Merriweather', serif">Merriweather</option>
+        <option value="'PT Sans', sans-serif">PT Sans</option>
+        <option value="'Quicksand', sans-serif">Quicksand</option>
+        <option value="'Nunito', sans-serif">Nunito</option>
+        <option value="'Inter', sans-serif">Inter</option>
+        <option value="'Fira Sans', sans-serif">Fira Sans</option>
+        <option value="'Poppins', sans-serif">Poppins</option>
+        <option value="'Oxygen', sans-serif">Oxygen</option>
+        <option value="'Work Sans', sans-serif">Work Sans</option>
+        <option value="'Karla', sans-serif">Karla</option>
+        <option value="'Rubik', sans-serif">Rubik</option>
+        <option value="'Manrope', sans-serif">Manrope</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+        <option value="Impact, fantasy">Impact</option>
+        <option value="'Segoe UI', sans-serif">Segoe UI</option>
+        <option value="Tahoma, sans-serif">Tahoma</option>
+        <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
+        <option value="system-ui">System UI</option>
+        <option value="'Apple System', sans-serif">Apple System</option>
+        <option value="'BlinkMacSystemFont', sans-serif">BlinkMacSystemFont</option>
+        <option value="'Lucida Grande', sans-serif">Lucida Grande</option>
+        <option value="'Gill Sans', sans-serif">Gill Sans</option>
+        <option value="'Century Gothic', sans-serif">Century Gothic</option>
+        <option value="'Futura', sans-serif">Futura</option>
+        <option value="'Candara', sans-serif">Candara</option>
+        <option value="'Calibri', sans-serif">Calibri</option>
+        <option value="'Optima', sans-serif">Optima</option>
+        <option value="'Avenir', sans-serif">Avenir</option>
+        <option value="'Palatino', serif">Palatino</option>
+        <option value="'Baskerville', serif">Baskerville</option>
+        <option value="'Garamond', serif">Garamond</option>
+        <option value="'Book Antiqua', serif">Book Antiqua</option>
+        <option value="'Didot', serif">Didot</option>
+      </select>
+    </label>
+
+    <label>Color del texto
+      <input type="color" id="customTextColor" value="#e0e0e0">
+    </label>
+
+    <label>Nombre para guardar
+      <input type="text" id="customStyleName"
+             style="height: 30px; padding: 7px 1.5px;
+                    font-size: 14px;" placeholder="¿Cómo se llamará tu estilo?">
+    </label>
+
+    <button onclick="saveCustomStyle()">Guardar estilo personalizado</button>
+  </div>
+
+  <button id="closeStyleBtn"
+          style="height: 40px; padding: 9px 1.5px;
+                 font-size: 14px;" onclick="hideTextStyleOptions()">Cerrar</button>
+</div>
+
+<script>
+  // === GESTIÓN DE ESTILOS DE TEXTO ===
+  const textarea = document.getElementById('texto');
+  const styleSelect = document.getElementById('styleSelect');
+
+  const presets = {
+    default: { name: "Por defecto", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "16px", lineHeight: "1.5", color: "#e0e0e0" },
+    large: { name: "Accesible", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "28px", lineHeight: "1.8", color: "#ffffff" },
+    elegant: { name: "Elegante", fontFamily: "'Lora', serif", fontSize: "18px", lineHeight: "1.7", color: "#f0e0d0", fontStyle: "italic" },
+    classic: { name: "Clásico", fontFamily: "'Lora', serif", fontSize: "16px", lineHeight: "1.6", color: "#ffeeee" }
+  };
+
+  function applyStyle(styleObj) {
+    textarea.style.fontFamily = styleObj.fontFamily;
+    textarea.style.fontSize = styleObj.fontSize;
+    textarea.style.lineHeight = styleObj.lineHeight;
+    textarea.style.color = styleObj.color;
+    textarea.style.fontStyle = styleObj.fontStyle || "normal";
+    localStorage.setItem('lastTextStyle', JSON.stringify(styleObj));
+  }
+
+  function syncControlsToStyle(styleObj) {
+    document.getElementById('customFontFamily').value = styleObj.fontFamily;
+    const sizeNum = parseInt(styleObj.fontSize);
+    fontSizeSlider.value = sizeNum;
+    fontSizeNum.value = sizeNum;
+    fontSizeVal.textContent = sizeNum + 'px';
+    const lhNum = parseFloat(styleObj.lineHeight);
+    lineHeightSlider.value = lhNum;
+    lineHeightNum.value = lhNum;
+    lineHeightVal.textContent = lhNum;
+    document.getElementById('customTextColor').value = styleObj.color;
+  }
+
+  // Sincronización bidireccional slider ↔ número
+  const fontSizeSlider = document.getElementById('customFontSize');
+  const fontSizeNum = document.getElementById('customFontSizeNum');
+  const fontSizeVal = document.getElementById('customFontSizeValue');
+  const lineHeightSlider = document.getElementById('customLineHeight');
+  const lineHeightNum = document.getElementById('customLineHeightNum');
+  const lineHeightVal = document.getElementById('customLineHeightValue');
+
+  fontSizeSlider.addEventListener('input', () => {
+    fontSizeNum.value = fontSizeSlider.value;
+    fontSizeVal.textContent = fontSizeSlider.value + 'px';
+  });
+  fontSizeNum.addEventListener('input', () => {
+    let val = Math.max(12, Math.min(40, parseInt(fontSizeNum.value) || 16));
+    fontSizeSlider.value = val;
+    fontSizeNum.value = val;
+    fontSizeVal.textContent = val + 'px';
+  });
+
+  lineHeightSlider.addEventListener('input', () => {
+    lineHeightNum.value = lineHeightSlider.value;
+    lineHeightVal.textContent = lineHeightSlider.value;
+  });
+  lineHeightNum.addEventListener('input', () => {
+    let val = Math.max(1, Math.min(3, parseFloat(lineHeightNum.value) || 1.5));
+    val = Math.round(val * 100) / 100;
+    lineHeightSlider.value = val;
+    lineHeightNum.value = val;
+    lineHeightVal.textContent = val;
+  });
+
+  function populateStyleSelect() {
+    styleSelect.innerHTML = '<option value="" disabled selected>Elige un estilo... Si no sabes qué poner, elige los oficiales</option>';
+
+    // Predeterminados
+    Object.keys(presets).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = presets[key].name + ' (Oficial)';
+      styleSelect.appendChild(opt);
+    });
+
+    // Guardados
+    const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+    saved.forEach((style, index) => {
+      const opt = document.createElement('option');
+      opt.value = `custom_${index}`;
+      opt.textContent = style.name;
+      styleSelect.appendChild(opt);
+    });
+  }
+
+  function applySelectedStyle() {
+    const val = styleSelect.value;
+    if (!val) return;
+
+    let styleObj;
+    if (val.startsWith('custom_')) {
+      const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+      const index = parseInt(val.split('_')[1]);
+      styleObj = saved[index];
+    } else {
+      styleObj = presets[val];
+    }
+
+    applyStyle(styleObj);
+    syncControlsToStyle(styleObj);
+  }
+
+  function saveCustomStyle() {
+    const name = document.getElementById('customStyleName').value.trim();
+    if (!name) return alert('Para guardar, debes poner un nombre a tu estilo.');
+
+    const style = {
+      name,
+      fontFamily: document.getElementById('customFontFamily').value,
+      fontSize: fontSizeSlider.value + 'px',
+      lineHeight: lineHeightSlider.value,
+      color: document.getElementById('customTextColor').value
+    };
+
+    const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+    saved.push(style);
+    localStorage.setItem('customTextStyles', JSON.stringify(saved));
+    applyStyle(style);
+    syncControlsToStyle(style);
+    populateStyleSelect();
+    document.getElementById('customStyleName').value = '';
+  }
+
+  function showTextStyleOptions() {
+    document.getElementById('text-style-container').style.display = 'flex';
+    populateStyleSelect();
+
+    const current = {
+      fontFamily: textarea.style.fontFamily || presets.default.fontFamily,
+      fontSize: parseInt(textarea.style.fontSize || 16),
+      lineHeight: parseFloat(textarea.style.lineHeight || 1.5),
+      color: textarea.style.color || '#e0e0e0'
+    };
+
+    document.getElementById('customFontFamily').value = current.fontFamily;
+    fontSizeSlider.value = current.fontSize;
+    fontSizeNum.value = current.fontSize;
+    fontSizeVal.textContent = current.fontSize + 'px';
+    lineHeightSlider.value = current.lineHeight;
+    lineHeightNum.value = current.lineHeight;
+    lineHeightVal.textContent = current.lineHeight;
+    document.getElementById('customTextColor').value = current.color;
+  }
+
+  function hideTextStyleOptions() {
+    document.getElementById('text-style-container').style.display = 'none';
+  }
+
+  // Cargar último estilo al iniciar
+  window.addEventListener('load', () => {
+    const last = localStorage.getItem('lastTextStyle');
+    if (last) {
+      const styleObj = JSON.parse(last);
+      applyStyle(styleObj);
+      syncControlsToStyle(styleObj);
+    } else {
+      applyStyle(presets.default);
+    }
+  });
+</script>
+
     <div id="preview-container" class="preview-container">
         <div class="preview-content"></div>
       </div>
@@ -1149,6 +1571,7 @@ addContextMenuOption();
 </script>
 <button class="control-button" id="controlButton"></button>
     <div class="options-container" id="themes-container">
+      <button id="closeThemesBtn" class="close-btn" aria-label="Cerrar">✕</button>
       <button onclick="changeTheme('#ff0000')" aria-label="Cambiar a tema rojo">Rojo</button>
       <button onclick="changeTheme('#0000ff')" aria-label="Cambiar a tema azul">Azul</button>
       <button onclick="changeTheme('#00ff00')" aria-label="Cambiar a tema verde">Verde</button>
@@ -1160,7 +1583,33 @@ addContextMenuOption();
       <button onclick="changeTheme('#ffffff')" aria-label="Cambiar a tema blanco">Blanco</button>
       <button onclick="changeTheme('#000000')" aria-label="Cambiar a tema negro">Negro</button>
     </div>
+<script>
+  const closeBtn = document.getElementById("closeThemesBtn");
+const themesContainer = document.getElementById("themes-container");
 
+closeBtn.addEventListener("click", () => {
+  themesContainer.style.display = "none";
+});
+
+</script>
+
+<style>
+  .options-container {
+  display: none; /* o none por defecto */
+}
+
+.close-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+</style>
     <div class="prefix-popup-container" id="prefix-popup-container">
       <div class="confirmation-bubble">¿Qué prefijos deseas usar?</div>
       <label><input type="checkbox" id="bold-prefix"> [B] Negritas</label>
@@ -1172,20 +1621,275 @@ addContextMenuOption();
       <button onclick="hidePrefixPopup()">Cancelar</button>
     </div>
 
-    <div id="actionContainer" class="action-container">
-      <div class="close-action" onclick="closeActionContainer()" aria-label="Cerrar contenedor de acción">✘</div>
-      <h3>Gestión de Arcos de Acción</h3>
-      <div>
-        <span class="file-label" aria-hidden="true"></span>
-        <input type="file" id="uploadActionFile" accept=".txt" style="display:none;" />
-        <button class="button" onclick="document.getElementById('uploadActionFile').click();" aria-label="Subir arco de acción .txt">Sube un marco de acción .txt</button>
-        <button class="button" onclick="pasteFromClipboard()" aria-label="Pegar desde el portapapeles">Pegar del portapapeles</button>
-      </div>
-      <input type="text" id="actionName" placeholder="Nombre del marco de acción" aria-label="Nombre del arco de acción" />
-      <button onclick="saveAction()" aria-label="Guardar marco">Guardar arco</button>
-      <div id="actionList"></div>
-    </div>
+<!-- CONTENEDOR PRINCIPAL -->
+<div id="actionContainer" class="action-container neon-scale">
+  <div class="close-action" id="closeAction">✘</div>
+  <h3>Gestión de Marcos</h3>
+
+  <div class="action-buttons">
+    <input type="file" id="uploadActionFile" accept=".txt" hidden />
+    <button id="uploadTxtBtn">Subir .txt</button>
+    <button id="pasteClipboardBtn">Crear o Pegar</button>
   </div>
+
+  <div id="actionList" class="action-list"></div>
+</div>
+
+<!-- MODAL EDITOR -->
+<div id="editorModal" class="editor-modal hidden neon-scale">
+  <h3 id="editorTitle">Editar Marco</h3>
+  <input type="text" id="editorName" placeholder="Nombre del marco" />
+  <textarea id="editorContent" placeholder="Contenido del marco"></textarea>
+
+  <script>
+    if (!editorName.value.trim()) {
+  editorName.classList.add("error");
+  editorName.focus();
+  return;
+}
+
+  </script>
+  <style>
+
+#editorContent {
+  width: 100%;
+  max-width: 420px;
+  min-height: 220px;
+  max-height: 320px;
+
+  margin: 10px auto 0 auto;
+  padding: 14px 16px;
+
+  background: #0d0d0d;
+  color: #eaeaea;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 15px;
+  font-family: 'Lora', serif;
+  line-height: 1.6;
+
+  resize: none;              /* Control total */
+  overflow-y: auto;          /* Scroll vertical */
+  outline: none;
+
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+#editorContent:focus {
+  border-color: #ff0000;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorContent::-webkit-scrollbar {
+  width: 12px;
+}
+
+#editorContent::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 15px;
+}
+
+#editorContent::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 1px solid #ff0000;
+  border-radius: 15px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+#editorContent::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+#editorContent::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+#editorContent {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 600px) {
+  #editorContent {
+    max-width: 100%;
+    min-height: 180px;
+    max-height: 240px;
+
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  #editorName,
+  #editorContent {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #editorContent {
+    max-height: 45vh; /* nunca excede la pantalla */
+  }
+
+  .editor-modal {
+    padding: 16px;
+  }
+
+}
+
+
+    #editorName {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 10px auto;
+  padding: 12px 18px;
+
+  background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+  color: #ffffff;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 16px;
+  font-family: 'Lora', serif;
+  letter-spacing: 0.5px;
+
+  outline: none;
+
+  box-shadow:
+    inset 0 0 6px rgba(0, 0, 0, 0.8),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: all 0.25s ease;
+}
+
+#editorName::placeholder {
+  color: #777777;
+  letter-spacing: 0.4px;
+}
+
+#editorName:focus {
+  border-color: #ff0000;
+
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorName:hover {
+  border-color: #555555;
+}
+
+#editorName {
+  animation: nameFadeIn 0.3s ease;
+}
+
+@keyframes nameFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#editorName.error {
+  border-color: #ff0000;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.9);
+}
+
+    .editor-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+    #saveEditor {
+  background: linear-gradient(145deg, #ff0000, #a00000);
+  color: #ffffff;
+  border: 1px solid #ff0000;
+  border-radius: 30px;
+  padding: 12px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow:
+    0 0 6px rgba(255, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.6);
+
+  transition: all 0.25s ease;
+}
+
+#saveEditor:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 0 12px rgba(255, 0, 0, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.8);
+}
+
+#saveEditor:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 0 4px rgba(255, 0, 0, 0.5);
+}
+
+#cancelEditor {
+  background: transparent;
+  color: #cccccc;
+  border: 1px solid #444444;
+  border-radius: 30px;
+  padding: 12px 26px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow: inset 0 0 0 rgba(0,0,0,0);
+  transition: all 0.25s ease;
+}
+
+#cancelEditor:hover {
+  color: #ffffff;
+  border-color: #ff0000;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+#cancelEditor:active {
+  transform: scale(0.96);
+}
+
+@keyframes saveGlow {
+  0%   { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+  50%  { box-shadow: 0 0 12px rgba(255,0,0,.8); }
+  100% { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+}
+
+#saveEditor {
+  animation: saveGlow 2.5s infinite ease-in-out;
+}
+
+  </style>
+  <div class="editor-actions">
+    <button id="saveEditor">Guardar</button>
+    <button id="cancelEditor" class="secondary">Cancelar</button>
+  </div>
+</div>
 
   <script src="Funciones/ModoEscritor.js"></script>
 </body>

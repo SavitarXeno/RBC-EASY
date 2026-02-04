@@ -41,87 +41,156 @@ window.addEventListener('load', function() {
     document.execCommand('redo');
   });
 
-let actionStore = JSON.parse(localStorage.getItem('actionStore')) || [];
+let actionStore = JSON.parse(localStorage.getItem("actionStore")) || [];
+let editingIndex = null;
 
-function showActionContainer() {
-document.getElementById('actionContainer').style.display = 'block';
-updateActionList();
+const actionContainer = document.getElementById("actionContainer");
+const actionList = document.getElementById("actionList");
+const editorModal = document.getElementById("editorModal");
+
+const editorName = document.getElementById("editorName");
+const editorContent = document.getElementById("editorContent");
+
+const textoOriginal = document.getElementById("texto");
+
+/* ------------------ UTILIDADES ------------------ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const openActionBtn = document.getElementById("openActionBtn");
+  const actionContainer = document.getElementById("actionContainer");
+
+  if (!openActionBtn || !actionContainer) {
+    console.error("❌ Botón o actionContainer no encontrados");
+    return;
+  }
+
+  openActionBtn.addEventListener("click", () => {
+    actionContainer.style.display = "block";
+
+    // Animación neón limpia
+    actionContainer.classList.remove("neon-scale");
+    void actionContainer.offsetWidth;
+    actionContainer.classList.add("neon-scale");
+  });
+});
+
+
+function saveStore() {
+  localStorage.setItem("actionStore", JSON.stringify(actionStore));
 }
 
-function closeActionContainer() {
-document.getElementById('actionContainer').style.display = 'none';
+function openEditor(name = "", content = "", index = null) {
+  editorName.value = name;
+  editorContent.value = content;
+  editingIndex = index;
+  editorModal.classList.remove("hidden");
 }
 
-function saveAction() {
-const fileInput = document.getElementById('uploadActionFile');
-const actionName = document.getElementById('actionName').value;
-let actionContent = '';
-
-if (fileInput.files.length > 0) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    actionContent = e.target.result;
-    addAction(actionName, actionContent);
-  };
-  reader.readAsText(fileInput.files[0]);
-} else {
-  actionContent = document.getElementById('texto').value;
-  addAction(actionName, actionContent);
-}
+function closeEditor() {
+  editorModal.classList.add("hidden");
+  editingIndex = null;
 }
 
-function addAction(name, content) {
-const actionIndex = actionStore.findIndex(action => action.name === name);
-
-if (actionIndex !== -1) {
-  actionStore[actionIndex].content = content;
-} else {
-  actionStore.push({ name, content });
-}
-
-localStorage.setItem('actionStore', JSON.stringify(actionStore));
-updateActionList();
-}
+/* ------------------ LISTA ------------------ */
 
 function updateActionList() {
-const actionList = document.getElementById('actionList');
-actionList.innerHTML = '';
+  actionList.innerHTML = "";
 
-actionStore.forEach(action => {
-  const div = document.createElement('div');
-  div.className = 'action-item';
-  div.innerHTML = `
-    <span>${action.name}</span>
-    <span class="edit-action" onclick="editAction('${action.name}')">✏️</span>
-    <span class="delete-action" onclick="deleteAction('${action.name}')">❌</span>
-  `;
-  div.addEventListener('click', () => addActionToTextarea(action.content));
-  actionList.appendChild(div);
-});
+  actionStore.forEach((action, index) => {
+    const item = document.createElement("div");
+    item.className = "action-item";
+
+    const name = document.createElement("span");
+    name.textContent = action.name;
+    name.className = "action-name";
+    name.onclick = () => {
+    insertActionAtCursor(action.content);
+    actionContainer.style.display = "none";
+};
+
+
+    const edit = document.createElement("span");
+    edit.textContent = "✏️";
+    edit.onclick = (e) => {
+      e.stopPropagation();
+      openEditor(action.name, action.content, index);
+    };
+
+    const del = document.createElement("span");
+    del.textContent = "❌";
+    del.onclick = (e) => {
+      e.stopPropagation();
+      if (confirm("⚠️ ¿Seguro que deseas borrar este marco? No se puede recuperar.")) {
+        actionStore.splice(index, 1);
+        saveStore();
+        updateActionList();
+      }
+    };
+
+    item.append(name, edit, del);
+    actionList.appendChild(item);
+  });
 }
 
-function editAction(name) {
-const action = actionStore.find(action => action.name === name);
-document.getElementById('actionName').value = action.name;
-document.getElementById('texto').value = action.content;
-}
+/* ------------------ BOTONES ------------------ */
 
-function deleteAction(name) {
-actionStore = actionStore.filter(action => action.name !== name);
-localStorage.setItem('actionStore', JSON.stringify(actionStore));
+document.getElementById("pasteClipboardBtn").onclick = async () => {
+  const text = await navigator.clipboard.readText();
+  openEditor("", text);
+};
+
+document.getElementById("uploadTxtBtn").onclick = () => {
+  document.getElementById("uploadActionFile").click();
+};
+
+document.getElementById("uploadActionFile").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => openEditor(file.name.replace(".txt", ""), reader.result);
+  reader.readAsText(file);
+};
+
+document.getElementById("saveEditor").onclick = () => {
+  const name = editorName.value.trim();
+  const content = editorContent.value;
+
+  if (!name || !content) return alert("Nombre y contenido requeridos");
+
+  if (editingIndex !== null) {
+    if (!confirm("¿Guardar cambios en este marco?")) return;
+    actionStore[editingIndex] = { name, content };
+  } else {
+    actionStore.push({ name, content });
+  }
+
+  saveStore();
+  updateActionList();
+  closeEditor();
+};
+
+document.getElementById("cancelEditor").onclick = closeEditor;
+document.getElementById("closeAction").onclick = () => actionContainer.style.display = "none";
+
+/* INIT */
 updateActionList();
-}
+  
+  function insertActionAtCursor(content) {
+  const textarea = document.getElementById("texto");
+  textarea.focus();
 
-function addActionToTextarea(content) {
-document.getElementById('texto').value += content;
-}
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
 
-function pasteFromClipboard() {
-navigator.clipboard.readText().then(text => {
-  document.getElementById('texto').value = text;
-}).catch(err => {
-  alert('Error al pegar texto: ' + err);
-});
+  const before = textarea.value.substring(0, start);
+  const after = textarea.value.substring(end);
+
+  textarea.value = before + content + after;
+
+  // Colocar cursor justo después del texto insertado
+  const cursorPos = start + content.length;
+  textarea.setSelectionRange(cursorPos, cursorPos);
 }
 
 function ChangeTheme(color) {
