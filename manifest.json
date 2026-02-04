@@ -2,7 +2,7 @@
   "name": "Rol Battle Científico Fácil",
   "short_name": "RBC-EASY",
   "description": "Bienvenido a RedPlay, una aplicación de Savitar que ofrece una experiencia única de entretenimiento y productividad.",
-  "start_url": "https://xn--yosoysavitarxeno99999-3g9l.on.drv.tw/RBC-EASY%200.81.0/index.html",
+  "start_url": "https://rbc-easy.vercel.app/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
