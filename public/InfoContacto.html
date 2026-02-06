@@ -1,83 +1,385 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Contacto - Savitar</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contacto | Savitar</title>
+
   <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
   <link rel="manifest" href="manifest.json">
+
+  <!-- Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('service-worker.js')
         .then((registration) => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          console.log('ServiceWorkerregistró con éxito y with scope: ', registration.scope);
         })
         .catch((error) => {
-          console.log('ServiceWorker registration failed: ', error);
+          console.log('ServiceWorker falló el registro: ', error);
         });
     });
   }
 </script>
+
   <style>
-    body {
+    /* =========================
+       VARIABLES GLOBALES
+    ========================== */
+    :root {
+      --bg-main: #050608;
+      --bg-panel: rgba(8, 10, 14, 0.88);
+      --red-neon: #ff003c;
+      --blue-neon: #00b3ff;
+      --blue-soft: #6fdcff;
+      --text-main: #e8e8e8;
+      --text-muted: #a0a0a0;
+      --border-glow: rgba(255, 0, 60, 0.6);
+      --blur-glass: blur(18px);
+      --radius-xl: 22px;
+      --transition-fast: 0.25s ease;
+      --transition-slow: 0.6s cubic-bezier(.16,.8,.38,.99);
+    }
+
+    /* =========================
+       RESET AVANZADO
+    ========================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      background: url('FSH.png') center/cover no-repeat;
-      font-family: 'Arial', sans-serif;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.7);
     }
-    .container {
-      background: rgba(0, 0, 0, 0.85); 
-      border: 2px solid #a00000; 
-      border-radius: 15px;
-      padding: 30px; 
-      max-width: 600px; 
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.8); 
-      text-align: center;
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: radial-gradient(circle at top, #0b0e16, #020205);
+      color: var(--text-main);
+      overflow-x: hidden;
     }
+
+    /* =========================
+       FONDO ANIMADO
+    ========================== */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(0, 179, 255, 0.08), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 0, 60, 0.1), transparent 45%);
+      animation: bgPulse 8s infinite alternate;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.02),
+        rgba(255,255,255,0.02) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes bgPulse {
+      from { opacity: 0.6; }
+      to { opacity: 1; }
+    }
+
+    /* =========================
+       CONTENEDOR PRINCIPAL
+    ========================== */
+    .page {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 40px 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 880px;
+      background: linear-gradient(
+        180deg,
+        rgba(12,14,20,0.95),
+        rgba(5,6,10,0.92)
+      );
+      backdrop-filter: var(--blur-glass);
+      border-radius: var(--radius-xl);
+      padding: 50px 40px;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow:
+        0 0 0 1px rgba(255,0,60,0.15),
+        0 0 40px rgba(0,179,255,0.15),
+        inset 0 0 30px rgba(0,0,0,0.6);
+      animation: cardEnter 1.2s var(--transition-slow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes cardEnter {
+      from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Glow dinámico */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: linear-gradient(
+        120deg,
+        transparent 20%,
+        var(--red-neon),
+        var(--blue-neon),
+        transparent 80%
+      );
+      opacity: 0.25;
+      filter: blur(22px);
+      animation: glowMove 6s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes glowMove {
+      to { transform: rotate(360deg); }
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =========================
+       TITULO
+    ========================== */
+
+    @supports not (-webkit-background-clip: text) {
+  h1 {
+    color: var(--red-neon);
+  }
+}
+
+h1 {
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 25px;
+  text-align: center;
+
+  background: linear-gradient(
+    90deg,
+    var(--red-neon),
+    var(--blue-neon),
+    var(--red-neon)
+  );
+
+  -webkit-text-fill-color: transparent;
+
+  text-shadow: 0 0 25px rgba(255,0,60,0.35);
+  animation: titleFlicker 3.5s infinite;
+}
+
+
     h1 {
-      color: #FF0000; 
-      margin-bottom: 20px;
-      font-size: 32px; 
-      text-transform: uppercase; 
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 25px;
+      text-align: center;
+      background: linear-gradient(
+        90deg,
+        var(--red-neon),
+        var(--blue-neon),
+        var(--red-neon)
+      );
+
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 25px rgba(255,0,60,0.35);
+      animation: titleFlicker 3.5s infinite;
     }
-    p {
-      font-size: 18px;
-      line-height: 1.6;
-      margin: 15px 0;
+
+    @keyframes titleFlicker {
+      0%, 100% { opacity: 1; }
+      48% { opacity: 0.85; }
+      50% { opacity: 0.6; }
+      52% { opacity: 1; }
     }
-    a {
-      color: #FF0000;
+
+    /* =========================
+       TEXTO
+    ========================== */
+    .intro {
+      text-align: center;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 35px;
+    }
+
+    /* =========================
+       LISTA DE LINKS
+    ========================== */
+    .links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .link-item {
+      position: relative;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: linear-gradient(
+        145deg,
+        rgba(15,18,28,0.9),
+        rgba(8,10,16,0.9)
+      );
+      border: 1px solid rgba(255,255,255,0.05);
+      color: var(--text-main);
       text-decoration: none;
-      font-weight: bold; 
-      transition: color 0.3s ease, text-shadow 0.3s ease; 
+      transition: transform var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  border-color var(--transition-fast);
+      overflow: hidden;
     }
-    a:hover {
-      color: #fff;
-      text-shadow: 0 0 8px #FF0000;
+
+    .link-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        120deg,
+        transparent,
+        rgba(0,179,255,0.25),
+        transparent
+      );
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .link-item:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: var(--red-neon);
+      box-shadow:
+        0 10px 30px rgba(255,0,60,0.35),
+        0 0 18px rgba(0,179,255,0.35);
+    }
+
+    .link-item:hover::before {
+      opacity: 1;
+    }
+
+    .link-title {
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .email {
+      text-align: center;
+      margin: 30px 0;
+      font-size: 1.1rem;
+    }
+
+    .email a {
+      color: var(--blue-soft);
+      text-decoration: none;
+      border-bottom: 1px dashed transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .email a:hover {
+      color: var(--red-neon);
+      border-bottom-color: var(--red-neon);
+      text-shadow: 0 0 8px var(--red-neon);
+    }
+
+    /* =========================
+       RESPONSIVE
+    ========================== */
+    @media (max-width: 600px) {
+      .card {
+        padding: 35px 22px;
+      }
+
+      .intro {
+        font-size: 0.98rem;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Contacto</h1>
-    <p>¡Bienvenido a nuestro portal de contacto!</p>
-    <p>Para comunicarte con Savitar, envía un correo a: <a href="mailto:savitarxeno@gmail.com">savitarxeno@gmail.com</a></p>
-    <p>Visita también nuestras plataformas:</p>
-    <p><a href="http://aminoapps.com/p/6ef8q5" target="_blank">Crea y lee libros gratis | AminoApps | Venus Art</a></p>
-    <p><a href="https://www.whatsapp.com/channel/0029VaTRAtgInlqW5dnwbG2K" target="_blank">WhatsApp Channel</a></p>
-    <p><a href="https://www.facebook.com/share/H84WiYzaNQsJgMWR/?mibextid=LQQJ4d" target="_blank">Facebook</a></p>
-    <p><a href="https://x.com/IAMSAVITARXENO" target="_blank">X/Twitter</a></p>
-    <p><a href="https://youtube.com/@savitarxeno?si=JWZoHSu4vyEFc8nT" target="_blank">YouTube</a></p>
-    <p><a href="https://www.instagram.com/iamsavitarxeno/" target="_blank">Instagram</a></p>
-    <p><a href="https://www.threads.net/@iamsavitarxeno" target="_blank">Threads</a></p>
-    <p><a href="https://www.tiktok.com/@savitar.xeno?_t=8o0hcObzyyb&_r=1" target="_blank">TikTok</a></p>
-  </div>
+  <main class="page">
+    <section class="card">
+      <div class="content">
+        <h1>Contacto</h1>
+
+        <p class="intro">
+          Gracias por usar <strong>RBC-EASY</strong>.<br>
+          Si deseas contactar a <strong>Savitar</strong> o explorar
+          sus proyectos, estás en el núcleo correcto.
+        </p>
+
+        <div class="email">
+          Contacto directo:
+          <a href="mailto:savitarxeno@gmail.com">savitarxeno@gmail.com</a>
+        </div>
+
+        <div class="links">
+          <a class="link-item" href="http://aminoapps.com/p/6ef8q5" target="_blank">
+            <div class="link-title">AminoApps · Venus Art</div>
+          </a>
+
+          <a class="link-item" href="https://wrixy.app/book/8hGH6hCc" target="_blank">
+            <div class="link-title">Novela Sci-Fi Filosófica</div>
+          </a>
+
+          <a class="link-item" href="https://www.whatsapp.com/channel/0029VaTRAtgInlqW5dnwbG2K" target="_blank">
+            <div class="link-title">WhatsApp Channel</div>
+          </a>
+
+          <a class="link-item" href="https://www.facebook.com/share/H84WiYzaNQsJgMWR/" target="_blank">
+            <div class="link-title">Facebook</div>
+          </a>
+
+          <a class="link-item" href="https://x.com/IAMSAVITARXENO" target="_blank">
+            <div class="link-title">X / Twitter</div>
+          </a>
+
+          <a class="link-item" href="https://youtube.com/@savitarxeno" target="_blank">
+            <div class="link-title">YouTube</div>
+          </a>
+
+          <a class="link-item" href="https://www.instagram.com/iamsavitarxeno/" target="_blank">
+            <div class="link-title">Instagram</div>
+          </a>
+
+          <a class="link-item" href="https://www.threads.net/@iamsavitarxeno" target="_blank">
+            <div class="link-title">Threads</div>
+          </a>
+
+          <a class="link-item" href="https://www.tiktok.com/@savitar.xeno" target="_blank">
+            <div class="link-title">TikTok</div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

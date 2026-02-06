@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RBC-EASY</title>
+
   <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
   <link rel="manifest" href="manifest.json">
 
@@ -21,113 +22,176 @@
   }
 </script>
 
-<style>
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: white;
-    background-color: #111;
-    position: relative;
-    background-image: url('FCC.png');
-}
+  <style>
+    /* =========================
+       BASE
+    ========================== */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: white;
+      background-color: #111;
+      background-image: url('FCC.png');
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
 
-body::before {
+    body::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7); 
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.7);
       z-index: 0;
     }
-    
-.background-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('FCC.png');
-    background-size: cover; 
-    background-position: center;
-    background-repeat: no-repeat; 
-    z-index: -1; 
-    filter: brightness(0.4); 
-}
 
+    /* =========================
+       LAYOUT PRINCIPAL
+    ========================== */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-.container {
-    text-align: center;
-    margin-top: 20%;
-    position: relative; 
-    z-index: 1;
-}
-
-
-h1 {
-    color: #FF0000;
-    font-size: 2.5rem;
-}
-
-
-.start-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #FF0000;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-top: 20px;
-    font-size: 1rem; 
-}
-
-.start-button:hover {
-    background-color: #FF3333;
-}
-
-
-.contact-link {
-    font-size: 12px;
-    color: #999999;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-.contact-link:hover {
-    color: #FF0000;
-}
-
-@media (max-width: 768px) {
     .container {
-        margin-top: 15%; 
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 40px;
+      max-width: 420px;
+      width: 100%;
+      animation: fadeUp 1.2s ease;
     }
-    
-    h1 {
-        font-size: 1.8rem; 
-    }
-    
-    .start-button {
-        padding: 8px 16px; 
-        font-size: 0.9rem; 
-    }
-    
-    .contact-link {
-        font-size: 10px; 
-    }
-}
 
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* =========================
+       TITULO
+    ========================== */
+    h1 {
+      font-size: 2.6rem;
+      letter-spacing: 0.18em;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      color: #ff0000;
+      text-shadow:
+        0 0 12px rgba(255, 0, 0, 0.6),
+        0 0 30px rgba(255, 0, 0, 0.4);
+    }
+
+    .author {
+      font-size: 0.95rem;
+      color: #b0b0b0;
+      margin-bottom: 50px;
+      letter-spacing: 0.08em;
+    }
+
+    /* =========================
+       BOTÓN PRINCIPAL
+    ========================== */
+    .start-button {
+      display: inline-block;
+      padding: 14px 42px;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #ffffff;
+      background: linear-gradient(
+        135deg,
+        #ff0000,
+        #b80000
+      );
+      border-radius: 10px;
+      box-shadow:
+        0 0 20px rgba(255, 0, 0, 0.6),
+        0 0 50px rgba(255, 0, 0, 0.3);
+      transition: transform 0.25s ease,
+                  box-shadow 0.25s ease,
+                  background 0.25s ease;
+    }
+
+    .start-button:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow:
+        0 0 30px rgba(255, 0, 0, 0.9),
+        0 0 70px rgba(255, 0, 0, 0.6);
+    }
+
+    .start-button:active {
+      transform: scale(0.97);
+    }
+
+    /* =========================
+       CONTACTO
+    ========================== */
+    .contact-link {
+      margin-top: 35px;
+      font-size: 0.75rem;
+      color: #9a9a9a;
+      text-decoration: underline;
+      cursor: pointer;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .contact-link:hover {
+      color: #ff0000;
+      text-shadow: 0 0 6px rgba(255, 0, 0, 0.7);
+    }
+
+    /* =========================
+       RESPONSIVE (MÓVIL)
+    ========================== */
+    @media (max-width: 768px) {
+      body {
+        align-items: flex-start;
+      }
+
+      .container {
+        padding-top: 35vh;
+        padding-bottom: 40px;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .start-button {
+        padding: 12px 34px;
+        font-size: 0.95rem;
+      }
+    }
   </style>
 </head>
+
 <body>
+
   <div class="container">
     <h1>RBC-EASY</h1>
-    <p>Autor: Savitar</p>
-    <a href="Mis_Proyectos.html" class="start-button" type="text/html" target="_self">Empezar</a>
-    <p class="contact-link" onclick="openContactInfo()">Contacto</p>
+    <div class="author">Autor · Savitar</div>
+
+    <a href="Mis_Proyectos.html"
+       class="start-button"
+       target="_self">
+       Empezar
+    </a>
+
+    <div class="contact-link" onclick="openContactInfo()">
+      Contacto
+    </div>
   </div>
 
   <script>
@@ -137,8 +201,13 @@ h1 {
       const height = 600;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
-      window.open(url, 'Contacto', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`);
+      window.open(
+        url,
+        'Contacto',
+        `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`
+      );
     }
   </script>
+
 </body>
 </html>

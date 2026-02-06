@@ -115,31 +115,239 @@
     .file-list li:hover {
       background-color: #333;
     }
-    #toggle-menu {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #FF0000;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 10px;
-      cursor: pointer;
-    }
-    #toggle-menu:hover {
-      background-color: #FF3333;
-    }
+
+  </style>
+
+  <style>
+    /* ==================================================
+   BOTONES DE ACCIÓN
+================================================== */
+.file-actions button {
+  background: transparent;
+  border: none;
+  color: #FF0000;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.file-actions button:hover {
+  text-shadow: 0 0 8px #FF0000;
+}
+
+/* ==================================================
+   CONTENEDOR CENTRAL
+================================================== */
+.container {
+  text-align: center;
+  z-index: 1;
+}
+
+.container h1 {
+  margin-bottom: 30px;
+}
+
+/* ==================================================
+   BOTONES PRINCIPALES
+================================================== */
+.action-btn {
+  display: inline-block;
+  padding: 14px 38px;
+  background: #FF0000;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  margin: 10px;
+  letter-spacing: .1em;
+  box-shadow: 0 0 25px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 0 45px rgba(255,0,0,.9);
+}
+
+/* ==================================================
+   BOTÓN CARGAR PROYECTOS
+================================================== */
+#toggle-menu {
+  position: fixed;
+  left: 20px;
+  top: 18px;
+  z-index: 10;
+  padding: 12px 18px;
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: .08em;
+  box-shadow: 0 0 18px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+#toggle-menu:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,0,0,.9);
+}
+
+/* Móvil: baja el botón */
+@media (max-width: 768px) {
+  #toggle-menu {
+    top: auto;
+    bottom: 30px;
+  }
+}
   </style>
   <title>Proyectos</title>
 </head>
 <body>
-  <button id="toggle-menu">Cargar Proyectos</button>
-  <div class="sidebar">
+<!-- BOTÓN TOGGLE (el tuyo, mejorado) -->
+<button id="toggle-menu" class="menu-btn">
+  📂 Cargar Proyectos
+</button>
+
+<!-- OVERLAY -->
+<div id="sidebar-overlay"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
     <h2>Cargar Proyectos</h2>
-    <button id="load-files">Subir turno .txt</button>
-    <ul id="file-list" class="file-list"></ul>
     <button id="close-menu" class="close-button">Cerrar</button>
   </div>
+
+  <div class="sidebar-content">
+    <button id="load-files" class="load-btn">
+      Subir turno .txt
+    </button>
+
+    <ul id="file-list" class="file-list"></ul>
+  </div>
+</aside>
+
+<style>
+  /* BOTÓN TOGGLE */
+.menu-btn {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 1001;
+  background: #0a0f1f;
+  color: #00bfff;
+  border: 1px solid #00bfff;
+  padding: 10px 14px;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+/* OVERLAY */
+#sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+/* SIDEBAR */
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: linear-gradient(180deg, #0a0f1f, #050812);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  color: #fff;
+  border-bottom: 1px solid #1c2340;
+}
+
+.sidebar-header button {
+  background: transparent;
+  color: #ff4d4d;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* CONTENT */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  color: #cfd8ff;
+}
+
+.sidebar-content p {
+  padding: 8px;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sidebar-content p:hover {
+  background: rgba(0, 191, 255, 0.15);
+}
+
+/* SCROLLBAR OSCURA */
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: #1c2340;
+  border-radius: 4px;
+}
+
+/* ACTIVO */
+body.sidebar-open #sidebar {
+  transform: translateX(0);
+}
+
+body.sidebar-open #sidebar-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+</style>
+<script>
+  const toggleMenu = document.getElementById("toggle-menu");
+  const closeMenu = document.getElementById("close-menu");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  toggleMenu.onclick = () => {
+    document.body.classList.add("sidebar-open");
+  };
+
+  closeMenu.onclick = () => {
+    document.body.classList.remove("sidebar-open");
+  };
+
+  overlay.onclick = () => {
+    document.body.classList.remove("sidebar-open");
+  };
+</script>
+
   <div class="container">
     <h1>Mis Proyectos</h1>
     <a href="Calculadora_Científica.html" class="calculate-button">Calcular</a>
