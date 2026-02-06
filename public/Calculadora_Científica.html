@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="Estilos/EstilosCalculadoraCientífica.css" rel="stylesheet" type="text/css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Rápida</title>
+    <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('service-worker.js')
+            .then((registration) => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch((error) => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script>
+</head>
+<body>
+  
+  <div class="calculator">
+        <h1>Calculadora</h1>
+
+        <input type="text" id="screen" class="screen" inputmode="numeric" placeholder="0">
+        <div class="previous-number" id="previousNumber"></div>
+        <div class="buttons">
+            
+            <button class="button" onclick="appendToScreen('1')">1</button>
+            <button class="button" onclick="appendToScreen('2')">2</button>
+            <button class="button operator" onclick="appendToScreen('+')">+</button>
+            <button class="button operator" onclick="appendToScreen('-')">-</button>
+            <button class="button" onclick="appendToScreen('3')">3</button>
+            <button class="button" onclick="appendToScreen('4')">4</button>
+            <button class="button operator" onclick="appendToScreen('*')">×</button>
+            <button class="button operator" onclick="appendToScreen('/')">÷</button>
+            <button class="button" onclick="appendToScreen('5')">5</button>
+            <button class="button" onclick="appendToScreen('6')">6</button>
+            <button class="button" onclick="appendToScreen('(')">(</button>
+            <button class="button" onclick="appendToScreen(')')">)</button>
+            <button class="button" onclick="appendToScreen('7')">7</button>
+            <button class="button" onclick="appendToScreen('8')">8</button>
+            <button class="button" onclick="backspace()">⌫</button>
+            <button class="button operator" onclick="calculate()">=</button>
+            <button class="button" onclick="appendToScreen('9')">9</button>
+            <button class="button" onclick="appendToScreen('0')">0</button>
+            <button class="button" onclick="appendToScreen('.')">.</button>
+            <button class="button" onclick="clearScreen()">C</button>  
+            <button class="button" onclick="reset()">Reset</button>
+            <button class="button" onclick="copyResult()">Copiar</button>
+            <button class="button" onclick="togglePopup()">Science Mode</button>
+            <button class="Button" onclick="pasteNumber()">Pegar</button>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/big.js/6.2.1/big.min.js"></script>
+    
+    <div class="sidebar">
+        <h2>Historial</h2>
+        <div id="history" class="history"></div>
+    </div>
+    
+    <div class="guide-sidebar">
+        <h2>Guía de Operaciones</h2>
+        <p id="operationGuide"></p>
+    </div>
+    
+
+    <script>
+  function togglePopup() {
+    const popup = document.getElementById('popup');
+    const overlay = document.querySelector('.popup-overlay');
+
+    if (popup.style.display === 'block') {
+      popup.style.display = 'none';
+      overlay.style.display = 'none';
+    } else {
+      popup.style.display = 'block';
+      overlay.style.display = 'block';
+    }
+  }
+</script>
+
+<div class="popup-overlay" style="display: none;"></div>
+
+<div class="popup" id="popup">
+    <span class="popup-close" onclick="togglePopup()">X</span>
+    <h2>Science Mode</h2>
+
+    <ul id="category-list">
+        <li><button class="button" onclick="showCategory('fisica')">Física</button></li>
+        <li><button class="button" onclick="showCategory('quimica')">Química</button></li>
+        <li><button class="button" onclick="showCategory('matematicas')">Matemáticas</button></li>
+        <button class="button" onclick="window.location.href='FireA.html'">Balística</button>
+        <button class="button" onclick="window.location.href='Conversor.html'">Conversión de datos</button>
+        <button class="button" onclick="window.location.href='Modo-Ascendido.html'">Modo ascendido</button> 
+        </ul>
+
+    <div id="operations" style="display:none;">
+        <button class="button" onclick="showCategories()">← Volver</button>
+        <ul id="operation-list">
+            <li><button class="button" onclick="advancedOperation('Newton')">Fuerza</button></li>
+            <li><button class="button" onclick="advancedOperation('Aceleración')">Aceleración</button></li>
+            <li><button class="button" onclick="advancedOperation('Masa')">Masa</button></li>
+            <li><button class="button" onclick="advancedOperation('Área Triángulo')">Área Triángulo</button></li>
+            <li><button class="button" onclick="advancedOperation('Área Cuadrado')">Área Cuadrado</button></li>
+            <li><button class="button" onclick="advancedOperation('Área Rectángulo')">Área Rectángulo</button></li>
+            <li><button class="button" onclick="advancedOperation('Volumen Cubo')">Volumen Cubo</button></li>
+            <li><button class="button" onclick="advancedOperation('Volumen Esfera')">Volumen Esfera</button></li>
+            <li><button class="button" onclick="advancedOperation('Hipotenusa Triángulo')">Hipotenusa Triángulo</button></li>
+            <li><button class="button" onclick="advancedOperation('Energía Cinética')">Energía Cinética</button></li>
+            <li><button class="button" onclick="advancedOperation('Temperatura')">Temperatura</button></li>
+            <li><button class="button" onclick="advancedOperation('Distancia')">Distancia</button></li>
+            <li><button class="button" onclick="advancedOperation('Velocidad')">Velocidad</button></li>
+            <li><button class="button" onclick="advancedOperation('Número Aleatorio')">Número Aleatorio</button></li>
+
+        </ul>
+    </div>
+</div>
+
+
+  <a href="#" class="neon-button" onclick="toggleMobileView()">Ver sitio móvil</a>
+
+
+  <a href="Mis_Proyectos.html" class="return-button">
+    Volver a Proyectos
+</a>
+<a href="BibliasMaker.html" class="start-writing-button">Empezar a escribir</a>
+
+<script src="Funciones/FuncionesCalculadoraCientífica.js"></script>
+
+</body>
+</html>

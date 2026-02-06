@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Popup Test</title>
+  <style>
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 999;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1b1b1b;
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 1000;
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 50%;
+    }
+
+    .button {
+      padding: 10px 20px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<button class="button" onclick="togglePopup()">Abrir Popup</button>
+
+<div class="popup-overlay"></div>
+
+<div class="popup" id="popup">
+  <button class="popup-close" onclick="togglePopup()">X</button>
+  <h2>Hola desde el Popup</h2>
+  <p>Esto es una prueba.</p>
+</div>
+
+<script>
+  function togglePopup() {
+    const popup = document.getElementById('popup');
+    const overlay = document.querySelector('.popup-overlay');
+
+    if (popup.style.display === 'block') {
+      popup.style.display = 'none';
+      overlay.style.display = 'none';
+    } else {
+      popup.style.display = 'block';
+      overlay.style.display = 'block';
+    }
+  }
+</script>
+
+<script src="FuncionesCalculadoraCientífica.js"></script>
+</body>
+</html>

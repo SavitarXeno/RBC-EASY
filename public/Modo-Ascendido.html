@@ -1,0 +1,1906 @@
+
+        <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modo Ascendido</title>
+    <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background: url('Estilos/Assest/FMA.png') no-repeat center center fixed;
+            background-size: cover;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 0;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            background: rgba(31, 31, 31, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(255, 50, 50, 0.4), inset 0 0 10px rgba(255, 50, 50, 0.1);
+            backdrop-filter: blur(5px);
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5em;
+            color: #ff3232;
+            text-shadow: 0 0 15px rgba(255, 50, 50, 0.7);
+            letter-spacing: 2px;
+        }
+        .calculator {
+            background: #151515;
+            border: 2px solid #ff3232;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 0 25px rgba(255, 50, 50, 0.5);
+        }
+        .display {
+            margin-bottom: 15px;
+        }
+        #display {
+            width: 100%;
+            height: 80px;
+            background: #0a0a0a;
+            color: #00ff66;
+            border: 1px solid #ff3232;
+            border-radius: 8px;
+            font-size: 22px;
+            padding: 15px;
+            text-align: right;
+            resize: none;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+            transition: all 0.3s ease;
+        }
+        #display:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(255, 50, 50, 0.4);
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .btn {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            color: #ff3232;
+            border: 1px solid #ff3232;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: #ff3232;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(255, 50, 50, 0.7);
+        }
+        .btn:active {
+            background: #cc2626;
+            transform: scale(0.95);
+        }
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+        .btn:hover::before {
+            width: 200%;
+            height: 200%;
+        }
+        .btn.number { color: #00ff66; }
+        .btn.operator { color: #ffff66; }
+        .btn.function { color: #00b7ff; }
+        .btn.constant { color: #00ffff; }
+        .btn.clear { color: #ff3232; }
+        .btn.delete { color: #ff6633; }
+        .btn.equal { background: #ff3232; color: #fff; }
+        #history {
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(15, 15, 15, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 50, 50, 0.6);
+            z-index: 1000;
+            color: #e0e0e0;
+            width: 90%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+            animation: popupFadeIn 0.3s ease;
+        }
+        @keyframes popupFadeIn {
+            from { opacity: 0; transform: translate(-50%, -60%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        .popup h3 {
+            color: #ff3232;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(255, 50, 50, 0.5);
+        }
+        .popup .option-btn, .popup .guide-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #2a2a2a;
+            color: #ff3232;
+            border: 1px solid #ff3232;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .popup .option-btn:hover, .popup .guide-btn:hover {
+            background: #ff3232;
+            color: #fff;
+        }
+        .popup .guide-btn {
+            background: #00b7ff;
+            color: #fff;
+            border: 1px solid #00b7ff;
+        }
+        .popup .guide-btn:hover {
+            background: #0099cc;
+        }
+        .popup input, .popup select, .popup button:not(.option-btn):not(.guide-btn) {
+            width: 100%;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ff3232;
+            background: #333;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .popup button:not(.option-btn):not(.guide-btn):hover {
+            background: #ff3232;
+            color: #fff;
+        }
+        .popup .guide-content {
+            background: #2a2a2a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        #graph {
+            margin-top: 15px;
+            max-height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px;
+            width: 100%;
+            display: block;
+            z-index: 200000;
+        }
+        .graph-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+.graph-fullscreen canvas {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    display: block; /* Asegura que el canvas sea visible */
+}
+.graph-tools {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    z-index: 2100;
+}
+.graph-tools button {
+    background: #ff3232;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.graph-tools button:hover {
+    background: #cc2626;
+}
+.sidebar {
+    position: absolute;
+    right: -250px;
+    top: 0;
+    width: 250px;
+    height: 100%;
+    background: rgba(31, 31, 31, 0.9);
+    padding: 20px;
+    transition: right 0.3s ease;
+    z-index: 2100;
+    overflow-y: auto;
+}
+.sidebar.active {
+    right: 0;
+}
+.sidebar-toggle {
+    position: absolute;
+    top: 10px;
+    left: -40px;
+    background: #ff3232;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px 0 0 5px;
+    cursor: pointer;
+}
+.sidebar h4 {
+    color: #ff3232;
+    margin-bottom: 10px;
+}
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+.sidebar li {
+    margin: 5px 0;
+    padding: 5px;
+    background: #2a2a2a;
+    border-radius: 5px;
+    color: #e0e0e0;
+}
+.container.hidden {
+    display: none;
+}
+@media (max-width: 480px) {
+    .sidebar { width: 150px; }
+    .sidebar-toggle { left: -30px; }
+    .graph-tools { flex-direction: column; }
+}
+        .button-wrapper {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .button-link {
+            background: #ff3232;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .button-link:hover {
+            background: #cc2626;
+            box-shadow: 0 0 15px rgba(255, 50, 50, 0.6);
+        }
+        @media (max-width: 768px) {
+            .container { max-width: 600px; padding: 15px; }
+            header h1 { font-size: 2em; }
+            #display { height: 70px; font-size: 20px; }
+            .btn { padding: 10px; font-size: 14px; }
+            .buttons { grid-template-columns: repeat(5, 1fr); }
+            .popup { max-width: 400px; padding: 15px; }
+        }
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .container { max-width: 100%; padding: 10px; }
+            header h1 { font-size: 1.5em; }
+            #display { height: 60px; font-size: 18px; }
+            .btn { padding: 8px; font-size: 12px; }
+            .buttons { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+            .popup { max-width: 95%; padding: 10px; }
+            #history { max-height: 100px; font-size: 12px; }
+            #graph { max-height: 200px; }
+            .button-link { padding: 8px 15px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Modo Ascendido</h1>
+        </header>
+        <div class="calculator">
+            <div class="display">
+                <textarea id="display"></textarea>
+            </div>
+            <div class="buttons">
+                <!-- Fila 1: Controles -->
+                <button class="btn clear" data-action="clear">C</button>
+                <button class="btn delete" data-action="delete">⌫</button>
+                <button class="btn operator" data-action="(">(</button>
+                <button class="btn operator" data-action=")">)</button>
+                <button class="btn equal" data-action="=">=</button>
+
+                <!-- Fila 2: Números 7-9 y Operadores -->
+                <button class="btn number" data-action="7">7</button>
+                <button class="btn number" data-action="8">8</button>
+                <button class="btn number" data-action="9">9</button>
+                <button class="btn operator" data-action="/">÷</button>
+                <button class="btn operator" data-action="*">×</button>
+
+                <!-- Fila 3: Números 4-6 y Operadores -->
+                <button class="btn number" data-action="4">4</button>
+                <button class="btn number" data-action="5">5</button>
+                <button class="btn number" data-action="6">6</button>
+                <button class="btn operator" data-action="+">+</button>
+                <button class="btn operator" data-action="-">-</button>
+
+                <!-- Fila 4: Números 1-3 y Más -->
+                <button class="btn number" data-action="1">1</button>
+                <button class="btn number" data-action="2">2</button>
+                <button class="btn number" data-action="3">3</button>
+                <button class="btn operator" data-action="mod">%</button>
+                <button class="btn operator" data-action=".">.</button>
+
+                <!-- Fila 5: 0 y Constantes -->
+                <button class="btn number" data-action="0">0</button>
+                <button class="btn constant" data-action="pi">π</button>
+                <button class="btn constant" data-action="e">e</button>
+                <button class="btn function" data-action="variable">X</button>
+                <button class="btn function" data-action="power">^</button>
+
+                <!-- Fila 6: Funciones Trigonométricas -->
+                <button class="btn function" data-action="sin">sin</button>
+                <button class="btn function" data-action="cos">cos</button>
+                <button class="btn function" data-action="tan">tan</button>
+                <button class="btn function" data-action="ln">ln</button>
+                <button class="btn function" data-action="log">log</button>
+
+                <!-- Fila 7: Más Funciones -->
+                <button class="btn function" data-action="sqrt">√</button>
+                <button class="btn function" data-action="factorial">!</button>
+                <button class="btn function" data-action="exp">exp</button>
+                <button class="btn function" data-action="advanced">Avanzado</button>
+                <button class="btn function" data-action="graph">Gráfica</button>
+            </div>
+        </div>
+        <div id="history"></div>
+        <canvas id="graph"></canvas>
+        <div class="button-wrapper">
+            <a href="BibliasMaker.html" class="button-link">Empezar a escribir</a>
+            <a href="Calculadora_Científica.html" class="button-link">Calculadora</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('ServiceWorker registrado:', reg.scope))
+                    .catch(err => console.log('Error en ServiceWorker:', err));
+            });
+        }
+
+        const display = document.getElementById('display');
+        const historyDiv = document.getElementById('history');
+        const graphCanvas = document.getElementById('graph');
+        let history = [];
+        let variables = {};
+        let chart = null;
+        let functions = [];
+
+        display.removeAttribute('readonly');
+        display.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleInput('=');
+            }
+        });
+
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', () => handleInput(btn.getAttribute('data-action')));
+        });
+
+        function handleInput(action) {
+            switch (action) {
+                case 'clear':
+                    display.value = '';
+                    if (chart) chart.destroy();
+                    graphCanvas.style.display = 'none';
+                    functions = [];
+                    break;
+                case 'delete':
+                    display.value = display.value.slice(0, -1);
+                    break;
+                case '=':
+                    try {
+                        const result = math.evaluate(display.value, variables);
+                        display.value = result;
+                        history.push(`${display.value} = ${result}`);
+                        updateHistory();
+                    } catch (e) {
+                        display.value = 'Error';
+                    }
+                    break;
+                case 'advanced':
+                    showAdvancedMenu();
+                    break;
+                case 'graph':
+                    graphFunction();
+                    break;
+                case 'variable':
+                    showVariableMenu();
+                    break;
+                case 'power':
+                    showPowerMenu();
+                    break;
+                case 'sqrt':
+                    showRootMenu();
+                    break;
+                case 'sin': case 'cos': case 'tan': case 'ln': case 'log': case 'exp':
+                    display.value += `${action}(`;
+                    break;
+                case 'factorial':
+                    display.value += '!';
+                    break;
+                case 'pi':
+                    display.value += 'pi';
+                    break;
+                case 'e':
+                    display.value += 'e';
+                    break;
+                default:
+                    display.value += action;
+                    break;
+            }
+        }
+
+        function updateHistory() {
+            historyDiv.innerHTML = history.map(h => `<p>${h}</p>`).join('');
+        }
+
+        function createPopup(title) {
+            const popup = document.createElement('div');
+            popup.className = 'popup';
+            popup.innerHTML = `
+                <h3>${title}</h3>
+                <button onclick="this.parentElement.remove()" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px;">X</button>
+            `;
+            return popup;
+        }
+
+        // Menú de Variables
+        function showVariableMenu() {
+            const popup = createPopup('Seleccionar Variable');
+            const vars = ['x', 'y', 'z', 't', 'a', 'b'];
+            vars.forEach(v => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = v;
+                btn.onclick = () => {
+                    display.value += v;
+                    popup.remove();
+                };
+                popup.appendChild(btn);
+            });
+            document.body.appendChild(popup);
+        }
+
+        // Menú de Exponentes
+        function showPowerMenu() {
+            const popup = createPopup('Seleccionar Exponente');
+            const powers = [
+                { text: '²', value: '2' },
+                { text: '³', value: '3' },
+                { text: '⁴', value: '4' },
+                { text: 'Otro', action: showCustomPower }
+            ];
+            powers.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = p.text;
+                btn.onclick = () => {
+                    if (p.action) p.action();
+                    else {
+                        display.value += `^${p.value}`;
+                        popup.remove();
+                    }
+                };
+                popup.appendChild(btn);
+            });
+            document.body.appendChild(popup);
+        }
+
+        function showCustomPower() {
+            const popup = createPopup('Exponente Personalizado');
+            popup.innerHTML += `
+                <input id="customPower" type="number" placeholder="Exponente">
+                <button id="applyPower">Aplicar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('applyPower').onclick = () => {
+                const power = document.getElementById('customPower').value;
+                display.value += `^${power}`;
+                popup.remove();
+            };
+        }
+
+        // Menú de Raíces
+        function showRootMenu() {
+            const popup = createPopup('Seleccionar Raíz');
+            const roots = [
+                { text: '√ (Cuadrada)', value: 'sqrt' },
+                { text: '∛ (Cúbica)', value: 'cbrt' },
+                { text: 'Otra', action: showCustomRoot }
+            ];
+            roots.forEach(r => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = r.text;
+                btn.onclick = () => {
+                    if (r.action) r.action();
+                    else {
+                        display.value += `${r.value}(`;
+                        popup.remove();
+                    }
+                };
+                popup.appendChild(btn);
+            });
+            document.body.appendChild(popup);
+        }
+
+        function showCustomRoot() {
+            const popup = createPopup('Raíz Personalizada');
+            popup.innerHTML += `
+                <input id="customRoot" type="number" placeholder="Índice de la raíz">
+                <button id="applyRoot">Aplicar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('applyRoot').onclick = () => {
+                const root = document.getElementById('customRoot').value;
+                display.value += `nthRoot( , ${root})`;
+                popup.remove();
+            };
+        }
+
+        // Menú Avanzado
+        function showAdvancedMenu() {
+            const popup = createPopup('Funciones Avanzadas');
+            const options = [
+                'Matriz',
+                'Derivada',
+                'Integral',
+                'Fracciones',
+                'Fórmula General (Cuadrática)',
+                'Distancia entre Puntos',
+                'Área de Figuras',
+                'Resolver Ecuación',
+                'Estadísticas',
+                'Conversión de Unidades',
+                'Funciones Algebraicas',
+                'Relaciones Algebraicas',
+                'Opciones de Gráfica'
+            ];
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt;
+                btn.onclick = () => {
+                    popup.remove();
+                    if (opt === 'Matriz') showMatrixMenu();
+                    else if (opt === 'Derivada') showDerivativeMenu();
+                    else if (opt === 'Integral') showIntegralMenu();
+                    else if (opt === 'Fracciones') showFractionMenu();
+                    else if (opt === 'Fórmula General (Cuadrática)') showQuadraticMenu();
+                    else if (opt === 'Distancia entre Puntos') showDistanceMenu();
+                    else if (opt === 'Área de Figuras') showAreaMenu();
+                    else if (opt === 'Resolver Ecuación') showSolveMenu();
+                    else if (opt === 'Estadísticas') showStatsMenu();
+                    else if (opt === 'Conversión de Unidades') showConvertMenu();
+                    else if (opt === 'Funciones Algebraicas') showAlgebraicFunctionMenu();
+                    else if (opt === 'Relaciones Algebraicas') showAlgebraicRelationMenu();
+                    else if (opt === 'Opciones de Gráfica') showGraphOptionsMenu();
+                };
+                popup.appendChild(btn);
+            });
+            document.body.appendChild(popup);
+        }
+
+        // Funciones Algebraicas
+        function showAlgebraicFunctionMenu() {
+            const popup = createPopup('Funciones Algebraicas');
+            popup.innerHTML += `
+                <input id="funcExpr" placeholder="Función (e.g., x^2 + 2x)">
+                <button id="addFunc">Agregar y Graficar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('addFunc').onclick = () => {
+                const expr = document.getElementById('funcExpr').value;
+                functions.push({ expr, color: getRandomColor(), isRelation: false });
+                display.value = expr;
+                graphFunction();
+                popup.remove();
+            };
+        }
+
+        // Relaciones Algebraicas
+        function showAlgebraicRelationMenu() {
+            const popup = createPopup('Relaciones Algebraicas');
+            popup.innerHTML += `
+                <input id="relExpr" placeholder="Relación (e.g., x^2 + y^2 = 4)">
+                <button id="addRel">Agregar y Graficar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('addRel').onclick = () => {
+                const expr = document.getElementById('relExpr').value;
+                functions.push({ expr, color: getRandomColor(), isRelation: true });
+                display.value = expr;
+                graphFunction();
+                popup.remove();
+            };
+        }
+
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) color += letters[Math.floor(Math.random() * 16)];
+            return color;
+        }
+
+        // Opciones de Gráfica
+        function showGraphOptionsMenu() {
+            const popup = createPopup('Opciones de Gráfica');
+            const options = [
+                { text: 'Graficar Todo', action: graphFunction, guide: 'Grafica todas las funciones y relaciones.' },
+                { text: 'Pantalla Completa', action: toggleFullscreenGraph, guide: 'Muestra la gráfica en pantalla completa.' },
+                { text: 'Editar Gráficas', action: editGraph, guide: 'Modifica o elimina funciones/relaciones.' },
+                { text: 'Ver Tabla de Valores', action: showValueTable, guide: 'Muestra valores x, y para las funciones.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        // Función de Graficación
+        function graphFunction() {
+            const expr = display.value.trim();
+            if (expr && !functions.some(f => f.expr === expr)) {
+                functions.push({ expr, color: getRandomColor(), isRelation: expr.includes('=') });
+            }
+            if (functions.length === 0) {
+                display.value = 'No hay funciones para graficar';
+                return;
+            }
+
+            const ctx = graphCanvas.getContext('2d');
+            graphCanvas.style.display = 'block';
+            if (chart) chart.destroy();
+
+            const datasets = [];
+            functions.forEach(f => {
+                const xValues = Array.from({ length: 200 }, (_, i) => -10 + i * 0.1);
+                if (f.isRelation) {
+                    const points = [];
+                    const [left, right] = f.expr.split('=');
+                    for (let x of xValues) {
+                        try {
+                            const yExpr = math.simplify(`${right} - (${left})`).toString();
+                            const y = math.evaluate(yExpr, { x });
+                            if (!isNaN(y)) points.push({ x, y });
+                        } catch {
+                            continue;
+                        }
+                    }
+                    datasets.push({
+                        label: f.expr,
+                        data: points,
+                        borderColor: f.color,
+                        backgroundColor: `${f.color}33`,
+                        showLine: true,
+                        tension: 0.4
+                    });
+                } else {
+                    const yValues = xValues.map(x => {
+                        try {
+                            return math.evaluate(f.expr, { x });
+                        } catch {
+                            return NaN;
+                        }
+                    });
+                    datasets.push({
+                        label: f.expr,
+                        data: xValues.map((x, i) => ({ x, y: yValues[i] })),
+                        borderColor: f.color,
+                        backgroundColor: `${f.color}33`,
+                        fill: false,
+                        tension: 0.4
+                    });
+                }
+            });
+
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'x', color: '#e0e0e0' } },
+                        y: { title: { display: true, text: 'y', color: '#e0e0e0' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e0e0e0' } } }
+                }
+            });
+        }
+
+        let manualPoints = [];
+let isDrawing = false;
+let offsetX = 0, offsetY = 0;
+let scaleX = 1, scaleY = 1;
+let dragging = false;
+let lastX, lastY;
+const container = document.querySelector('.container');
+
+function showGraphOptionsMenu() {
+    const popup = createPopup('Opciones de Gráfica');
+    const options = [
+        { text: 'Pantalla Completa', action: enterFullscreenGraph }
+    ];
+    options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt.text;
+        btn.onclick = () => {
+            popup.remove();
+            opt.action();
+        };
+        popup.appendChild(btn);
+    });
+    document.body.appendChild(popup);
+}
+
+function enterFullscreenGraph() {
+    if (!graphCanvas.classList.contains('graph-fullscreen')) {
+        container.classList.add('hidden');
+        graphCanvas.classList.add('graph-fullscreen');
+        document.body.style.overflow = 'hidden';
+        setupFullscreenGraph();
+    }
+}
+
+function exitFullscreenGraph() {
+    graphCanvas.classList.remove('graph-fullscreen');
+    container.classList.remove('hidden');
+    document.body.style.overflow = 'auto';
+    removeFullscreenTools();
+    graphCanvas.style.display = 'block'; // Restaura el canvas en modo normal
+    graphFunction();
+}
+
+function setupFullscreenGraph() {
+    if (chart) chart.destroy();
+    const ctx = graphCanvas.getContext('2d');
+    graphCanvas.width = window.innerWidth;
+    graphCanvas.height = window.innerHeight;
+    graphCanvas.style.display = 'block'; // Asegura visibilidad
+
+    const tools = document.createElement('div');
+    tools.className = 'graph-tools';
+    tools.innerHTML = `
+        <button id="addPoint">Añadir Punto</button>
+        <button id="removePoint">Quitar Punto</button>
+        <button id="drawMode">Dibujar</button>
+        <button id="fitCurve">Ajustar Curva</button>
+        <button id="to3D">Convertir a 3D</button>
+        <button id="shapes">Figuras</button>
+        <button id="zoomIn">Zoom +</button>
+        <button id="zoomOut">Zoom -</button>
+        <button id="resetView">Reset Vista</button>
+        <button id="exitFullscreen">Salir</button>
+    `;
+    document.body.appendChild(tools);
+
+    const sidebar = document.createElement('div');
+    sidebar.className = 'sidebar';
+    sidebar.innerHTML = `
+        <button class="sidebar-toggle">☰</button>
+        <h4>Ecuaciones</h4>
+        <ul id="equationList"></ul>
+    `;
+    document.body.appendChild(sidebar);
+
+    document.getElementById('addPoint').onclick = toggleAddPointMode;
+    document.getElementById('removePoint').onclick = toggleRemovePointMode;
+    document.getElementById('drawMode').onclick = toggleDrawMode;
+    document.getElementById('fitCurve').onclick = fitCurveToPoints;
+    document.getElementById('to3D').onclick = convertTo3D;
+    document.getElementById('shapes').onclick = showShapesMenu;
+    document.getElementById('zoomIn').onclick = () => { scaleX *= 1.1; scaleY *= 1.1; updateGraph(); };
+    document.getElementById('zoomOut').onclick = () => { scaleX *= 0.9; scaleY *= 0.9; updateGraph(); };
+    document.getElementById('resetView').onclick = () => { offsetX = 0; offsetY = 0; scaleX = 1; scaleY = 1; updateGraph(); };
+    document.getElementById('exitFullscreen').onclick = exitFullscreenGraph;
+    document.querySelector('.sidebar-toggle').onclick = () => sidebar.classList.toggle('active');
+
+    let addPointMode = false;
+    let removePointMode = false;
+
+    function toggleAddPointMode() {
+        addPointMode = !addPointMode;
+        removePointMode = false;
+        isDrawing = false;
+        graphCanvas.style.cursor = addPointMode ? 'crosshair' : 'default';
+    }
+
+    function toggleRemovePointMode() {
+        removePointMode = !removePointMode;
+        addPointMode = false;
+        isDrawing = false;
+        graphCanvas.style.cursor = removePointMode ? 'pointer' : 'default';
+    }
+
+    function toggleDrawMode() {
+        isDrawing = !isDrawing;
+        addPointMode = false;
+        removePointMode = false;
+        graphCanvas.style.cursor = isDrawing ? 'crosshair' : 'default';
+        if (!isDrawing) fitCurveToPoints();
+    }
+
+    graphCanvas.onmousedown = (e) => {
+        const { x, y } = canvasToGraphCoords(e.offsetX, e.offsetY);
+        if (addPointMode) {
+            manualPoints.push({ x, y });
+            updateGraph();
+        } else if (removePointMode) {
+            manualPoints = manualPoints.filter(p => Math.hypot(p.x - x, p.y - y) > 0.5);
+            updateGraph();
+        } else if (isDrawing) {
+            manualPoints.push({ x, y });
+            updateGraph();
+        } else {
+            dragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        }
+    };
+
+    graphCanvas.onmousemove = (e) => {
+        if (isDrawing && e.buttons === 1) {
+            const { x, y } = canvasToGraphCoords(e.offsetX, e.offsetY);
+            manualPoints.push({ x, y });
+            updateGraph();
+        } else if (dragging) {
+            const dx = (e.clientX - lastX) / 20;
+            const dy = (e.clientY - lastY) / 20;
+            offsetX -= dx;
+            offsetY += dy;
+            lastX = e.clientX;
+            lastY = e.clientY;
+            updateGraph();
+        }
+    };
+
+    graphCanvas.onmouseup = () => dragging = false;
+
+    graphCanvas.onwheel = (e) => {
+        e.preventDefault();
+        const factor = e.deltaY > 0 ? 0.9 : 1.1;
+        scaleX *= factor;
+        scaleY *= factor;
+        updateGraph();
+    };
+
+    function canvasToGraphCoords(cx, cy) {
+        const rect = graphCanvas.getBoundingClientRect();
+        const x = (cx - rect.width / 2) / (20 * scaleX) + offsetX;
+        const y = -(cy - rect.height / 2) / (20 * scaleY) + offsetY;
+        return { x, y };
+    }
+
+    function graphToCanvasCoords(x, y) {
+        const rect = graphCanvas.getBoundingClientRect();
+        const cx = (x - offsetX) * 20 * scaleX + rect.width / 2;
+        const cy = -(y - offsetY) * 20 * scaleY + rect.height / 2;
+        return { cx, cy };
+    }
+
+    function updateGraph() {
+        ctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+        drawGrid(ctx);
+        drawFunctions(ctx);
+        drawManualPoints(ctx);
+        updateSidebar();
+    }
+
+    function drawGrid(ctx) {
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        for (let x = -10; x <= 10; x += 1) {
+            const { cx } = graphToCanvasCoords(x, 0);
+            ctx.beginPath();
+            ctx.moveTo(cx, 0);
+            ctx.lineTo(cx, graphCanvas.height);
+            ctx.stroke();
+        }
+        for (let y = -10; y <= 10; y += 1) {
+            const { cy } = graphToCanvasCoords(0, y);
+            ctx.beginPath();
+            ctx.moveTo(0, cy);
+            ctx.lineTo(graphCanvas.width, cy);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = '#fff';
+        const { cx: x0 } = graphToCanvasCoords(0, 0);
+        const { cy: y0 } = graphToCanvasCoords(0, 0);
+        ctx.beginPath();
+        ctx.moveTo(x0, 0);
+        ctx.lineTo(x0, graphCanvas.height);
+        ctx.moveTo(0, y0);
+        ctx.lineTo(graphCanvas.width, y0);
+        ctx.stroke();
+    }
+
+    function drawFunctions(ctx) {
+        functions.forEach(f => {
+            ctx.strokeStyle = f.color;
+            ctx.beginPath();
+            const xValues = Array.from({ length: 200 }, (_, i) => -10 + i * 0.1);
+            let first = true;
+            xValues.forEach(x => {
+                try {
+                    const y = f.isRelation ? 
+                        math.evaluate(math.simplify(`${f.expr.split('=')[1]} - (${f.expr.split('=')[0]})`).toString(), { x }) :
+                        math.evaluate(f.expr, { x });
+                    const { cx, cy } = graphToCanvasCoords(x, y);
+                    if (first) {
+                        ctx.moveTo(cx, cy);
+                        first = false;
+                    } else {
+                        ctx.lineTo(cx, cy);
+                    }
+                } catch {}
+            });
+            ctx.stroke();
+        });
+    }
+
+    function drawManualPoints(ctx) {
+        ctx.fillStyle = '#00ff00';
+        manualPoints.forEach(p => {
+            const { cx, cy } = graphToCanvasCoords(p.x, p.y);
+            ctx.beginPath();
+            ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+        if (manualPoints.length > 1) {
+            ctx.strokeStyle = '#00ff00';
+            ctx.beginPath();
+            manualPoints.forEach((p, i) => {
+                const { cx, cy } = graphToCanvasCoords(p.x, p.y);
+                if (i === 0) ctx.moveTo(cx, cy);
+                else ctx.lineTo(cx, cy);
+            });
+            ctx.stroke();
+        }
+    }
+
+    function fitCurveToPoints() {
+        if (manualPoints.length < 2) return;
+        const x = manualPoints.map(p => p.x);
+        const y = manualPoints.map(p => p.y);
+        const coeffs = polynomialFit(x, y, 2);
+        const expr = `${coeffs[2].toFixed(2)}x^2 + ${coeffs[1].toFixed(2)}x + ${coeffs[0].toFixed(2)}`;
+        functions.push({ expr, color: '#00ff00', isRelation: false });
+        manualPoints = [];
+        updateGraph();
+    }
+
+    function polynomialFit(x, y, degree) {
+        const n = x.length;
+        const X = [];
+        for (let i = 0; i < n; i++) {
+            X[i] = [];
+            for (let j = 0; j <= degree; j++) {
+                X[i][j] = Math.pow(x[i], j);
+            }
+        }
+        const Xt = math.transpose(X);
+        const XtX = math.multiply(Xt, X);
+        const Xty = math.multiply(Xt, y);
+        return math.lusolve(XtX, Xty).map(v => v[0]);
+    }
+
+    function updateSidebar() {
+        const list = document.getElementById('equationList');
+        list.innerHTML = '';
+        functions.forEach(f => {
+            const li = document.createElement('li');
+            li.textContent = f.expr;
+            list.appendChild(li);
+        });
+    }
+
+    function convertTo3D() {
+        alert('Conversión a 3D no implementada aún. Requiere una librería como Three.js.');
+        // Para implementar 3D, necesitarías integrar Three.js y reescribir el renderizado.
+    }
+
+    function showShapesMenu() {
+        const popup = createPopup('Figuras Predeterminadas');
+        const shapes = [
+            { name: 'Kamehameha', action: () => drawShape('sin(x) * 5', '#00f') },
+            { name: 'Agujero Negro', action: () => drawShape('x^2 + y^2 = 4', '#000') },
+            { name: 'Rasengan', action: () => drawShape('cos(x) * sin(x)', '#0ff') },
+            { name: 'Media Luna', action: () => drawShape('x^2 + (y - 2)^2 = 4 && y > 2', '#fff') },
+            { name: 'Triángulo', action: () => drawTriangle() },
+            { name: 'Estrella', action: () => drawStar() },
+            { name: 'Corazón', action: () => drawShape('(x^2 + y^2 - 1)^3 - x^2 * y^3 = 0', '#f00') },
+            { name: 'Espiral', action: () => drawShape('x * cos(x)', '#ff0') }
+        ];
+        shapes.forEach(shape => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = shape.name;
+            btn.onclick = () => {
+                shape.action();
+                popup.remove();
+                updateGraph();
+            };
+            popup.appendChild(btn);
+        });
+        document.body.appendChild(popup);
+    }
+
+    function drawShape(expr, color) {
+        functions.push({ expr, color, isRelation: expr.includes('=') });
+    }
+
+    function drawTriangle() {
+        manualPoints = [
+            { x: 0, y: 0 },
+            { x: 2, y: 2 },
+            { x: 4, y: 0 }
+        ];
+    }
+
+    function drawStar() {
+        manualPoints = [];
+        for (let i = 0; i < 5; i++) {
+            const angle = i * 4 * Math.PI / 5;
+            manualPoints.push({ x: 2 * Math.cos(angle), y: 2 * Math.sin(angle) });
+            const innerAngle = angle + 2 * Math.PI / 5;
+            manualPoints.push({ x: Math.cos(innerAngle), y: Math.sin(innerAngle) });
+        }
+    }
+
+    function removeFullscreenTools() {
+        const tools = document.querySelector('.graph-tools');
+        const sidebar = document.querySelector('.sidebar');
+        if (tools) tools.remove();
+        if (sidebar) sidebar.remove();
+        graphCanvas.onmousedown = null;
+        graphCanvas.onmousemove = null;
+        graphCanvas.onmouseup = null;
+        graphCanvas.onwheel = null;
+    }
+
+    updateGraph();
+}
+
+        function toggleFullscreenGraph() {
+            if (!graphCanvas.classList.contains('graph-fullscreen')) {
+                graphCanvas.classList.add('graph-fullscreen');
+                graphFunction();
+            } else {
+                graphCanvas.classList.remove('graph-fullscreen');
+                graphFunction();
+            }
+        }
+
+        function editGraph() {
+            const popup = createPopup('Editar Gráficas');
+            functions.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <input value="${f.expr}" id="editFunc${i}">
+                    <button onclick="updateFunction(${i})">Actualizar</button>
+                    <button onclick="deleteFunction(${i})">Eliminar</button>
+                `;
+                popup.appendChild(div);
+            });
+            document.body.appendChild(popup);
+        }
+
+        function updateFunction(index) {
+            const newExpr = document.getElementById(`editFunc${index}`).value;
+            functions[index].expr = newExpr;
+            graphFunction();
+        }
+
+        function deleteFunction(index) {
+            functions.splice(index, 1);
+            graphFunction();
+        }
+
+        function showValueTable() {
+            const popup = createPopup('Tabla de Valores');
+            popup.innerHTML += `
+                <input id="xValues" placeholder="Valores de x (e.g., -2,0,2)">
+                <button id="calcTable">Calcular</button>
+                <div id="tableResult"></div>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcTable').onclick = () => {
+                const xInputs = document.getElementById('xValues').value.split(',').map(Number);
+                let table = '<table style="width:100%; border-collapse: collapse; color: #e0e0e0;">';
+                table += '<tr><th>x</th>';
+                functions.forEach(f => table += `<th>${f.expr}</th>`);
+                table += '</tr>';
+                xInputs.forEach(x => {
+                    table += `<tr><td>${x}</td>`;
+                    functions.forEach(f => {
+                        try {
+                            if (f.isRelation) {
+                                const [left, right] = f.expr.split('=');
+                                const yExpr = math.simplify(`${right} - (${left})`).toString();
+                                const y = math.evaluate(yExpr, { x });
+                                table += `<td>${y.toFixed(4)}</td>`;
+                            } else {
+                                const y = math.evaluate(f.expr, { x });
+                                table += `<td>${y.toFixed(4)}</td>`;
+                            }
+                        } catch {
+                            table += '<td>Error</td>';
+                        }
+                    });
+                    table += '</tr>';
+                });
+                table += '</table>';
+                document.getElementById('tableResult').innerHTML = table;
+            };
+        }
+
+        function showMatrixMenu() {
+            const popup = createPopup('Opciones de Matriz');
+            const options = [
+                { text: 'Crear Matriz', action: createMatrixEditor, guide: 'Ingrese un nombre (e.g., A), filas y columnas.' },
+                { text: 'Determinante', action: () => calcMatrixOp('det'), guide: 'Ingrese el nombre de una matriz existente.' },
+                { text: 'Inversa', action: () => calcMatrixOp('inv'), guide: 'Ingrese el nombre de una matriz existente.' },
+                { text: 'Multiplicación', action: multiplyMatrices, guide: 'Ingrese dos nombres de matrices.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function createMatrixEditor() {
+            const popup = createPopup('Crear Matriz');
+            popup.innerHTML += `
+                <input id="matrixName" placeholder="Nombre (e.g., A)">
+                <input id="rows" type="number" placeholder="Filas" min="1">
+                <input id="cols" type="number" placeholder="Columnas" min="1">
+                <button id="createMatrix">Crear</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('createMatrix').onclick = () => {
+                const name = document.getElementById('matrixName').value;
+                const rows = parseInt(document.getElementById('rows').value);
+                const cols = parseInt(document.getElementById('cols').value);
+                if (name && rows > 0 && cols > 0) {
+                    popup.remove();
+                    editMatrix(name, rows, cols);
+                } else alert('Completa todos los campos.');
+            };
+        }
+
+        function editMatrix(name, rows, cols) {
+            const popup = createPopup(`Matriz ${name}`);
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = `repeat(${cols}, 50px)`;
+            grid.style.gap = '5px';
+            const matrix = [];
+            for (let i = 0; i < rows; i++) {
+                const row = [];
+                for (let j = 0; j < cols; j++) {
+                    const input = document.createElement('input');
+                    input.value = '0';
+                    input.style.width = '100%';
+                    row.push(input);
+                    grid.appendChild(input);
+                }
+                matrix.push(row);
+            }
+            popup.appendChild(grid);
+            popup.innerHTML += `<button id="saveMatrix">Guardar</button>`;
+            document.body.appendChild(popup);
+            document.getElementById('saveMatrix').onclick = () => {
+                const values = matrix.map(row => row.map(input => parseFloat(input.value) || 0));
+                variables[name] = math.matrix(values);
+                display.value = name;
+                popup.remove();
+            };
+        }
+
+        function calcMatrixOp(op) {
+            const popup = createPopup(`${op === 'det' ? 'Determinante' : 'Inversa'}`);
+            popup.innerHTML += `
+                <input id="matrixName" placeholder="Nombre de la matriz (e.g., A)">
+                <button id="calcOp">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcOp').onclick = () => {
+                const name = document.getElementById('matrixName').value;
+                if (variables[name]) {
+                    try {
+                        display.value = op === 'det' ? math.det(variables[name]) : math.inv(variables[name]).toString();
+                        history.push(`${op}(${name}) = ${display.value}`);
+                        updateHistory();
+                        popup.remove();
+                    } catch (e) {
+                        display.value = 'Error';
+                    }
+                } else alert('Matriz no encontrada.');
+            };
+        }
+
+        function multiplyMatrices() {
+            const popup = createPopup('Multiplicar Matrices');
+            popup.innerHTML += `
+                <input id="matrix1" placeholder="Matriz 1 (e.g., A)">
+                <input id="matrix2" placeholder="Matriz 2 (e.g., B)">
+                <button id="multiply">Multiplicar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('multiply').onclick = () => {
+                const m1 = document.getElementById('matrix1').value;
+                const m2 = document.getElementById('matrix2').value;
+                if (variables[m1] && variables[m2]) {
+                    try {
+                        display.value = math.multiply(variables[m1], variables[m2]).toString();
+                        history.push(`${m1} * ${m2} = ${display.value}`);
+                        updateHistory();
+                        popup.remove();
+                    } catch (e) {
+                        display.value = 'Error';
+                    }
+                } else alert('Matrices no encontradas.');
+            };
+        }
+
+        function showDerivativeMenu() {
+            const popup = createPopup('Opciones de Derivada');
+            const options = [
+                { text: 'Calcular Derivada', action: showDerivativePopup, guide: 'Ingrese una expresión (e.g., x^2) y la variable.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function showDerivativePopup() {
+            const popup = createPopup('Calcular Derivada');
+            popup.innerHTML += `
+                <input id="expr" placeholder="Expresión (e.g., x^2)">
+                <input id="var" placeholder="Variable (e.g., x)">
+                <button id="calcDerivative">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcDerivative').onclick = () => {
+                const expr = document.getElementById('expr').value;
+                const variable = document.getElementById('var').value;
+                try {
+                    const derivative = math.derivative(expr, variable);
+                    display.value = math.simplify(derivative).toString();
+                    history.push(`d/d${variable}(${expr}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showIntegralMenu() {
+            const popup = createPopup('Opciones de Integral');
+            const options = [
+                { text: 'Calcular Integral Numérica', action: showIntegralPopup, guide: 'Ingrese una expresión y límites.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function showIntegralPopup() {
+            const popup = createPopup('Calcular Integral');
+            popup.innerHTML += `
+                <input id="expr" placeholder="Expresión (e.g., x^2)">
+                <input id="lower" type="number" placeholder="Límite inferior">
+                <input id="upper" type="number" placeholder="Límite superior">
+                <button id="calcIntegral">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcIntegral').onclick = () => {
+                const expr = document.getElementById('expr').value;
+                const a = parseFloat(document.getElementById('lower').value);
+                const b = parseFloat(document.getElementById('upper').value);
+                try {
+                    const f = x => math.evaluate(expr, { x });
+                    const result = trapezoidalRule(f, a, b, 100);
+                    display.value = result.toFixed(6);
+                    history.push(`∫[${a},${b}] ${expr} dx = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function trapezoidalRule(f, a, b, n) {
+            const h = (b - a) / n;
+            let sum = 0.5 * (f(a) + f(b));
+            for (let i = 1; i < n; i++) sum += f(a + i * h);
+            return sum * h;
+        }
+
+        function showFractionMenu() {
+            const popup = createPopup('Opciones de Fracciones');
+            const options = [
+                { text: 'Simplificar Fracción', action: simplifyFraction, guide: 'Ingrese numerador y denominador.' },
+                { text: 'Sumar Fracciones', action: addFractions, guide: 'Ingrese dos fracciones.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function simplifyFraction() {
+            const popup = createPopup('Simplificar Fracción');
+            popup.innerHTML += `
+                <input id="numerator" type="number" placeholder="Numerador">
+                <input id="denominator" type="number" placeholder="Denominador">
+                <button id="simplify">Simplificar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('simplify').onclick = () => {
+                const num = parseInt(document.getElementById('numerator').value);
+                const den = parseInt(document.getElementById('denominator').value);
+                try {
+                    const fraction = math.fraction(num, den);
+                    display.value = `${fraction.n}/${fraction.d}`;
+                    history.push(`Simplificar ${num}/${den} = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function addFractions() {
+            const popup = createPopup('Sumar Fracciones');
+            popup.innerHTML += `
+                <input id="frac1" placeholder="Fracción 1 (e.g., 1/2)">
+                <input id="frac2" placeholder="Fracción 2 (e.g., 1/3)">
+                <button id="addFractions">Sumar</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('addFractions').onclick = () => {
+                const f1 = document.getElementById('frac1').value;
+                const f2 = document.getElementById('frac2').value;
+                try {
+                    const result = math.add(math.fraction(f1), math.fraction(f2));
+                    display.value = `${result.n}/${result.d}`;
+                    history.push(`${f1} + ${f2} = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showQuadraticMenu() {
+            const popup = createPopup('Fórmula General');
+            const options = [
+                { text: 'Resolver Ecuación Cuadrática', action: solveQuadratic, guide: 'Ingrese a, b y c de ax² + bx + c = 0.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function solveQuadratic() {
+            const popup = createPopup('Resolver Cuadrática');
+            popup.innerHTML += `
+                <input id="a" type="number" placeholder="a (coeficiente x²)">
+                <input id="b" type="number" placeholder="b (coeficiente x)">
+                <input id="c" type="number" placeholder="c (término constante)">
+                <button id="solveQuad">Resolver</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('solveQuad').onclick = () => {
+                const a = parseFloat(document.getElementById('a').value);
+                const b = parseFloat(document.getElementById('b').value);
+                const c = parseFloat(document.getElementById('c').value);
+                try {
+                    const discriminant = b * b - 4 * a * c;
+                    if (discriminant < 0) {
+                        display.value = 'Sin soluciones reales';
+                    } else {
+                        const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                        const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                        display.value = `x₁ = ${x1.toFixed(4)}, x₂ = ${x2.toFixed(4)}`;
+                    }
+                    history.push(`Cuadrática ${a}x² + ${b}x + ${c} = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showDistanceMenu() {
+            const popup = createPopup('Distancia entre Puntos');
+            const options = [
+                { text: 'Calcular Distancia', action: calcDistance, guide: 'Ingrese las coordenadas (x₁, y₁) y (x₂, y₂).' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function calcDistance() {
+            const popup = createPopup('Calcular Distancia');
+            popup.innerHTML += `
+                <input id="x1" type="number" placeholder="x₁">
+                <input id="y1" type="number" placeholder="y₁">
+                <input id="x2" type="number" placeholder="x₂">
+                <input id="y2" type="number" placeholder="y₂">
+                <button id="calcDist">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcDist').onclick = () => {
+                const x1 = parseFloat(document.getElementById('x1').value);
+                const y1 = parseFloat(document.getElementById('y1').value);
+                const x2 = parseFloat(document.getElementById('x2').value);
+                const y2 = parseFloat(document.getElementById('y2').value);
+                try {
+                    const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    display.value = distance.toFixed(4);
+                    history.push(`Distancia (${x1},${y1}) a (${x2},${y2}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showAreaMenu() {
+            const popup = createPopup('Área de Figuras');
+            const options = [
+                { text: 'Triángulo', action: calcTriangleArea, guide: 'Ingrese base y altura.' },
+                { text: 'Círculo', action: calcCircleArea, guide: 'Ingrese el radio.' },
+                { text: 'Rectángulo', action: calcRectangleArea, guide: 'Ingrese largo y ancho.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function calcTriangleArea() {
+            const popup = createPopup('Área de Triángulo');
+            popup.innerHTML += `
+                <input id="base" type="number" placeholder="Base">
+                <input id="height" type="number" placeholder="Altura">
+                <button id="calcArea">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcArea').onclick = () => {
+                const base = parseFloat(document.getElementById('base').value);
+                const height = parseFloat(document.getElementById('height').value);
+                try {
+                    const area = (base * height) / 2;
+                    display.value = area.toFixed(4);
+                    history.push(`Área Triángulo (base=${base}, altura=${height}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function calcCircleArea() {
+            const popup = createPopup('Área de Círculo');
+            popup.innerHTML += `
+                <input id="radius" type="number" placeholder="Radio">
+                <button id="calcArea">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcArea').onclick = () => {
+                const radius = parseFloat(document.getElementById('radius').value);
+                try {
+                    const area = Math.PI * radius * radius;
+                    display.value = area.toFixed(4);
+                    history.push(`Área Círculo (radio=${radius}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function calcRectangleArea() {
+            const popup = createPopup('Área de Rectángulo');
+            popup.innerHTML += `
+                <input id="length" type="number" placeholder="Largo">
+                <input id="width" type="number" placeholder="Ancho">
+                <button id="calcArea">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcArea').onclick = () => {
+                const length = parseFloat(document.getElementById('length').value);
+                const width = parseFloat(document.getElementById('width').value);
+                try {
+                    const area = length * width;
+                    display.value = area.toFixed(4);
+                    history.push(`Área Rectángulo (largo=${length}, ancho=${width}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showSolveMenu() {
+            const popup = createPopup('Resolver Ecuación');
+            const options = [
+                { text: 'Resolver (Limitado)', action: showSolvePopup, guide: 'Ingrese una ecuación y variable.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function showSolvePopup() {
+            const popup = createPopup('Resolver Ecuación');
+            popup.innerHTML += `
+                <input id="eqn" placeholder="Ecuación (e.g., x^2 - 4 = 0)">
+                <input id="var" placeholder="Variable (e.g., x)">
+                <button id="solveEqn">Resolver</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('solveEqn').onclick = () => {
+                const eqn = document.getElementById('eqn').value;
+                const variable = document.getElementById('var').value;
+                try {
+                    display.value = 'Funcionalidad limitada en math.js';
+                    history.push(`Sol(${eqn}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error o sin solución';
+                }
+            };
+        }
+
+        function showStatsMenu() {
+            const popup = createPopup('Estadísticas');
+            const options = [
+                { text: 'Media', action: () => calcStat('mean'), guide: 'Ingrese datos separados por comas.' },
+                { text: 'Mediana', action: () => calcStat('median'), guide: 'Ingrese datos separados por comas.' },
+                { text: 'Desviación Estándar', action: () => calcStat('std'), guide: 'Ingrese datos separados por comas.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function calcStat(stat) {
+            const popup = createPopup(`Calcular ${stat.charAt(0).toUpperCase() + stat.slice(1)}`);
+            popup.innerHTML += `
+                <input id="data" placeholder="Datos (e.g., 1,2,3,4)">
+                <button id="calcStat">Calcular</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcStat').onclick = () => {
+                const data = document.getElementById('data').value.split(',').map(Number);
+                try {
+                    const result = stat === 'mean' ? math.mean(data) :
+                                  stat === 'median' ? math.median(data) :
+                                  math.std(data);
+                    display.value = result.toFixed(4);
+                    history.push(`${stat}(${data}) = ${display.value}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function showConvertMenu() {
+            const popup = createPopup('Conversión de Unidades');
+            const options = [
+                { text: 'Convertir Longitud', action: convertLength, guide: 'Ingrese un valor y unidades.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        function convertLength() {
+            const popup = createPopup('Convertir Longitud');
+            popup.innerHTML += `
+                <input id="value" type="number" placeholder="Valor">
+                <select id="fromUnit">
+                    <option value="m">Metros</option>
+                    <option value="km">Kilómetros</option>
+                    <option value="cm">Centímetros</option>
+                </select>
+                <select id="toUnit">
+                    <option value="m">Metros</option>
+                    <option value="km">Kilómetros</option>
+                    <option value="cm">Centímetros</option>
+                </select>
+                <button id="convertUnit">Convertir</button>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('convertUnit').onclick = () => {
+                const value = parseFloat(document.getElementById('value').value);
+                const from = document.getElementById('fromUnit').value;
+                const to = document.getElementById('toUnit').value;
+                try {
+                    const result = math.unit(value, from).toNumber(to);
+                    display.value = result.toFixed(4);
+                    history.push(`${value} ${from} = ${display.value} ${to}`);
+                    updateHistory();
+                    popup.remove();
+                } catch (e) {
+                    display.value = 'Error';
+                }
+            };
+        }
+
+        function addOptionsWithGuide(popup, options) {
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.textContent = opt.text;
+                btn.onclick = () => {
+                    popup.remove();
+                    opt.action();
+                };
+                popup.appendChild(btn);
+            });
+            const guideBtn = document.createElement('button');
+            guideBtn.className = 'guide-btn';
+            guideBtn.textContent = 'Ver Guía';
+            guideBtn.onclick = () => {
+                let guideDiv = popup.querySelector('.guide-content');
+                if (guideDiv) {
+                    guideDiv.remove();
+                } else {
+                    guideDiv = document.createElement('div');
+                    guideDiv.className = 'guide-content';
+                    guideDiv.innerHTML = options.map(opt => `<p><strong>${opt.text}:</strong> ${opt.guide || 'Sin guía disponible'}</p>`).join('');
+                    popup.appendChild(guideDiv);
+                }
+            };
+            popup.appendChild(guideBtn);
+        }
+
+        function showGraphOptionsMenu() {
+            const popup = createPopup('Opciones de Gráfica');
+            const options = [
+                { text: 'Graficar Todo', action: graphFunction, guide: 'Grafica todas las funciones y relaciones.' },
+                { text: 'Pantalla Completa', action: toggleFullscreenGraph, guide: 'Muestra la gráfica en pantalla completa.' },
+                { text: 'Editar Gráficas', action: editGraph, guide: 'Modifica o elimina funciones/relaciones.' },
+                { text: 'Ver Tabla de Valores', action: showValueTable, guide: 'Muestra valores x, y para las funciones.' }
+            ];
+            addOptionsWithGuide(popup, options);
+            document.body.appendChild(popup);
+        }
+
+        // Función de Graficación
+        function graphFunction() {
+            const expr = display.value.trim();
+            if (expr && !functions.some(f => f.expr === expr)) {
+                functions.push({ expr, color: getRandomColor(), isRelation: expr.includes('=') });
+            }
+            if (functions.length === 0) {
+                display.value = 'No hay funciones para graficar';
+                return;
+            }
+
+            const ctx = graphCanvas.getContext('2d');
+            graphCanvas.style.display = 'block';
+            if (chart) chart.destroy();
+
+            const datasets = [];
+            functions.forEach(f => {
+                const xValues = Array.from({ length: 200 }, (_, i) => -10 + i * 0.1);
+                if (f.isRelation) {
+                    const points = [];
+                    const [left, right] = f.expr.split('=');
+                    for (let x of xValues) {
+                        try {
+                            const yExpr = math.simplify(`${right} - (${left})`).toString();
+                            const y = math.evaluate(yExpr, { x });
+                            if (!isNaN(y)) points.push({ x, y });
+                        } catch {
+                            continue;
+                        }
+                    }
+                    datasets.push({
+                        label: f.expr,
+                        data: points,
+                        borderColor: f.color,
+                        backgroundColor: `${f.color}33`,
+                        showLine: true,
+                        tension: 0.4
+                    });
+                } else {
+                    const yValues = xValues.map(x => {
+                        try {
+                            return math.evaluate(f.expr, { x });
+                        } catch {
+                            return NaN;
+                        }
+                    });
+                    datasets.push({
+                        label: f.expr,
+                        data: xValues.map((x, i) => ({ x, y: yValues[i] })),
+                        borderColor: f.color,
+                        backgroundColor: `${f.color}33`,
+                        fill: false,
+                        tension: 0.4
+                    });
+                }
+            });
+
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'x', color: '#e0e0e0' } },
+                        y: { title: { display: true, text: 'y', color: '#e0e0e0' } }
+                    },
+                    plugins: { legend: { labels: { color: '#e0e0e0' } } }
+                }
+            });
+        }
+
+        function toggleFullscreenGraph() {
+            if (!graphCanvas.classList.contains('graph-fullscreen')) {
+                graphCanvas.classList.add('graph-fullscreen');
+                graphFunction();
+            } else {
+                graphCanvas.classList.remove('graph-fullscreen');
+                graphFunction();
+            }
+        }
+
+        function editGraph() {
+            const popup = createPopup('Editar Gráficas');
+            functions.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <input value="${f.expr}" id="editFunc${i}">
+                    <button onclick="updateFunction(${i})">Actualizar</button>
+                    <button onclick="deleteFunction(${i})">Eliminar</button>
+                `;
+                popup.appendChild(div);
+            });
+            document.body.appendChild(popup);
+        }
+
+        function updateFunction(index) {
+            const newExpr = document.getElementById(`editFunc${index}`).value;
+            functions[index].expr = newExpr;
+            graphFunction();
+        }
+
+        function deleteFunction(index) {
+            functions.splice(index, 1);
+            graphFunction();
+        }
+
+        function showValueTable() {
+            const popup = createPopup('Tabla de Valores');
+            popup.innerHTML += `
+                <input id="xValues" placeholder="Valores de x (e.g., -2,0,2)">
+                <button id="calcTable">Calcular</button>
+                <div id="tableResult"></div>
+            `;
+            document.body.appendChild(popup);
+            document.getElementById('calcTable').onclick = () => {
+                const xInputs = document.getElementById('xValues').value.split(',').map(Number);
+                let table = '<table style="width:100%; border-collapse: collapse; color: #e0e0e0;">';
+                table += '<tr><th>x</th>';
+                functions.forEach(f => table += `<th>${f.expr}</th>`);
+                table += '</tr>';
+                xInputs.forEach(x => {
+                    table += `<tr><td>${x}</td>`;
+                    functions.forEach(f => {
+                        try {
+                            if (f.isRelation) {
+                                const [left, right] = f.expr.split('=');
+                                const yExpr = math.simplify(`${right} - (${left})`).toString();
+                                const y = math.evaluate(yExpr, { x });
+                                table += `<td>${y.toFixed(4)}</td>`;
+                            } else {
+                                const y = math.evaluate(f.expr, { x });
+                                table += `<td>${y.toFixed(4)}</td>`;
+                            }
+                        } catch {
+                            table += '<td>Error</td>';
+                        }
+                    });
+                    table += '</tr>';
+                });
+                table += '</table>';
+                document.getElementById('tableResult').innerHTML = table;
+            };
+        }
+    </script>
+</body>
+</html>

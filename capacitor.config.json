@@ -1,0 +1,6 @@
+{
+  "appId": "com.savitar.rbc",
+  "appName": "RBC Easy",
+  "webDir": "public",
+  "bundledWebRuntime": false
+}

@@ -1,0 +1,803 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    overflow: hidden;
+  }
+
+
+.writer-mode-container {
+    display: flex;
+    flex-direction: column;
+    height: 91vh;
+    width: 100%; /* Ensure container takes full width */
+    max-width: 100%; /* Prevent exceeding viewport */
+    box-sizing: border-box; /* Include padding/border in width */
+    position: relative;
+  }
+  
+textarea#texto {
+  flex: 1;
+  width: 100%;
+  background-color: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 0px;
+  font-family: 'Lora', serif;
+  font-size: 18px;
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+  overflow-x: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  max-width: 100%;
+  height: calc(100vh - 51px - 60px - 90px); /* Ajuste para top-bar (51px), action-bar (60px) y margen inferior (10px) */
+  margin-bottom: 10px; /* Espacio entre el textarea y la action-bar */
+}
+
+/* WebKit-based browsers (Chrome, Edge, Safari) */
+textarea#texto::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+textarea#texto::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 10px;
+}
+
+textarea#texto::-webkit-scrollbar-thumb {
+  background: #333333;
+  border-radius: 10px;
+  border: 1px solid #ff0000;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+textarea#texto::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+}
+
+textarea#texto::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+/* Firefox */
+textarea#texto {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+/* Mobile adjustments */
+@media only screen and (max-width: 600px) {
+  textarea#texto {
+    height: calc(100vh - 51px - 76px); /* Adjusted for top-bar (51px) and action-bar (56px height + 20px bottom offset) */
+  height: calc(100vh - 51px - 76px - 90px); /* Ajuste para top-bar (51px), action-bar (56px + 20px offset) y margen inferior (10px) */
+        margin-bottom: 10px;
+  }
+}
+
+/* Desktop adjustments */
+@media only screen and (min-width: 601px) {
+  textarea#texto {
+    padding: 20px;
+    font-size: 20px;
+    height: calc(100vh - 51px - 60px - 90px); /* Ajuste para top-bar (51px), action-bar (60px) y margen inferior (10px) */
+        margin-bottom: 10px;
+  }
+}
+  textarea#texto::placeholder {
+    color: #ff5555;
+  }
+
+  textarea#texto::placeholder {
+    color: var(--placeholder-color, #ff5555);
+}
+
+
+  .action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #000000;
+    border-bottom: 2px solid #ff0000;
+    padding: 10px;
+    box-shadow: 0px 2px 5px rgba(255, 0, 0, 0.6);
+    margin-top: 10px;
+    
+  }
+  
+/* Barra de Acción (Action Bar - Inferior) */
+.action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #000000;
+  border-top: 2px solid #ff0000;
+  padding: 10px 15px;
+  box-shadow: 0px -2px 5px rgba(255, 0, 0, 0.6);
+  width: 100%;
+  box-sizing: border-box;
+  position: fixed;
+  bottom: 0; /* Predeterminado para PC */
+  left: 0;
+  z-index: 10;
+}
+
+.action-bar .button {
+  background-color: transparent;
+  border: none;
+  color: #ff0000;
+  font-size: 29px;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.action-bar .button:hover {
+  color: #ffffff;
+}
+
+/* Ajustes para móviles (elevación solo en pantallas pequeñas) */
+@media only screen and (max-width: 600px) {
+  .action-bar {
+    padding: 4px 5px;
+    bottom: 20px; /* Elevado para evitar la barra de navegación del iPhone/Android */
+  }
+
+  .action-bar .button {
+    font-size: 26px; /* Ligeramente más pequeño para móviles */
+  }
+}
+
+    .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #000000;
+    border-bottom: 2px solid #ff0000;
+    padding: 10px;
+    box-shadow: 0px 2px 5px rgba(255, 0, 0, 0.6);
+    
+  }
+  
+  .top-bar .button {
+    background-color: transparent;
+    border: none;
+    color: #ff0000;
+    font-size: 29px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .top-bar .button:hover {
+    color: #ffffff;
+  }
+  
+
+
+.preview-container {
+  display: none;
+  background-color: rgba(0, 0, 0, 0.8); 
+  color: #ffffff;
+  border-top: 2px solid #ff0000;
+  padding: 10px;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  z-index: 1000; 
+  width: 100%;
+  max-height: 80vh;
+  box-sizing: border-box;
+}
+
+/* Estilo de la barra de desplazamiento para navegadores basados en WebKit (Chrome, Edge, Safari) */
+#preview-container::-webkit-scrollbar {
+  width: 12px; /* Ancho delgado */
+  height: 12px; /* Altura para barras horizontales */
+}
+
+#preview-container::-webkit-scrollbar-track {
+  background: #1a1a1a; /* Negro oscuro para el fondo */
+  border-radius: 15px; /* Bordes más redondeados */
+}
+
+#preview-container::-webkit-scrollbar-thumb {
+  background: #333333; /* Gris oscuro para el pulgar */
+  border: 1px solid #ff0000; /* Borde neón rojo */
+  border-radius: 15px; /* Bordes más redondeados */
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Brillo neón sutil */
+}
+
+#preview-container::-webkit-scrollbar-thumb:hover {
+  background: #555555; /* Gris más claro al pasar el mouse */
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8); /* Brillo neón más intenso */
+}
+
+#preview-container::-webkit-scrollbar-corner {
+  background: #1a1a1a; /* Mismo color que el fondo */
+}
+
+/* Estilo para Firefox */
+#preview-container {
+  scrollbar-color: #333333 #1a1a1a; /* Pulgar gris oscuro, fondo negro */
+  scrollbar-width: thin; /* Barra de desplazamiento delgada */
+}
+.preview-content {
+  font-family: 'Lora', serif;
+  line-height: 1.5;
+  word-break: break-word; 
+  padding-bottom: 10px;
+}
+
+/* Estilo de la barra de desplazamiento para navegadores basados en WebKit (Chrome, Edge, Safari) */
+#voiceSelect::-webkit-scrollbar {
+  width: 12px; /* Ancho delgado */
+  height: 12px; /* Altura para barras horizontales */
+}
+
+#voiceSelect::-webkit-scrollbar-track {
+  background: #1a1a1a; /* Negro oscuro para el fondo */
+  border-radius: 15px; /* Bordes más redondeados */
+}
+
+#voiceSelect::-webkit-scrollbar-thumb {
+  background: #333333; /* Gris oscuro para el pulgar */
+  border: 1px solid #ff0000; /* Borde neón rojo */
+  border-radius: 15px; /* Bordes más redondeados */
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Brillo neón sutil */
+}
+
+#voiceSelect::-webkit-scrollbar-thumb:hover {
+  background: #555555; /* Gris más claro al pasar el mouse */
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8); /* Brillo neón más intenso */
+}
+
+#voiceSelect::-webkit-scrollbar-corner {
+  background: #1a1a1a; /* Mismo color que el fondo */
+}
+
+/* Estilo para Firefox */
+#voiceSelect {
+  scrollbar-color: #333333 #1a1a1a; /* Pulgar gris oscuro, fondo negro */
+  scrollbar-width: thin; /* Barra de desplazamiento delgada */
+}
+
+.textarea-diffused {
+  position: relative;
+  z-index: 1;
+}
+
+.textarea-diffused::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  z-index: -1;
+}
+
+
+.preview-content::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background-color: #ff0000;
+  margin: 10px 0;
+  border-radius: 2px;
+  box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.6);
+}
+
+
+.preview-content.long-text::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background-color: #ff0000;
+  margin: 20px 0;
+  border-radius: 2px;
+  box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.6);
+}  
+
+.bubble {
+    position: fixed;
+    top: 10px; /* Posición inicial en la parte superior derecha */
+    right: 60px;
+    background-color: var(--theme-color, #ff0000);
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 16px;
+    box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.8);
+    z-index: 10;
+    touch-action: manipulation; /* Mejora la interactividad en móviles */
+    user-select: none; /* Evita selección accidental */
+    cursor: grab; /* Indica que se puede arrastrar */
+    transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+.bubble:active {
+    cursor: grabbing; /* Cambia el cursor mientras se arrastra */
+    transform: scale(0.95); /* Efecto de pulsación al arrastrar */
+}
+
+.bubble.hidden {
+    opacity: 0;
+    pointer-events: none; /* Desactiva interacciones cuando está oculta */
+}
+
+.control-button {
+    position: fixed;
+    display: none;
+    background-color: var(--theme-color, #ff0000);
+    color: #ffffff;
+    padding: 8px 12px;
+    border-radius: 50%;
+    font-size: 16px;
+    box-shadow: 0px 0px 10px rgba(255, 0, 0, 0.8);
+    z-index: 11;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    transition: opacity 0.3s ease;
+}
+
+.control-button.visible {
+    display: block;
+}
+
+/* Ajustes para móviles */
+@media only screen and (max-width: 600px) {
+    .bubble {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .control-button {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+}
+  
+
+  .options-container {
+    display: none;
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    background-color: #000000;
+    border: 2px solid #ff0000;
+    padding: 10px;
+    z-index: 20;
+  }
+  
+  .options-container button {
+    display: block;
+    margin: 5px 0;
+    padding: 10px;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .options-container button:hover {
+    background-color: #ff0000;
+  }
+  
+  .prefix-popup-container {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #1a1a1a;
+    border: 2px solid #ff0000;
+    padding: 20px;
+    z-index: 30;
+    box-shadow: 0px 0px 20px rgba(255, 0, 0, 0.8);
+  }
+  
+  .prefix-popup-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: clamp(280px, 80%, 360px);
+    padding: 24px;
+    background: linear-gradient(145deg, rgba(20, 20, 20, 0.95), rgba(30, 30, 30, 0.95));
+    border: 1px solid var(--theme-color, #ff0000); /* Color dinámico, rojo por defecto */
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    text-align: center;
+    font-family: 'Lora', serif;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  
+  .prefix-popup-container.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .prefix-popup-container label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 12px 0;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+  
+  .prefix-popup-container input {
+    margin-right: 12px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--theme-color, #ff0000); /* Color dinámico, rojo por defecto */
+    cursor: pointer;
+  }
+  
+  .prefix-popup-container input:focus {
+    outline: 2px solid var(--theme-color-alpha, rgba(255, 0, 0, 0.5)); /* Color dinámico, rojo por defecto */
+    outline-offset: 2px;
+  }
+  
+  .prefix-popup-container button {
+    background-color: var(--theme-color, #ff0000); /* Color dinámico, rojo por defecto */
+    color: #ffffff;
+    padding: 10px 20px;
+    margin: 10px 5px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Lora', serif;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  .prefix-popup-container button:hover {
+    background-color: var(--theme-hover-color, #c70000); /* Color dinámico para hover */
+  }
+  
+  
+
+  button {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+
+  @media only screen and (max-width: 600px) {
+    .action-bar {
+      padding: 5px;
+    }
+  
+    .action-bar .button {
+      font-size: 20px;
+    }
+  
+    .bubble {
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+  }
+  
+  @media only screen and (min-width: 601px) {
+    textarea#texto {
+      padding: 20px;
+      font-size: 20px;
+    }
+  
+    .action-bar {
+      padding: 15px;
+    }
+  
+    .action-bar .button {
+      font-size: 28px;
+    }
+  
+    .options-container {
+      top: 70px;
+      left: 20px;
+    }
+  
+    .prefix-popup-container {
+      padding: 30px;
+    }
+  
+    .bubble {
+      font-size: 18px;
+      padding: 12px 24px;
+    }
+
+  }
+
+.action-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 360px;
+    max-height: 70%; 
+    background-color: rgba(26, 26, 26, 0.95);
+    z-index: 40;
+    padding: 15px; 
+    border-radius: 10px;
+    overflow-y: hidden;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.7);
+  }
+  
+  .action-container h3 {
+    color: #ff0000;
+    font-size: 20px; 
+    margin-bottom: 15px;
+    text-align: center;
+  }
+  
+  .action-container input,
+  .action-container button {
+    width: 100%;
+    margin-bottom: 10px; 
+    padding: 10px; 
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 2px solid #ff0000;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+  }
+  
+  .action-container {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 20px;
+    border-radius: 20px;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+    opacity: 0.9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+  }
+
+  .action-container input[type="text"] {
+    width: 80%;
+    padding: 10px;
+    margin: 10px auto;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    background-color: #333;
+    color: #fff;
+  }
+
+  .action-container button {
+    background-color: #ff0000;
+    color: #ffffff;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s;
+    display: inline-block;
+    font-family: 'Lora', serif;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .action-container button:hover {
+    background-color: #c70000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item:hover {
+    background-color: #444;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .edit-action,
+  .action-item .delete-action {
+    margin-left: 10px;
+    cursor: pointer;
+    color: #ff0000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .edit-action:hover {
+    color: #c70000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-item .delete-action:hover {
+    color: #900000;
+    font-family: 'Lora', serif;
+  }
+
+  .close-action {
+    background-color: #ff0000;
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-family: 'Lora', serif;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  .close-action:hover {
+    background-color: #c70000;
+    font-family: 'Lora', serif;
+  }
+
+  .action-list {
+  margin-top: 15px;
+
+  max-height: 250px;        /* 5 marcos visibles */
+  overflow-y: auto;         /* Scroll automático */
+  padding-right: 5px;
+
+  scrollbar-gutter: stable; /* Evita saltos de layout */
+}
+
+  .editor-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  z-index: 10000;
+}
+
+.hidden {
+  display: none;
+}
+
+.editor-modal textarea {
+  height: 200px;
+  resize: vertical;
+  background: #111;
+  color: rgb(255, 0, 0);
+  border-radius: 10px;
+  padding: 10px;
+  border: 1px solid rgb(255, 0, 0);
+}
+
+.action-name {
+  flex: 1;
+  cursor: pointer;
+  color: rgb(255, 0, 0);
+}
+  
+.action-list::-webkit-scrollbar {
+  width: 6px;          /* MUY delgada */
+}
+
+.action-list::-webkit-scrollbar-track {
+  background: #0b0b0b; /* Negro casi puro */
+  border-radius: 10px;
+}
+
+.action-list::-webkit-scrollbar-thumb {
+  background: #2a2a2a; /* Gris oscuro */
+  border-radius: 10px;
+  box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.4);
+}
+
+.action-list::-webkit-scrollbar-thumb:hover {
+  background: #444444;
+}
+
+.action-list {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #0b0b0b;
+}
+
+.action-list {
+  overflow-y: hidden;
+}
+
+.action-list:hover {
+  overflow-y: auto;
+}
+
+  .preview-container {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    height: 80%;
+    max-width: 1000px;
+    max-height: 800px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    z-index: 1111000;
+    text-align: left;
+    border-radius: 10px;
+    top: 10%;
+    left: 10%;
+    }
+    
+    .close-preview {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #ff0000;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1001;
+    }
+    
+    .close-preview:hover {
+    background-color: #c70000;
+    }
+    
+    .preview-content {
+    white-space: pre-wrap;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    }
+    
+    
+    .fullscreen-textarea {
+    width: 100% !important;
+    height: 100vh !important;
+    margin: 0;
+    border-radius: 0;
+    padding: 20px;
+    font-size: 20px;
+    }
+

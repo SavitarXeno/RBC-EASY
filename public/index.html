@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RBC-EASY</title>
+    <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+
+<script>
+(async () => {
+  const pages = [
+    'BibliasMaker.html',
+    'CalculadoraCientífica.html',
+    'CentralCity.html',
+    'Converter.html',
+    'FireA.html',
+    'InfoContacto.html',
+    'Mis_Proyectos.html',
+    'Modo-Ascendido.html',
+    'Modo-Escritor.html',
+    'RedPlay.html'
+  ];
+
+  for (const page of pages) {
+    try {
+      await fetch(page, { cache: 'reload' });
+    } catch (e) {}
+  }
+})();
+</script>
+
+    <style>
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #2c3e50;
+            overflow: hidden;
+        }
+
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('ÍconoWeb.png') repeat center center; 
+            background-size: 200px 200px; 
+            filter: blur(20px) brightness(0.4); 
+            z-index: 1;
+        }
+
+
+        #loader {
+            position: relative;
+            z-index: 2; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8); 
+            border-radius: 15px; 
+            box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.7); 
+            animation: fadeIn 1s ease-out forwards; 
+        }
+
+
+        #loader img {
+            width: 60px; 
+            max-width: 100px;
+            margin-bottom: 20px; 
+        }
+
+
+        #loader h2 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-size: 1.2rem;
+            color: #ecf0f1;
+            text-align: center;
+            margin: 0;
+        }
+
+    
+        @keyframes fadeIn {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #loader {
+                width: 80%;
+                padding: 15px;
+            }
+
+            #loader img {
+                width: 50px; 
+            }
+
+            #loader h2 {
+                font-size: 1rem; 
+            }
+        }
+
+        @media (max-width: 480px) {
+            #loader {
+                width: 90%;
+                padding: 10px;
+            }
+
+            #loader img {
+                width: 40px; 
+            }
+
+            #loader h2 {
+                font-size: 0.9rem; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">
+        <img src="ÍconoWeb.png" alt="Cargando...">
+        <h2>Conectando con RBC-EASY. Un momento, por favor...</h2>
+    </div>
+
+    <script>
+
+        setTimeout(function(){
+            window.location.href = "CentralCity.html";
+        }, 1500); 
+    </script>
+</body>
+</html>

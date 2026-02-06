@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Poppins:wght@400;600&family=Roboto:wght@400;500&family=Open+Sans:wght@400;600&family=Montserrat:wght@400;500&family=Playfair+Display:wght@400;700&family=Raleway:wght@400;500&family=Source+Sans+Pro:wght@400;600&family=Ubuntu:wght@400;500&family=Merriweather:wght@400;700&family=PT+Sans:wght@400;700&family=Quicksand:wght@400;500&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/earlyaccess/notosanscjkkr.css" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblias Maker</title>
+  <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
+  <link href="Estilos/EstilosBibliasMaker.css" rel="stylesheet" type="text/css">
+
+  <script>
+    // AutoSave.js
+(function () {
+  // Variables únicas para evitar conflictos
+  const AUTO_SAVE_KEY = 'biblias_maker_auto_save';
+  const AUTO_SAVE_TEXTAREA_ID = 'texto';
+  const AUTO_SAVE_DB_NAME = 'BibliasMakerDB';
+  const AUTO_SAVE_STORE_NAME = 'textStore';
+  let autoSaveTextArea = null;
+  let autoSaveDb = null;
+
+  // Inicializar IndexedDB
+  function initIndexedDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(AUTO_SAVE_DB_NAME, 1);
+
+      request.onupgradeneeded = function (event) {
+        const db = event.target.result;
+        db.createObjectStore(AUTO_SAVE_STORE_NAME, { keyPath: 'id' });
+      };
+
+      request.onsuccess = function (event) {
+        autoSaveDb = event.target.result;
+        resolve();
+      };
+
+      request.onerror = function () {
+        console.error('Error al abrir IndexedDB');
+        reject();
+      };
+    });
+  }
+
+  // Guardar texto en IndexedDB
+  function saveTextToDB(text) {
+    return new Promise((resolve, reject) => {
+      const transaction = autoSaveDb.transaction([AUTO_SAVE_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(AUTO_SAVE_STORE_NAME);
+      const data = { id: AUTO_SAVE_KEY, text: text };
+
+      const request = store.put(data);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject();
+    });
+  }
+
+  // Cargar texto desde IndexedDB
+  function loadTextFromDB() {
+    return new Promise((resolve, reject) => {
+      const transaction = autoSaveDb.transaction([AUTO_SAVE_STORE_NAME], 'readonly');
+      const store = transaction.objectStore(AUTO_SAVE_STORE_NAME);
+      const request = store.get(AUTO_SAVE_KEY);
+
+      request.onsuccess = function (event) {
+        const data = event.target.result;
+        resolve(data ? data.text : '');
+      };
+      request.onerror = function () {
+        reject('');
+      };
+    });
+  }
+
+  // Debounce para limitar guardado
+  function debounceAutoSave(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  }
+
+  // Función de autoguardado
+  function autoSaveText() {
+    if (autoSaveTextArea) {
+      const text = autoSaveTextArea.value;
+      saveTextToDB(text).catch(err => console.error('Error al guardar texto:', err));
+    }
+  }
+
+  // Crear burbuja de notificación
+  function showNotification(message, isOnline) {
+    const existingBubble = document.querySelector('.auto-save-notification');
+    if (existingBubble) {
+      existingBubble.remove();
+    }
+
+    const bubble = document.createElement('div');
+    bubble.className = `auto-save-notification ${isOnline ? 'online' : 'offline'}`;
+    bubble.textContent = message;
+    document.body.appendChild(bubble);
+
+    setTimeout(() => {
+      bubble.classList.add('fade-out');
+      setTimeout(() => bubble.remove(), 500);
+    }, 4000);
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    autoSaveTextArea = document.getElementById(AUTO_SAVE_TEXTAREA_ID);
+    if (!autoSaveTextArea) {
+      console.error('No se encontró el textarea con id "texto"');
+      return;
+    }
+
+    try {
+      await initIndexedDB();
+      const savedText = await loadTextFromDB();
+      autoSaveTextArea.value = savedText;
+    } catch (err) {
+      console.error('Error al cargar texto guardado:', err);
+    }
+
+    // Configurar autoguardado
+    const debouncedAutoSave = debounceAutoSave(autoSaveText, 500);
+    autoSaveTextArea.addEventListener('input', debouncedAutoSave);
+
+    // Detectar cambios de conexión
+    window.addEventListener('online', () => {
+      showNotification('¡Conexión restaurada! Tu texto está seguro y sigue guardándose.', true);
+    });
+
+    window.addEventListener('offline', () => {
+      showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
+    });
+
+    // Verificar estado inicial
+    if (!navigator.onLine) {
+      showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
+    }
+  });
+})();
+  </script>
+
+<link href="https://fonts.googleapis.com/css2?family=Lora&family=Poppins&display=swap" rel="stylesheet">
+
+  <style>
+    /* AutoSave.css */
+.auto-save-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid var(--theme-color, #ff0000);
+  border-radius: 25px;
+  color: #ffffff;
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 20000;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.auto-save-notification.offline {
+  border-color: var(--theme-color, #ff0000);
+}
+
+.auto-save-notification.online {
+  border-color: var(--theme-color, #ff0000);
+}
+
+.auto-save-notification.fade-out {
+  animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="particles"></div>
+  <div class="container">
+    <div class="bubble" id="title">Biblias Maker</div>
+    <textarea id="texto" placeholder="Escribe tu turno aquí... uwu"></textarea>
+    <style>
+
+      /* Estilo de la barra de desplazamiento para navegadores basados en WebKit (Chrome, Edge, Safari) */
+.textarea-wrapper::-webkit-scrollbar,
+#texto::-webkit-scrollbar {
+  width: 12px; /* Barra delgada */
+  height: 12px; /* Para scroll horizontal si aplica */
+}
+
+/* Fondo de la barra de desplazamiento (track) */
+.textarea-wrapper::-webkit-scrollbar-track,
+#texto::-webkit-scrollbar-track {
+  background: #1a1a1a; /* Negro oscuro */
+  border-radius: 15px; /* Más redondeado */
+}
+
+/* Pulgar de la barra de desplazamiento (thumb) */
+.textarea-wrapper::-webkit-scrollbar-thumb,
+#texto::-webkit-scrollbar-thumb {
+  background: #333333; /* Gris oscuro */
+  border: 1px solid #ff0000; /* Borde neón rojo */
+  border-radius: 15px; /* Más redondeado */
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Brillo neón sutil */
+}
+
+/* Efecto hover sobre el pulgar */
+.textarea-wrapper::-webkit-scrollbar-thumb:hover,
+#texto::-webkit-scrollbar-thumb:hover {
+  background: #555555; /* Gris más claro */
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+/* Esquinas de la barra de desplazamiento */
+.textarea-wrapper::-webkit-scrollbar-corner,
+#texto::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+/* Estilo para Firefox */
+.textarea-wrapper,
+#texto {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+.action-list::-webkit-scrollbar {
+  width: 12px;
+}
+
+.action-list::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 15px;
+}
+
+.action-list::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 1px solid #ff0000;
+  border-radius: 15px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+.action-list::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+.action-list::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+.action-list {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+.action-list {
+  overflow-y: hidden;
+}
+
+.action-list:hover {
+  overflow-y: auto;
+}
+
+
+#texto {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            letter-spacing: normal;
+            word-spacing: normal;
+            padding: 12px;
+            font-style: normal;
+            font-variant: normal;
+            font-weight: normal;
+            text-transform: none;
+        }
+    </style>
+    <script>
+      window.addEventListener('load', function() {
+        const fileName = localStorage.getItem('currentFileName');
+        const fileContent = localStorage.getItem('currentFileContent');
+  
+        if (fileContent !== null) {
+          document.getElementById('texto').value = fileContent;
+          localStorage.removeItem('currentFileName');
+          localStorage.removeItem('currentFileContent');
+        }
+      });
+    </script>
+    <script>
+      window.addEventListener('load', function() {
+        const textContent = localStorage.getItem('textContent');
+        if (textContent !== null) {
+          document.getElementById('texto').value = textContent;
+          localStorage.removeItem('textContent');
+        }
+      });
+    </script>
+    
+<div id="toggleButtonWrapper" class="mode-writer">
+    <button id="toggleButtonsBtn" onclick="toggleButtons()">Opciones</button>
+</div>
+
+    <div id="botones" class="mode-writer">
+      <button class="button" onclick="goToProjects()">Volver a mis proyectos</button>
+      <button class="button" onclick="activateFullscreenMode()">Modo Escritor</button>
+      <button class="button" onclick="togglePreview()">Ver vista previa</button>
+      <button class="button" onclick="showOptions('themes')">Temas</button>
+      <button class="button" onclick="showTextStyleOptions()">Estilos de texto</button>
+      <button class="button" id="openActionBtn">Cargar arco de acción</button>
+      <button class="button" onclick="showConfirmation('create-bibles')">Crear biblias</button>
+      <button class="button" id="togglePrefixBtn" onclick="togglePrefixes()">Habilitar a prefijos</button>
+      <button class="button" onclick="copyText()">Copiar todo el texto</button>
+      <button class="button" onclick="showOptions('clean-spelling')">Limpiar ortografía</button>
+      <button class="button" onclick="openCalculator()">Calcular datos</button>
+      <button class="button" onclick="downloadText()">Descargar .txt</button>
+    </div>
+
+<style>
+        /* Forzar menú de botones siempre en columna y scrollable (incluso oculto) */
+      #botones {
+        flex-direction: column !important;
+        max-height: 45vh;
+        overflow-y: auto;
+        padding: 12px;
+        background: rgba(20, 20, 20, 0.92);
+        border-radius: 15px;
+        gap: 10px;
+      }
+
+      #botones.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Textarea más redondo y oscuro */
+      #texto {
+        color: #e0e0e0;
+        border-radius: 20px;
+        box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.7);
+      }
+</style>
+
+<style>
+  /* Mejoras generales al popup */
+  #text-style-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #111111, #1a1a1a);
+    border: 2px solid var(--theme-color, #ff0000);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 
+                0 0 20px var(--theme-color); /* Glow dinámica con el tema */
+    z-index: 30000;
+    display: none;
+    flex-direction: column;
+    gap: 18px;
+    color: #e0e0e0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  #text-style-container h3 {
+    margin: 0 0 15px 0;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* Select bonito y unificado */
+  #styleSelect {
+    width: 100%;
+    padding: 14px 15px;
+    background: #222222;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Controles custom más elegantes y oscuros */
+  .custom-section label {
+    display: block;
+    margin: 18px 0 8px;
+    font-weight: 500;
+    color: #cccccc;
+  }
+
+  .custom-section input[type="range"],
+  .custom-section input[type="color"],
+  .custom-section select,
+  .custom-section input[type="text"],
+  .custom-section input[type="number"] {
+    width: 100%;
+    height: 46px;
+    background: #222222;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 15px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .custom-section input[type="range"] {
+    height: 8px;
+    padding: 0;
+  }
+
+  .custom-section input[type="color"] {
+    height: 50px;
+    padding: 4px;
+  }
+
+  /* Select de fuentes más compacto */
+  #customFontFamily {
+    height: 42px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .custom-section input[type="number"]::-webkit-outer-spin-button,
+  .custom-section input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Scrollbar personalizada para popup, menú de botones y select de fuentes */
+  #text-style-container::-webkit-scrollbar,
+  #botones::-webkit-scrollbar,
+  #customFontFamily::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  #text-style-container::-webkit-scrollbar-track,
+  #botones::-webkit-scrollbar-track,
+  #customFontFamily::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 15px;
+  }
+
+  #text-style-container::-webkit-scrollbar-thumb,
+  #botones::-webkit-scrollbar-thumb,
+  #customFontFamily::-webkit-scrollbar-thumb {
+    background: #333333;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 15px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  }
+
+  #text-style-container::-webkit-scrollbar-thumb:hover,
+  #botones::-webkit-scrollbar-thumb:hover,
+  #customFontFamily::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+    box-shadow: 0 0 10px var(--theme-color, #ff0000);
+  }
+
+  #text-style-container,
+  #botones,
+  #customFontFamily {
+    scrollbar-color: #333333 #1a1a1a;
+    scrollbar-width: thin;
+  }
+
+  /* Botón cerrar bonito */
+  #closeStyleBtn {
+    margin-top: 20px;
+    padding: 14px;
+    background: #333333;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  #closeStyleBtn:hover {
+    background: #555555;
+  }
+</style>
+
+<div class="options-container" id="text-style-container">
+  <h3>Estilos de texto</h3>
+
+  <select id="styleSelect" onchange="applySelectedStyle()">
+    <option value="" disabled selected>Elige un estilo...</option>
+  </select>
+
+  <div class="custom-section">
+    <label>Tamaño de fuente
+      <div class="number-wrapper">
+        <input type="range" id="customFontSize" min="12" max="40" value="16">
+        <input type="number" id="customFontSizeNum" min="12" max="40" value="16"
+               style="height: 30px; padding: 7px 1.5px;
+                       font-size: 14px;">
+      </div>
+      <div class="value-display" id="customFontSizeValue">16px</div>
+    </label>
+
+    <label>Interlineado
+      <div class="number-wrapper">
+        <input type="range" id="customLineHeight" min="1" max="3" step="0.05" value="1.5">
+        <input type="number" id="customLineHeightNum" min="1" max="3" step="0.05" value="1.5"
+               style="height: 30px; padding: 7px 1.5px;
+                       font-size: 14px;">
+      </div>
+      <div class="value-display" id="customLineHeightValue">1.5</div>
+    </label>
+
+    <label>Fuente
+      <select id="customFontFamily">
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Roboto', sans-serif">Roboto</option>
+        <option value="'Open Sans', sans-serif">Open Sans</option>
+        <option value="'Montserrat', sans-serif">Montserrat</option>
+        <option value="'Lora', serif">Lora</option>
+        <option value="'Playfair Display', serif">Playfair Display</option>
+        <option value="'Raleway', sans-serif">Raleway</option>
+        <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+        <option value="'Ubuntu', sans-serif">Ubuntu</option>
+        <option value="'Merriweather', serif">Merriweather</option>
+        <option value="'PT Sans', sans-serif">PT Sans</option>
+        <option value="'Quicksand', sans-serif">Quicksand</option>
+        <option value="'Nunito', sans-serif">Nunito</option>
+        <option value="'Inter', sans-serif">Inter</option>
+        <option value="'Fira Sans', sans-serif">Fira Sans</option>
+        <option value="'Poppins', sans-serif">Poppins</option>
+        <option value="'Oxygen', sans-serif">Oxygen</option>
+        <option value="'Work Sans', sans-serif">Work Sans</option>
+        <option value="'Karla', sans-serif">Karla</option>
+        <option value="'Rubik', sans-serif">Rubik</option>
+        <option value="'Manrope', sans-serif">Manrope</option>
+        <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="'Times New Roman', serif">Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+        <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+        <option value="Impact, fantasy">Impact</option>
+        <option value="'Segoe UI', sans-serif">Segoe UI</option>
+        <option value="Tahoma, sans-serif">Tahoma</option>
+        <option value="'Helvetica Neue', sans-serif">Helvetica Neue</option>
+        <option value="system-ui">System UI</option>
+        <option value="'Apple System', sans-serif">Apple System</option>
+        <option value="'BlinkMacSystemFont', sans-serif">BlinkMacSystemFont</option>
+        <option value="'Lucida Grande', sans-serif">Lucida Grande</option>
+        <option value="'Gill Sans', sans-serif">Gill Sans</option>
+        <option value="'Century Gothic', sans-serif">Century Gothic</option>
+        <option value="'Futura', sans-serif">Futura</option>
+        <option value="'Candara', sans-serif">Candara</option>
+        <option value="'Calibri', sans-serif">Calibri</option>
+        <option value="'Optima', sans-serif">Optima</option>
+        <option value="'Avenir', sans-serif">Avenir</option>
+        <option value="'Palatino', serif">Palatino</option>
+        <option value="'Baskerville', serif">Baskerville</option>
+        <option value="'Garamond', serif">Garamond</option>
+        <option value="'Book Antiqua', serif">Book Antiqua</option>
+        <option value="'Didot', serif">Didot</option>
+      </select>
+    </label>
+
+    <label>Color del texto
+      <input type="color" id="customTextColor" value="#e0e0e0">
+    </label>
+
+    <label>Nombre para guardar
+      <input type="text" id="customStyleName"
+             style="height: 30px; padding: 7px 1.5px;
+                    font-size: 14px;" placeholder="¿Cómo se llamará tu estilo?">
+    </label>
+
+    <button onclick="saveCustomStyle()">Guardar estilo personalizado</button>
+  </div>
+
+  <button id="closeStyleBtn"
+          style="height: 40px; padding: 9px 1.5px;
+                 font-size: 14px;" onclick="hideTextStyleOptions()">Cerrar</button>
+</div>
+
+<script>
+  // === GESTIÓN DE ESTILOS DE TEXTO ===
+  const textarea = document.getElementById('texto');
+  const styleSelect = document.getElementById('styleSelect');
+
+  const presets = {
+    default: { name: "Por defecto", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "16px", lineHeight: "1.5", color: "#e0e0e0" },
+    large: { name: "Accesible", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "28px", lineHeight: "1.8", color: "#ffffff" },
+    elegant: { name: "Elegante", fontFamily: "'Lora', serif", fontSize: "18px", lineHeight: "1.7", color: "#f0e0d0", fontStyle: "italic" },
+    classic: { name: "Clásico", fontFamily: "'Lora', serif", fontSize: "16px", lineHeight: "1.6", color: "#ffeeee" }
+  };
+
+  function applyStyle(styleObj) {
+    textarea.style.fontFamily = styleObj.fontFamily;
+    textarea.style.fontSize = styleObj.fontSize;
+    textarea.style.lineHeight = styleObj.lineHeight;
+    textarea.style.color = styleObj.color;
+    textarea.style.fontStyle = styleObj.fontStyle || "normal";
+    localStorage.setItem('lastTextStyle', JSON.stringify(styleObj));
+  }
+
+  function syncControlsToStyle(styleObj) {
+    document.getElementById('customFontFamily').value = styleObj.fontFamily;
+    const sizeNum = parseInt(styleObj.fontSize);
+    fontSizeSlider.value = sizeNum;
+    fontSizeNum.value = sizeNum;
+    fontSizeVal.textContent = sizeNum + 'px';
+    const lhNum = parseFloat(styleObj.lineHeight);
+    lineHeightSlider.value = lhNum;
+    lineHeightNum.value = lhNum;
+    lineHeightVal.textContent = lhNum;
+    document.getElementById('customTextColor').value = styleObj.color;
+  }
+
+  // Sincronización bidireccional slider ↔ número
+  const fontSizeSlider = document.getElementById('customFontSize');
+  const fontSizeNum = document.getElementById('customFontSizeNum');
+  const fontSizeVal = document.getElementById('customFontSizeValue');
+  const lineHeightSlider = document.getElementById('customLineHeight');
+  const lineHeightNum = document.getElementById('customLineHeightNum');
+  const lineHeightVal = document.getElementById('customLineHeightValue');
+
+  fontSizeSlider.addEventListener('input', () => {
+    fontSizeNum.value = fontSizeSlider.value;
+    fontSizeVal.textContent = fontSizeSlider.value + 'px';
+  });
+  fontSizeNum.addEventListener('input', () => {
+    let val = Math.max(12, Math.min(40, parseInt(fontSizeNum.value) || 16));
+    fontSizeSlider.value = val;
+    fontSizeNum.value = val;
+    fontSizeVal.textContent = val + 'px';
+  });
+
+  lineHeightSlider.addEventListener('input', () => {
+    lineHeightNum.value = lineHeightSlider.value;
+    lineHeightVal.textContent = lineHeightSlider.value;
+  });
+  lineHeightNum.addEventListener('input', () => {
+    let val = Math.max(1, Math.min(3, parseFloat(lineHeightNum.value) || 1.5));
+    val = Math.round(val * 100) / 100;
+    lineHeightSlider.value = val;
+    lineHeightNum.value = val;
+    lineHeightVal.textContent = val;
+  });
+
+  function populateStyleSelect() {
+    styleSelect.innerHTML = '<option value="" disabled selected>Elige un estilo... Si no sabes qué poner, elige los oficiales</option>';
+
+    // Predeterminados
+    Object.keys(presets).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = presets[key].name + ' (Oficial)';
+      styleSelect.appendChild(opt);
+    });
+
+    // Guardados
+    const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+    saved.forEach((style, index) => {
+      const opt = document.createElement('option');
+      opt.value = `custom_${index}`;
+      opt.textContent = style.name;
+      styleSelect.appendChild(opt);
+    });
+  }
+
+  function applySelectedStyle() {
+    const val = styleSelect.value;
+    if (!val) return;
+
+    let styleObj;
+    if (val.startsWith('custom_')) {
+      const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+      const index = parseInt(val.split('_')[1]);
+      styleObj = saved[index];
+    } else {
+      styleObj = presets[val];
+    }
+
+    applyStyle(styleObj);
+    syncControlsToStyle(styleObj);
+  }
+
+  function saveCustomStyle() {
+    const name = document.getElementById('customStyleName').value.trim();
+    if (!name) return alert('Para guardar, debes poner un nombre a tu estilo.');
+
+    const style = {
+      name,
+      fontFamily: document.getElementById('customFontFamily').value,
+      fontSize: fontSizeSlider.value + 'px',
+      lineHeight: lineHeightSlider.value,
+      color: document.getElementById('customTextColor').value
+    };
+
+    const saved = JSON.parse(localStorage.getItem('customTextStyles') || '[]');
+    saved.push(style);
+    localStorage.setItem('customTextStyles', JSON.stringify(saved));
+    applyStyle(style);
+    syncControlsToStyle(style);
+    populateStyleSelect();
+    document.getElementById('customStyleName').value = '';
+  }
+
+  function showTextStyleOptions() {
+    document.getElementById('text-style-container').style.display = 'flex';
+    populateStyleSelect();
+
+    const current = {
+      fontFamily: textarea.style.fontFamily || presets.default.fontFamily,
+      fontSize: parseInt(textarea.style.fontSize || 16),
+      lineHeight: parseFloat(textarea.style.lineHeight || 1.5),
+      color: textarea.style.color || '#e0e0e0'
+    };
+
+    document.getElementById('customFontFamily').value = current.fontFamily;
+    fontSizeSlider.value = current.fontSize;
+    fontSizeNum.value = current.fontSize;
+    fontSizeVal.textContent = current.fontSize + 'px';
+    lineHeightSlider.value = current.lineHeight;
+    lineHeightNum.value = current.lineHeight;
+    lineHeightVal.textContent = current.lineHeight;
+    document.getElementById('customTextColor').value = current.color;
+  }
+
+  function hideTextStyleOptions() {
+    document.getElementById('text-style-container').style.display = 'none';
+  }
+
+  // Cargar último estilo al iniciar
+  window.addEventListener('load', () => {
+    const last = localStorage.getItem('lastTextStyle');
+    if (last) {
+      const styleObj = JSON.parse(last);
+      applyStyle(styleObj);
+      syncControlsToStyle(styleObj);
+    } else {
+      applyStyle(presets.default);
+    }
+  });
+</script>
+    
+
+    <div id="preview-container" class="preview-container">
+      <div class="preview-content"></div>
+    </div>
+    <button class="close-preview" onclick="togglePreview()">〆</button>
+    <div class="replay-buttons">
+      <button class="button" id="undoButton">↜</button>
+      <button class="button" id="redoButton">↝</button>
+    </div>
+
+    <style>
+  /* Estilos para el botón de voz y la barra de control */
+  .voice-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background-color: #ff0000;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1001;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .voice-button:hover {
+    background-color: #c70000;
+  }
+
+  .voice-control-bar {
+    display: none !important; /* Oculto por defecto */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 1002;
+    width: 90%;
+    max-width: 800px;
+    font-family: 'Lora', serif;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .voice-control-bar.active {
+    display: flex !important;
+  }
+
+  .voice-control-bar button {
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    background-color: #ff0000;
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    z-index: 1001;
+  }
+
+  .voice-control-bar button:hover {
+    background-color: #c70000;
+  }
+
+  .voice-control-bar select {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid #ff0000;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-family: 'Lora', serif;
+    max-width: 300px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-shadow: 0 0 5px rgba(255, 0, 0, 0.4);
+  }
+
+  .voice-control-bar select.no-voices {
+    color: #ff5555;
+    border-color: #ff5555;
+    cursor: help;
+  }
+
+  .voice-control-bar select option {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+
+  .voice-control-bar .speed-select-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .voice-control-bar .speed-select-container select {
+    width: 60px;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    position: relative;
+    height: 20px;
+    order: -1; /* Mueve la barra de progreso arriba */
+  }
+
+  .progress-bar {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    outline: none;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .progress-bar::-webkit-slider-runnable-track {
+    background: #1a1a1a;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ff0000;
+    border-radius: 50%;
+    margin-top: -5px;
+    background-color: #c70000;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 1);
+  }
+
+  .progress-bar::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #ff0000;
+    border-radius: 50%;
+    background-color: #c70000;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 1);
+  }
+
+  .progress-bar::-webkit-slider-runnable-track {
+    background: linear-gradient(to right, #ff0000 var(--progress), #1a1a1a var(--progress));
+  }
+
+  .progress-bar::-moz-range-track {
+    background: #1a1a1a;
+  }
+
+  .progress-bar::-moz-range-progress {
+    background: #ff0000;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .selected-text {
+    position: absolute;
+    top: 7px;
+    height: 6px;
+    background-color: rgba(255, 165, 0, 0.5); /* Naranja semi dorado */
+    z-index: 0;
+  }
+
+  .time-info {
+    color: #ffffff;
+    font-size: 14px;
+    margin-left: 10px;
+    font-family: 'Lora', serif;
+  }
+
+  /* Mensaje para cuando no hay voces */
+  .no-voices-message {
+    display: none;
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1a1a1a;
+    color: #ff5555;
+    border: 1px solid #ff0000;
+    border-radius: 5px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: 'Lora', serif;
+    z-index: 1003;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+  }
+
+  .no-voices-message.visible {
+    display: block;
+  }
+
+/* Estilo de la barra de desplazamiento para navegadores basados en WebKit (Chrome, Edge, Safari) */
+#voiceSelect::-webkit-scrollbar {
+  width: 12px; /* Ancho delgado */
+  height: 12px; /* Altura para barras horizontales */
+}
+
+#voiceSelect::-webkit-scrollbar-track {
+  background: #1a1a1a; /* Negro oscuro para el fondo */
+  border-radius: 15px; /* Bordes más redondeados */
+}
+
+#voiceSelect::-webkit-scrollbar-thumb {
+  background: #333333; /* Gris oscuro para el pulgar */
+  border: 1px solid #ff0000; /* Borde neón rojo */
+  border-radius: 15px; /* Bordes más redondeados */
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5); /* Brillo neón sutil */
+}
+
+#voiceSelect::-webkit-scrollbar-thumb:hover {
+  background: #555555; /* Gris más claro al pasar el mouse */
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8); /* Brillo neón más intenso */
+}
+
+#voiceSelect::-webkit-scrollbar-corner {
+  background: #1a1a1a; /* Mismo color que el fondo */
+}
+
+/* Estilo para Firefox */
+#voiceSelect {
+  scrollbar-color: #333333 #1a1a1a; /* Pulgar gris oscuro, fondo negro */
+  scrollbar-width: thin; /* Barra de desplazamiento delgada */
+}
+</style>
+
+<!-- Botón de voz -->
+<button class="voice-button" onclick="toggleVoiceReader()">🎙️</button>
+
+<!-- Barra de control de voz -->
+<div class="voice-control-bar" id="voiceControlBar">
+  <button onclick="playPauseVoice()">⏯︎</button>
+  <button onclick="rewindVoice()">⏮︎</button>
+  <button onclick="fastForwardVoice()">⏭︎</button>
+  <div class="progress-bar-container">
+    <div class="selected-text" id="selectedTextBar"></div>
+    <input type="range" class="progress-bar" id="progressBar" min="0" max="100" value="0" step="0.1">
+  </div>
+  <select id="voiceSelect" onchange="changeVoice()"></select>
+  <div class="speed-select-container">
+    <select id="speedSelect" onchange="changeSpeed()">
+      <option value="1">1x</option>
+      <option value="1.2">1.2x</option>
+      <option value="1.5">1.5x</option>
+      <option value="1.7">1.7x</option>
+      <option value="2">2x</option>
+      <option value="2.5">2.5x</option>
+      <option value="3">3x</option>
+    </select>
+  </div>
+  <span class="time-info" id="timeInfo">0:00 / 0:00</span>
+</div>
+
+<script>
+  let voices = [];
+  let utterance = null;
+  let isSpeaking = false;
+  let isBarVisible = false;
+  let totalDuration = 0;
+  let currentTime = 0;
+  let startTime = 0;
+  let animationFrameId = null;
+  const textInput = document.getElementById('texto');
+  const voiceSelect = document.getElementById('voiceSelect');
+  const speedSelect = document.getElementById('speedSelect');
+  const voiceControlBar = document.getElementById('voiceControlBar');
+  const progressBar = document.getElementById('progressBar');
+  const selectedTextBar = document.getElementById('selectedTextBar');
+  const timeInfo = document.getElementById('timeInfo');
+
+  // Asegurar que la barra esté oculta al inicio
+  document.addEventListener('DOMContentLoaded', () => {
+    voiceControlBar.classList.remove('active');
+    isBarVisible = false;
+  });
+
+  // Cargar voces disponibles (solo en español)
+  function loadVoices() {
+    voices = speechSynthesis.getVoices().filter(voice => voice.lang.includes('es'));
+    voiceSelect.innerHTML = '';
+    const noVoicesMessage = document.getElementById('noVoicesMessage');
+    if (voices.length === 0) {
+      const option = document.createElement('option');
+      option.textContent = 'No hay voces en español';
+      voiceSelect.appendChild(option);
+      voiceSelect.classList.add('no-voices');
+      voiceSelect.addEventListener('mouseover', () => {
+        noVoicesMessage.classList.add('visible');
+      });
+      voiceSelect.addEventListener('mouseout', () => {
+        noVoicesMessage.classList.remove('visible');
+      });
+    } else {
+      voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+      voiceSelect.classList.remove('no-voices');
+    }
+  }
+
+  loadVoices();
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  // Estimar duración del texto (en segundos)
+  function estimateDuration(text, rate) {
+    const wordsPerMinute = 120; // Promedio para español
+    const words = text.trim().split(/\s+/).length;
+    return (words / wordsPerMinute) * 60 / rate;
+  }
+
+  // Formatear tiempo (mm:ss)
+  function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Actualizar barra de progreso
+  function updateProgress() {
+    if (isSpeaking) {
+      currentTime = (Date.now() - startTime) / 1000;
+      const progress = (currentTime / totalDuration) * 100;
+      progressBar.value = progress;
+      progressBar.style.setProperty('--progress', `${progress}%`);
+      timeInfo.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)}`;
+      animationFrameId = requestAnimationFrame(updateProgress);
+    }
+  }
+
+  // Resaltar texto seleccionado
+  function updateSelectedText() {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      const totalText = textInput.value;
+      const startPos = textInput.selectionStart / totalText.length;
+      const endPos = textInput.selectionEnd / totalText.length;
+      const selectedDuration = estimateDuration(selection, parseFloat(speedSelect.value));
+      selectedTextBar.style.left = `${startPos * 100}%`;
+      selectedTextBar.style.width = `${(endPos - startPos) * 100}%`;
+      timeInfo.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)} (Sel: ${formatTime(selectedDuration)})`;
+    } else {
+      selectedTextBar.style.width = '0%';
+    }
+  }
+
+  // Reproducir texto (o selección)
+  function speakText(text) {
+    speechSynthesis.cancel();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    isSpeaking = false;
+    utterance = new SpeechSynthesisUtterance(text);
+    const selectedVoice = voices[voiceSelect.value];
+    utterance.voice = selectedVoice || voices[0] || null;
+    utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+    utterance.rate = parseFloat(speedSelect.value);
+    totalDuration = estimateDuration(text, utterance.rate);
+    currentTime = 0;
+    startTime = Date.now();
+    speechSynthesis.speak(utterance);
+    isSpeaking = true;
+    updateProgress();
+  }
+
+  // Iniciar/pausar lectura
+  function toggleVoiceReader() {
+    if (!isBarVisible) {
+      const text = textInput.value;
+      if (text.trim() === '') {
+        alert('Por favor, escribe algo en el área de texto.');
+        return;
+      }
+      voiceControlBar.classList.add('active');
+      isBarVisible = true;
+      speakText(text);
+    } else {
+      speechSynthesis.cancel();
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+
+  // Reanudar/pausar
+  function playPauseVoice() {
+    if (speechSynthesis.paused) {
+      speechSynthesis.resume();
+      isSpeaking = true;
+      startTime = Date.now() - currentTime * 1000;
+      updateProgress();
+    } else if (isSpeaking) {
+      speechSynthesis.pause();
+      isSpeaking = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+  }
+
+  // Retroceder 10 segundos
+  function rewindVoice() {
+    const newTime = Math.max(0, currentTime - 10);
+    seekTo(newTime);
+  }
+
+  // Avanzar 10 segundos
+  function fastForwardVoice() {
+    const newTime = Math.min(totalDuration, currentTime + 10);
+    seekTo(newTime);
+  }
+
+  // Mover a un tiempo específico
+  function seekTo(newTime) {
+    speechSynthesis.cancel();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    isSpeaking = false;
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = (120 / 60) * utterance.rate;
+    const startIndex = Math.floor(wordsPerSecond * newTime);
+    const textToSpeak = startIndex < words.length ? words.slice(startIndex).join(' ') : '';
+    if (textToSpeak) {
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.voice = voices[voiceSelect.value] || voices[0];
+      utterance.rate = parseFloat(speedSelect.value);
+      totalDuration = estimateDuration(textToSpeak, utterance.rate);
+      currentTime = newTime;
+      startTime = Date.now() - currentTime * 1000;
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+    } else {
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+
+// Cambiar voz
+function changeVoice() {
+  if (isSpeaking || speechSynthesis.paused) {
+    speechSynthesis.pause(); // Pausar la reproducción actual
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = (120 / 60) * parseFloat(speedSelect.value); // Palabras por segundo
+    const currentWordIndex = Math.floor(wordsPerSecond * currentTime); // Estimar palabra actual
+    const textToSpeak = currentWordIndex < words.length ? words.slice(currentWordIndex).join(' ') : '';
+
+    if (textToSpeak) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      const selectedVoice = voices[voiceSelect.value];
+      utterance.voice = selectedVoice || voices[0] || null;
+      utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+      utterance.rate = parseFloat(speedSelect.value); // Mantener velocidad actual
+      totalDuration = estimateDuration(textToSpeak, utterance.rate);
+      startTime = Date.now() - currentTime * 1000; // Ajustar startTime para mantener continuidad
+      speechSynthesis.cancel(); // Cancelar el utterance anterior
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+      if (!speechSynthesis.paused) {
+        speechSynthesis.resume(); // Reanudar si no estaba pausado
+      }
+    } else {
+      // Si no hay texto restante, detener
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+}
+
+// Cambiar velocidad
+function changeSpeed() {
+  if (isSpeaking || speechSynthesis.paused) {
+    speechSynthesis.pause(); // Pausar la reproducción actual
+    const text = textInput.value;
+    const words = text.split(/\s+/);
+    const wordsPerSecond = (120 / 60) * parseFloat(speedSelect.value); // Usar nueva velocidad
+    const currentWordIndex = Math.floor(wordsPerSecond * currentTime); // Estimar palabra actual
+    const textToSpeak = currentWordIndex < words.length ? words.slice(currentWordIndex).join(' ') : '';
+
+    if (textToSpeak) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+      utterance = new SpeechSynthesisUtterance(textToSpeak);
+      const selectedVoice = voices[voiceSelect.value];
+      utterance.voice = selectedVoice || voices[0] || null; // Mantener voz actual
+      utterance.lang = utterance.voice ? utterance.voice.lang : 'es-ES';
+      utterance.rate = parseFloat(speedSelect.value); // Aplicar nueva velocidad
+      totalDuration = estimateDuration(textToSpeak, utterance.rate);
+      startTime = Date.now() - currentTime * 1000; // Ajustar startTime para mantener continuidad
+      speechSynthesis.cancel(); // Cancelar el utterance anterior
+      speechSynthesis.speak(utterance);
+      isSpeaking = true;
+      updateProgress();
+      if (!speechSynthesis.paused) {
+        speechSynthesis.resume(); // Reanudar si no estaba pausado
+      }
+    } else {
+      // Si no hay texto restante, detener
+      isSpeaking = false;
+      isBarVisible = false;
+      voiceControlBar.classList.remove('active');
+      progressBar.value = 0;
+      progressBar.style.setProperty('--progress', '0%');
+      timeInfo.textContent = '0:00 / 0:00';
+      currentTime = 0;
+    }
+  }
+}
+  // Mover barra de progreso manualmente
+  progressBar.addEventListener('input', () => {
+    const progress = parseFloat(progressBar.value);
+    const newTime = (progress / 100) * totalDuration;
+    seekTo(newTime);
+  });
+
+  // Detectar selección de texto
+  textInput.addEventListener('select', updateSelectedText);
+  textInput.addEventListener('click', updateSelectedText);
+  textInput.addEventListener('keyup', updateSelectedText);
+
+// Menú contextual mejorado
+function addContextMenuOption() {
+  if (!textInput) return;
+
+  // Crear un contenedor para el botón flotante
+  const floatingButton = document.createElement('button');
+  floatingButton.textContent = 'Reproducir';
+  floatingButton.style.position = 'absolute';
+  floatingButton.style.display = 'none';
+  floatingButton.style.backgroundColor = '#1a1a1a';
+  floatingButton.style.color = '#ffffff';
+  floatingButton.style.border = '1px solid var(--theme-color, #ff0000)';
+  floatingButton.style.padding = '5px 10px';
+  floatingButton.style.zIndex = '10000';
+  floatingButton.style.fontFamily = "'Lora', serif";
+  floatingButton.style.fontSize = '14px';
+  floatingButton.style.cursor = 'pointer';
+  document.body.appendChild(floatingButton);
+
+  // Mostrar botón flotante al seleccionar texto
+  function showFloatingButton(e) {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      const rect = textInput.getBoundingClientRect();
+      const x = e.clientX || (e.touches && e.touches[0].clientX) || rect.left + rect.width / 2;
+      const y = e.clientY || (e.touches && e.touches[0].clientY) || rect.top + rect.height;
+      floatingButton.style.left = `${x}px`;
+      floatingButton.style.top = `${y + 10}px`;
+      floatingButton.style.display = 'block';
+    } else {
+      floatingButton.style.display = 'none';
+    }
+  }
+
+  // Ocultar botón al hacer clic fuera
+  function hideFloatingButton() {
+    floatingButton.style.display = 'none';
+  }
+
+  // Acción al hacer clic en el botón flotante
+  floatingButton.onclick = () => {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (selection) {
+      if (!isBarVisible) {
+        voiceControlBar.classList.add('active');
+        isBarVisible = true;
+      }
+      speakText(selection);
+      hideFloatingButton();
+    }
+  };
+
+  // Detectar selección de texto en escritorio
+  textInput.addEventListener('contextmenu', (e) => {
+    showFloatingButton(e);
+    // No usamos e.preventDefault() para preservar el menú nativo
+  });
+
+  // Detectar selección de texto en dispositivos móviles (mantener presionado)
+  let touchTimeout;
+  textInput.addEventListener('touchstart', (e) => {
+    touchTimeout = setTimeout(() => {
+      showFloatingButton(e);
+      // No usamos e.preventDefault() para permitir el menú nativo
+    }, 500);
+  });
+
+  textInput.addEventListener('touchend', () => {
+    clearTimeout(touchTimeout);
+  });
+
+  // Ocultar botón al hacer clic fuera o al cambiar selección
+  document.addEventListener('click', hideFloatingButton);
+  textInput.addEventListener('select', showFloatingButton);
+  textInput.addEventListener('selectionchange', () => {
+    const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+    if (!selection) hideFloatingButton();
+  });
+}
+
+// Reproducir texto seleccionado
+window.playSelectedText = function() {
+  if (!textInput) return;
+  const selection = textInput.value.substring(textInput.selectionStart, textInput.selectionEnd);
+  if (selection) {
+    if (!isBarVisible) {
+      voiceControlBar.classList.add('active');
+      isBarVisible = true;
+    }
+    speakText(selection);
+  }
+};
+
+// Inicializar menú contextual
+addContextMenuOption();
+</script>
+
+    <div class="bubble" id="contador-container">Contador: <span id="contador">0</span></div>
+    <div class="options-container" id="themes-container">
+      <button onclick="changeTheme('#ff0000')">Rojo</button>
+      <button onclick="changeTheme('#0000ff')">Azul</button>
+      <button onclick="changeTheme('#00ff00')">Verde</button>
+      <button onclick="changeTheme('#ffff00')">Amarillo</button>
+      <button onclick="changeTheme('#ff00ff')">Rosa</button>
+      <button onclick="changeTheme('#00ffff')">Cian</button>
+      <button onclick="changeTheme('#800080')">Morado</button>
+      <button onclick="changeTheme('#ffa500')">Naranja</button>
+      <button onclick="changeTheme('#ffffff')">Blanco</button>
+      <button onclick="changeTheme('#000000')">Negro</button>
+      <button id="closeThemesBtn" class="close-btn" aria-label="Cerrar">Cerrar</button>
+    </div>
+
+<script>
+  const closeBtn = document.getElementById("closeThemesBtn");
+const themesContainer = document.getElementById("themes-container");
+
+closeBtn.addEventListener("click", () => {
+  themesContainer.style.display = "none";
+});
+
+</script>
+    
+    <style>
+
+      .options-container {
+  display: none; /* o none por defecto */
+}
+
+      #close-btn {
+    margin-top: 20px;
+    padding: 14px;
+    background: #333333;
+    color: #e0e0e0;
+    border: 1px solid var(--theme-color, #ff0000);
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#close-btn:hover {
+  background: #555555;
+}
+    </style>
+    <div class="options-container" id="clean-spelling-container">
+      <div class="confirmation-bubble">¿Estás seguro? Después de hacerlo, se modificarán varias palabras que podrían cambiar el texto, ya que el cambio será realizado por una IA y no por ti.</div>
+      <button onclick="confirmCleanSpelling()">Aceptar</button>
+      <button onclick="hideOptions()">Cancelar</button>
+    </div>
+    <div class="popup-container" id="bible-selection-container">
+      <div class="popup-header">¡Selecciona la biblia para copiar el texto!</div>
+      <div id="bible-buttons"></div>
+      <button onclick="saveProgress()">Listo</button>
+      <button onclick="hidePopup()">Cancelar</button>
+    </div>
+    <div class="options-container" id="confirmation-container">
+      <div class="confirmation-bubble"></div>
+      <button onclick="createBibles()">Sí</button>
+      <button onclick="hideOptions()">No</button>
+    </div>
+    <div class="prefix-popup-container" id="prefix-popup-container">
+      <div class="confirmation-bubble">¿Qué prefijos deseas usar?</div>
+      <label><input type="checkbox" id="bold-prefix"> [B] Negritas</label>
+      <label><input type="checkbox" id="center-prefix"> [C] Centrado</label>
+      <label><input type="checkbox" id="italic-prefix"> [I] Cursiva</label>
+      <label><input type="checkbox" id="underline-prefix"> [U] Subrayar</label>
+      <label><input type="checkbox" id="strikethrough-prefix"> [S] Tachar</label>
+      <button onclick="applyPrefixes()">Listo</button>
+      <button onclick="hidePrefixPopup()">Cancelar</button>
+    </div>
+  </div>
+  
+<!-- CONTENEDOR PRINCIPAL -->
+<div id="actionContainer" class="action-container neon-scale">
+  <div class="close-action" id="closeAction">✘</div>
+  <h3>Gestión de Marcos</h3>
+
+  <div class="action-buttons">
+    <input type="file" id="uploadActionFile" accept=".txt" hidden />
+    <button id="uploadTxtBtn">Subir .txt</button>
+    <button id="pasteClipboardBtn">Crear o Pegar</button>
+  </div>
+
+  <div id="actionList" class="action-list"></div>
+</div>
+
+<!-- MODAL EDITOR -->
+<div id="editorModal" class="editor-modal hidden neon-scale">
+  <h3 id="editorTitle">Editar Marco</h3>
+  <input type="text" id="editorName" placeholder="Nombre del marco" />
+  <textarea id="editorContent" placeholder="Contenido del marco"></textarea>
+
+  <script>
+    if (!editorName.value.trim()) {
+  editorName.classList.add("error");
+  editorName.focus();
+  return;
+}
+
+  </script>
+  <style>
+
+#editorContent {
+  width: 100%;
+  max-width: 420px;
+  min-height: 220px;
+  max-height: 320px;
+
+  margin: 10px auto 0 auto;
+  padding: 14px 16px;
+
+  background: #0d0d0d;
+  color: #eaeaea;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 15px;
+  font-family: 'Lora', serif;
+  line-height: 1.6;
+
+  resize: none;              /* Control total */
+  overflow-y: auto;          /* Scroll vertical */
+  outline: none;
+
+  box-shadow:
+    inset 0 0 10px rgba(0, 0, 0, 0.9),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+#editorContent:focus {
+  border-color: #ff0000;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.95),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorContent::-webkit-scrollbar {
+  width: 12px;
+}
+
+#editorContent::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 15px;
+}
+
+#editorContent::-webkit-scrollbar-thumb {
+  background: #333333;
+  border: 1px solid #ff0000;
+  border-radius: 15px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+#editorContent::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+}
+
+#editorContent::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+#editorContent {
+  scrollbar-color: #333333 #1a1a1a;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 600px) {
+  #editorContent {
+    max-width: 100%;
+    min-height: 180px;
+    max-height: 240px;
+
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+
+  #editorName,
+  #editorContent {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  #editorContent {
+    max-height: 45vh; /* nunca excede la pantalla */
+  }
+
+  .editor-modal {
+    padding: 16px;
+  }
+
+}
+
+
+    #editorName {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto 10px auto;
+  padding: 12px 18px;
+
+  background: linear-gradient(145deg, #0d0d0d, #1a1a1a);
+  color: #ffffff;
+
+  border: 1px solid #333333;
+  border-radius: 18px;
+
+  font-size: 16px;
+  font-family: 'Lora', serif;
+  letter-spacing: 0.5px;
+
+  outline: none;
+
+  box-shadow:
+    inset 0 0 6px rgba(0, 0, 0, 0.8),
+    0 0 0 rgba(255, 0, 0, 0);
+
+  transition: all 0.25s ease;
+}
+
+#editorName::placeholder {
+  color: #777777;
+  letter-spacing: 0.4px;
+}
+
+#editorName:focus {
+  border-color: #ff0000;
+
+  box-shadow:
+    inset 0 0 8px rgba(0, 0, 0, 0.9),
+    0 0 10px rgba(255, 0, 0, 0.6);
+}
+
+#editorName:hover {
+  border-color: #555555;
+}
+
+#editorName {
+  animation: nameFadeIn 0.3s ease;
+}
+
+@keyframes nameFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+#editorName.error {
+  border-color: #ff0000;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.9);
+}
+
+    .editor-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+    #saveEditor {
+  background: linear-gradient(145deg, #ff0000, #a00000);
+  color: #ffffff;
+  border: 1px solid #ff0000;
+  border-radius: 30px;
+  padding: 12px 28px;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow:
+    0 0 6px rgba(255, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.6);
+
+  transition: all 0.25s ease;
+}
+
+#saveEditor:hover {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 0 12px rgba(255, 0, 0, 0.9),
+    0 6px 18px rgba(0, 0, 0, 0.8);
+}
+
+#saveEditor:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 0 4px rgba(255, 0, 0, 0.5);
+}
+
+#cancelEditor {
+  background: transparent;
+  color: #cccccc;
+  border: 1px solid #444444;
+  border-radius: 30px;
+  padding: 12px 26px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: 'Lora', serif;
+
+  box-shadow: inset 0 0 0 rgba(0,0,0,0);
+  transition: all 0.25s ease;
+}
+
+#cancelEditor:hover {
+  color: #ffffff;
+  border-color: #ff0000;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+#cancelEditor:active {
+  transform: scale(0.96);
+}
+
+@keyframes saveGlow {
+  0%   { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+  50%  { box-shadow: 0 0 12px rgba(255,0,0,.8); }
+  100% { box-shadow: 0 0 6px rgba(255,0,0,.4); }
+}
+
+#saveEditor {
+  animation: saveGlow 2.5s infinite ease-in-out;
+}
+
+  </style>
+  <div class="editor-actions">
+    <button id="saveEditor">Guardar</button>
+    <button id="cancelEditor" class="secondary">Cancelar</button>
+  </div>
+</div>
+  
+    <script>
+      function activateFullscreenMode() {
+        const textContent = document.getElementById('texto').value;
+        localStorage.setItem('textContent', textContent);
+        window.location.href = 'Modo-Escritor.html';
+      }
+    </script>
+    
+  <script src="Funciones/FuncionesBibliasMaker.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente Balístico</title>
+    <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('service-worker.js')
+            .then((registration) => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch((error) => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Lora', serif !important;
+        background-color: #1a1a1a;
+        background: url('Estilos/Assest/MA.png') no-repeat center center fixed;
+        background-size: cover;
+        background-position: center;
+        color: #f0f0f0;
+        position: relative;
+        min-height: 100vh;
+        overflow-y: auto;
+    }
+
+    body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 104%;
+        min-height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        z-index: -1;
+        pointer-events: none;
+    }
+
+    header {
+        background-color: rgba(33, 33, 33, 0.7);
+        color: #e53935;
+        padding: 15px;
+        text-align: center;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border-bottom: 2px solid rgba(255, 255, 255, 0.3); 
+    }
+
+    .container {
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto 20px auto;
+        background: rgba(30, 30, 30, 0.7); /* Más transparente */
+        backdrop-filter: blur(5px);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.3); /* Borde más notorio */
+    }
+
+    .section {
+        margin-bottom: 15px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        padding: 12px;
+        background-color: rgba(44, 44, 44, 0.7); /* Más transparente */
+        border-radius: 5px;
+        transition: background-color 0.3s;
+        border: 1px solid rgba(255, 255, 255, 0.3); /* Borde notorio */
+    }
+
+    .section-header:hover {
+        background-color: rgba(56, 56, 56, 0.7);
+    }
+
+    .section-header h2 {
+        color: #e53935;
+        font-size: 1.4rem;
+        margin: 0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .section-content {
+        padding: 15px;
+        display: none;
+    }
+
+    .section-content.active {
+        display: block;
+    }
+
+    .sub-section {
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: rgba(51, 51, 51, 0.7); /* Más transparente */
+        border-radius: 5px;
+        border: 1px solid rgba(255, 255, 255, 0.3); /* Borde notorio */
+    }
+
+    .sub-section h3 {
+        color: #e53935;
+        font-size: 1.2rem;
+        margin: 0 0 10px 0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1rem;
+        color: #bdbdbd;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e53935;
+        background-color: rgba(68, 68, 68, 0.7); /* Más transparente */
+        color: #fff;
+        border-radius: 5px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+    }
+
+    select:focus,
+    input[type="number"]:focus,
+    input[type="text"]:focus {
+        border-color: #c62828;
+        outline: none;
+    }
+
+    button {
+        background-color: #e53935;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    button:hover {
+        background-color: #c62828;
+        transform: scale(1.02);
+    }
+
+    .result {
+        background-color: rgba(51, 51, 51, 0.7); /* Más transparente */
+        padding: 15px;
+        border-radius: 5px;
+        font-size: 1rem;
+        color: #e53935;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+        margin-top: 10px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.3); /* Borde notorio */
+    }
+
+    .explanation {
+        background-color: rgba(44, 44, 44, 0.7); /* Más transparente */
+        padding: 12px;
+        border-radius: 5px;
+        color: #bdbdbd;
+        font-size: 0.9rem;
+        margin-top: 10px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.3); /* Borde notorio */
+    }
+
+    .button-container {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .button-link {
+        background-color: #d32f2f;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 0.95rem;
+        text-align: center;
+        transition: background-color 0.3s, transform 0.3s;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .button-link:hover {
+        background-color: #b71c1c;
+        transform: scale(1.02);
+    }
+
+    @media (max-width: 767px) {
+        header {
+            font-size: 1.4rem;
+            padding: 10px;
+        }
+
+        .container {
+            padding: 15px;
+            margin: 0 10px 20px 10px;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .sub-section h3 {
+            font-size: 1.1rem;
+        }
+
+        label {
+            font-size: 0.9rem;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"] {
+            font-size: 0.85rem;
+            padding: 8px;
+        }
+
+        button {
+            font-size: 0.9rem;
+            padding: 10px;
+        }
+
+        .result {
+            font-size: 0.9rem;
+            padding: 12px;
+        }
+
+        .explanation {
+            font-size: 0.8rem;
+            padding: 10px;
+        }
+
+        .button-link {
+            font-size: 0.85rem;
+            padding: 8px 15px;
+        }
+    }
+
+    #trajectoryChartContainer {
+    max-width: 100%;
+    min-height: 350px;
+    padding: 15px;
+    background: rgba(30, 30, 30, 0.7);
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-sizing: border-box;
+    position: relative;
+    margin-top: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#trajectoryChart {
+    display: block;
+    max-width: 100%;
+    width: 600px;
+    height: 300px;
+    background: rgba(44, 44, 44, 0.7);
+    cursor: grab;
+}
+
+#zoomControls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+#zoomControls button {
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: #e53935;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#zoomControls button:hover {
+    background-color: #c62828;
+}
+
+#chartError {
+    color: #e53935;
+    text-align: center;
+    margin-top: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 767px) {
+    #trajectoryChartContainer {
+        min-height: 250px;
+        padding: 10px;
+    }
+    #trajectoryChart {
+        width: 400px;
+        height: 200px;
+    }
+}
+
+</style>
+<script>
+    // Guardado de datos con localStorage
+let history = [];
+try {
+    const storedHistory = localStorage.getItem('calculationHistory');
+    if (storedHistory) {
+        history = JSON.parse(storedHistory) || [];
+    }
+} catch (e) {
+    console.error('Error al leer el historial de localStorage:', e);
+    history = [];
+}
+
+function saveToHistory(data, result) {
+    try {
+        const timestamp = new Date().toLocaleString();
+        history.unshift({ timestamp, data, result });
+        if (history.length > 5) history.pop(); // Mantener solo los últimos 5 cálculos
+        localStorage.setItem('calculationHistory', JSON.stringify(history));
+        updateHistoryDisplay();
+    } catch (e) {
+        console.error('Error al guardar en el historial:', e);
+    }
+}
+
+function updateHistoryDisplay() {
+    const historyDiv = document.getElementById('history');
+    if (!historyDiv) {
+        console.error('No se encontró el elemento #history');
+        return;
+    }
+    historyDiv.innerHTML = '';
+    if (!Array.isArray(history)) {
+        console.error('Historial no es un array:', history);
+        history = [];
+    }
+    history.forEach((entry, index) => {
+        if (!entry || !entry.timestamp || !entry.result) {
+            console.warn('Entrada de historial inválida:', entry);
+            return;
+        }
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `
+            <strong>Cálculo ${index + 1} (${entry.timestamp})</strong><br>
+            Resultado: ${entry.result}<br>
+            <button onclick="loadHistory(${index})">Cargar</button>
+        `;
+        historyDiv.appendChild(div);
+    });
+}
+
+function loadHistory(index) {
+    try {
+        const entry = history[index];
+        if (!entry) {
+            console.error('Entrada de historial no encontrada para el índice:', index);
+            return;
+        }
+        for (const [id, value] of Object.entries(entry.data)) {
+            const input = document.getElementById(id);
+            if (input) input.value = value;
+        }
+        document.getElementById('result').innerHTML = entry.result;
+        updateUnits();
+        // Redibujar la gráfica si hay datos relevantes
+        const { muzzleVelocity, distance, elevationAngle } = entry.data;
+        if (muzzleVelocity && distance && elevationAngle !== undefined) {
+            zoomLevel = 1;
+            offsetX = 0;
+            drawTrajectoryChart(parseFloat(muzzleVelocity), parseFloat(distance), parseFloat(elevationAngle), unitSystem);
+            localStorage.setItem('lastInputs', JSON.stringify({ muzzleVelocity, distance, elevationAngle }));
+        }
+    } catch (e) {
+        console.error('Error al cargar el historial:', e);
+    }
+}
+
+function clearHistory() {
+    try {
+        history = [];
+        localStorage.removeItem('calculationHistory');
+        updateHistoryDisplay();
+    } catch (e) {
+        console.error('Error al borrar el historial:', e);
+    }
+}
+</script>
+</head>
+<body>
+    <header>
+        Calculadora Balística
+    </header>
+    <div class="container">
+        <!-- Selector de unidades -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Unidades</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content active">
+                <label for="unitSystem">Sistema de unidades:</label>
+                <select id="unitSystem" onchange="updateUnits()">
+                    <option value="metric">Métrico</option>
+                    <option value="imperial">Imperial</option>
+                </select>
+            </div>
+        </div>
+    
+        <!-- Sección: Datos de la bala -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Datos de la bala</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <label for="bulletMass">Masa de la bala (<span class="unit-label" data-type="mass">granos</span>):</label>
+                <input type="number" id="bulletMass" step="0.1" placeholder="Ej: 150">
+                
+                <label for="bulletCaliber">Calibre (<span class="unit-label" data-type="length">pulgadas</span>):</label>
+                <input type="number" id="bulletCaliber" step="0.001" placeholder="Ej: 0.308">
+                
+                <label for="bulletBC">Coeficiente balístico (BC, G1):</label>
+                <input type="number" id="bulletBC" step="0.001" placeholder="Ej: 0.435">
+                
+                <label for="bulletDiameter">Diámetro de la bala (<span class="unit-label" data-type="length">pulgadas</span>):</label>
+                <input type="number" id="bulletDiameter" step="0.001" placeholder="Ej: 0.308">
+            </div>
+        </div>
+    
+        <!-- Sección: Datos del arma -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Datos del arma</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <label for="muzzleVelocity">Velocidad inicial (<span class="unit-label" data-type="velocity">pies/segundo</span>):</label>
+                <input type="number" id="muzzleVelocity" step="0.1" placeholder="Ej: 2800">
+                
+                <label for="barrelLength">Longitud del cañón (<span class="unit-label" data-type="length">pulgadas</span>):</label>
+                <input type="number" id="barrelLength" step="0.1" placeholder="Ej: 24">
+                
+                <label for="twistRate">Tasa de giro (1 vuelta cada X <span class="unit-label" data-type="length">pulgadas</span>):</label>
+                <input type="number" id="twistRate" step="0.1" placeholder="Ej: 10">
+            </div>
+        </div>
+    
+        <!-- Sección: Condiciones ambientales -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Condiciones ambientales</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <label for="temperature">Temperatura (<span class="unit-label" data-type="temperature">°F</span>):</label>
+                <input type="number" id="temperature" step="0.1" placeholder="Ej: 70">
+                
+                <label for="pressure">Presión atmosférica (<span class="unit-label" data-type="pressure">inHg</span>):</label>
+                <input type="number" id="pressure" step="0.01" placeholder="Ej: 29.92">
+                
+                <label for="humidity">Humedad (%):</label>
+                <input type="number" id="humidity" step="0.1" min="0" max="100" placeholder="Ej: 50">
+                
+                <label for="altitude">Altitud (<span class="unit-label" data-type="length">pies</span>):</label>
+                <input type="number" id="altitude" step="0.1" placeholder="Ej: 0">
+                
+                <label for="windSpeed">Velocidad del viento (<span class="unit-label" data-type="velocity">mph</span>):</label>
+                <input type="number" id="windSpeed" step="0.1" placeholder="Ej: 10">
+                
+                <label for="windDirection">Dirección del viento (grados, 0 = norte):</label>
+                <input type="number" id="windDirection" step="0.1" min="0" max="360" placeholder="Ej: 90">
+            </div>
+        </div>
+    
+        <!-- Sección: Cálculos básicos -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Cálculos básicos</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <div class="sub-section">
+                    <h3>MOA (Minuto de ángulo)</h3>
+                    <label for="moaDistance">Distancia (<span class="unit-label" data-type="length">yardas</span>):</label>
+                    <input type="number" id="moaDistance" step="0.1">
+                    <label for="moaExtension">Extensión (<span class="unit-label" data-type="length">pulgadas</span>):</label>
+                    <input type="number" id="moaExtension" step="0.1">
+                    <button onclick="calculateBasic('moa')">Calcular MOA</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Caída de bala</h3>
+                    <label for="bulletDropVelocity">Velocidad inicial (<span class="unit-label" data-type="velocity">pies/segundo</span>):</label>
+                    <input type="number" id="bulletDropVelocity" step="0.1">
+                    <label for="bulletDropDistance">Distancia al objetivo (<span class="unit-label" data-type="length">yardas</span>):</label>
+                    <input type="number" id="bulletDropDistance" step="0.1">
+                    <button onclick="calculateBasic('bulletDrop')">Calcular caída</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Deriva por viento</h3>
+                    <label for="windDriftSpeed">Velocidad del viento (<span class="unit-label" data-type="velocity">mph</span>):</label>
+                    <input type="number" id="windDriftSpeed" step="0.1">
+                    <label for="windDriftDistance">Distancia al objetivo (<span class="unit-label" data-type="length">yardas</span>):</label>
+                    <input type="number" id="windDriftDistance" step="0.1">
+                    <button onclick="calculateBasic('windDrift')">Calcular deriva</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Energía</h3>
+                    <label for="energyMass">Masa de la bala (<span class="unit-label" data-type="mass">granos</span>):</label>
+                    <input type="number" id="energyMass" step="0.1">
+                    <label for="energyVelocity">Velocidad (<span class="unit-label" data-type="velocity">pies/segundo</span>):</label>
+                    <input type="number" id="energyVelocity" step="0.1">
+                    <button onclick="calculateBasic('energy')">Calcular energía</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Penetración</h3>
+                    <label for="penetrationVelocity">Velocidad del proyectil (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="penetrationVelocity" step="0.1">
+                    <label for="materialHardness">Dureza del material (unidad específica):</label>
+                    <input type="number" id="materialHardness" step="0.1">
+                    <label for="projectileType">Tipo de proyectil (1-10):</label>
+                    <input type="number" id="projectileType" step="0.1" min="1" max="10">
+                    <button onclick="calculateBasic('penetration')">Calcular penetración</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Momento de inercia</h3>
+                    <label for="momentMass">Masa del proyectil (<span class="unit-label" data-type="mass">kg</span>):</label>
+                    <input type="number" id="momentMass" step="0.1">
+                    <label for="momentRadius">Radio del proyectil (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="momentRadius" step="0.1">
+                    <button onclick="calculateBasic('momentOfInertia')">Calcular momento</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Tiempo al objetivo</h3>
+                    <label for="timeVelocity">Velocidad inicial (<span class="unit-label" data-type="velocity">pies/segundo</span>):</label>
+                    <input type="number" id="timeVelocity" step="0.1">
+                    <label for="timeDistance">Distancia al objetivo (<span class="unit-label" data-type="length">yardas</span>):</label>
+                    <input type="number" id="timeDistance" step="0.1">
+                    <button onclick="calculateBasic('timeToTarget')">Calcular tiempo</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Fuerza</h3>
+                    <label for="forceMass">Masa (<span class="unit-label" data-type="mass">kg</span>):</label>
+                    <input type="number" id="forceMass" step="0.1">
+                    <label for="forceAcceleration">Aceleración (<span class="unit-label" data-type="acceleration">m/s²</span>):</label>
+                    <input type="number" id="forceAcceleration" step="0.1">
+                    <button onclick="calculateBasic('force')">Calcular fuerza</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Aceleración</h3>
+                    <label for="accelInitialVelocity">Velocidad inicial (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="accelInitialVelocity" step="0.1">
+                    <label for="accelFinalVelocity">Velocidad final (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="accelFinalVelocity" step="0.1">
+                    <label for="accelTime">Tiempo (<span class="unit-label" data-type="time">s</span>):</label>
+                    <input type="number" id="accelTime" step="0.1">
+                    <button onclick="calculateBasic('acceleration')">Calcular aceleración</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Masa</h3>
+                    <label for="massForce">Fuerza (N):</label>
+                    <input type="number" id="massForce" step="0.1">
+                    <label for="massAcceleration">Aceleración (<span class="unit-label" data-type="acceleration">m/s²</span>):</label>
+                    <input type="number" id="massAcceleration" step="0.1">
+                    <button onclick="calculateBasic('mass')">Calcular masa</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Distancia</h3>
+                    <label for="distanceTime">Tiempo (<span class="unit-label" data-type="time">s</span>):</label>
+                    <input type="number" id="distanceTime" step="0.1">
+                    <label for="distanceVelocity">Velocidad (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="distanceVelocity" step="0.1">
+                    <button onclick="calculateBasic('distance')">Calcular distancia</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Velocidad</h3>
+                    <label for="velocityDistance">Distancia (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="velocityDistance" step="0.1">
+                    <label for="velocityTime">Tiempo (<span class="unit-label" data-type="time">s</span>):</label>
+                    <input type="number" id="velocityTime" step="0.1">
+                    <button onclick="calculateBasic('velocity')">Calcular velocidad</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Gravedad</h3>
+                    <label for="gravityMass1">Masa del cuerpo 1 (<span class="unit-label" data-type="mass">kg</span>):</label>
+                    <input type="number" id="gravityMass1" step="0.1">
+                    <label for="gravityMass2">Masa del cuerpo 2 (<span class="unit-label" data-type="mass">kg</span>):</label>
+                    <input type="number" id="gravityMass2" step="0.1">
+                    <label for="gravityDistance">Distancia entre los cuerpos:</label>
+                    <input type="number" id="gravityDistance" step="0.1">
+                    <label for="gravityDistanceUnit">Unidad de distancia:</label>
+                    <select id="gravityDistanceUnit">
+                        <option value="nm">Nanómetros (nm)</option>
+                        <option value="mm">Milímetros (mm)</option>
+                        <option value="cm">Centímetros (cm)</option>
+                        <option value="m">Metros (m)</option>
+                        <option value="km">Kilómetros (km)</option>
+                        <option value="in">Pulgadas (in)</option>
+                        <option value="ft">Pies (ft)</option>
+                        <option value="yd">Yardas (yd)</option>
+                        <option value="mi">Millas (mi)</option>
+                    </select>
+                    <button onclick="calculateBasic('gravity')">Calcular gravedad</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Trayectoria de proyectil</h3>
+                    <label for="trajAngle">Ángulo de lanzamiento (grados):</label>
+                    <input type="number" id="trajAngle" step="0.1">
+                    <label for="trajVelocity">Velocidad inicial (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="trajVelocity" step="0.1">
+                    <label for="trajDistanceX">Distancia horizontal (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="trajDistanceX" step="0.1">
+                    <button onclick="calculateBasic('trajectory')">Calcular trayectoria</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Ángulo de elevación</h3>
+                    <label for="elevHeight">Altura del objetivo (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="elevHeight" step="0.1">
+                    <label for="elevDistance">Distancia al objetivo (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="elevDistance" step="0.1">
+                    <button onclick="calculateBasic('elevationAngle')">Calcular ángulo</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Cálculo de distancia</h3>
+                    <label for="distCalcHeight">Altura del objetivo (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="distCalcHeight" step="0.1">
+                    <label for="distCalcAngle">Ángulo de elevación (grados):</label>
+                    <input type="number" id="distCalcAngle" step="0.1">
+                    <button onclick="calculateBasic('distanceCalculation')">Calcular distancia</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Efecto Coriolis</h3>
+                    <label for="coriolisVelocity">Velocidad del proyectil (<span class="unit-label" data-type="velocity">m/s</span>):</label>
+                    <input type="number" id="coriolisVelocity" step="0.1">
+                    <label for="coriolisTime">Tiempo de vuelo (<span class="unit-label" data-type="time">s</span>):</label>
+                    <input type="number" id="coriolisTime" step="0.1">
+                    <label for="coriolisAcceleration">Aceleración (<span class="unit-label" data-type="acceleration">m/s²</span>):</label>
+                    <input type="number" id="coriolisAcceleration" step="0.1">
+                    <button onclick="calculateBasic('coriolisEffect')">Calcular Coriolis</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Punto de impacto</h3>
+                    <label for="impactDistance">Distancia al objetivo (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="impactDistance" step="0.1">
+                    <label for="impactAngle">Ángulo de ajuste (grados):</label>
+                    <input type="number" id="impactAngle" step="0.1">
+                    <button onclick="calculateBasic('impactPoint')">Calcular impacto</button>
+                </div>
+    
+                <div class="sub-section">
+                    <h3>Corrección de viento</h3>
+                    <label for="windCorrDistance">Distancia al objetivo (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="windCorrDistance" step="0.1">
+                    <label for="windCorrCoefficient">Coeficiente de viento (<span class="unit-label" data-type="length">m</span>):</label>
+                    <input type="number" id="windCorrCoefficient" step="0.1">
+                    <button onclick="calculateBasic('windCorrection')">Calcular corrección</button>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Sección: Cálculos avanzados -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Cálculos avanzados</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <label for="advDistance">Distancia al objetivo (<span class="unit-label" data-type="length">yardas</span>):</label>
+                <input type="number" id="advDistance" step="0.1" placeholder="Ej: 500">
+                
+                <label for="advElevationAngle">Ángulo de elevación (grados):</label>
+                <input type="number" id="advElevationAngle" step="0.1" placeholder="Ej: 0">
+                
+                <button onclick="calculateAdvanced()">Calcular</button>
+            </div>
+        </div>
+    
+<!-- Sección: Resultados -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+        <h2>Resultados</h2>
+        <span>▼</span>
+    </div>
+    <div class="section-content active">
+        <div id="result" class="result">Ingresa los datos y calcula para ver los resultados.</div>
+        <div id="trajectoryChartContainer">
+            <canvas id="trajectoryChart" width="600" height="300"></canvas>
+            <div id="zoomControls">
+                <button onclick="zoomIn()">+</button>
+                <button onclick="zoomOut()">-</button>
+            </div>
+            <div id="chartError" style="display: none;">Error al cargar la gráfica.</div>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="section-header" onclick="toggleSection(this)">
+        <h2>Historial de cálculos</h2>
+        <span>▼</span>
+    </div>
+    <div class="section-content">
+        <div id="history" class="history-list"></div>
+        <button onclick="clearHistory()">Borrar historial</button>
+    </div>
+</div>
+        <!-- Sección: Explicaciones -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <h2>Explicaciones de conceptos</h2>
+                <span>▼</span>
+            </div>
+            <div class="section-content">
+                <div id="explanation-moa" class="explanation">
+                    <strong>MOA (Minuto de ángulo)</strong>: El MOA es una medida angular utilizada en balística para describir la precisión. 
+                    1 MOA equivale a 1.047 pulgadas a 100 yardas. Se calcula utilizando la relación angular entre el tamaño del grupo de impacto y la distancia al objetivo.
+                </div>
+                <div id="explanation-bulletDrop" class="explanation">
+                    <strong>Caída de bala</strong>: La caída de bala es la distancia vertical que recorre una bala debido a la gravedad desde que sale del cañón hasta que llega al objetivo. 
+                    Se mide en función de la distancia al objetivo y la velocidad inicial, utilizando la fórmula de caída libre.
+                </div>
+                <div id="explanation-windDrift" class="explanation">
+                    <strong>Deriva por viento</strong>: La deriva por viento es el desplazamiento lateral que sufre una bala debido al viento mientras viaja hacia el objetivo. 
+                    Se ve afectada por la velocidad del viento y la distancia, calculándose a partir de la velocidad del viento y la trayectoria de la bala.
+                </div>
+                <div id="explanation-energy" class="explanation">
+                    <strong>Energía</strong>: La energía cinética de una bala es una medida de su capacidad de causar daño. Se calcula en función de la masa y la velocidad.
+                </div>
+                <div id="explanation-penetration" class="explanation">
+                    <strong>Penetración</strong>: La penetración mide cuánto profundiza un proyectil en un objetivo al impactar. 
+                    Factores como la velocidad del proyectil, el tipo de munición y el material del objetivo afectan la penetración.
+                </div>
+                <div id="explanation-momentOfInertia" class="explanation">
+                    <strong>Momento de inercia</strong>: El momento de inercia mide la resistencia de un cuerpo a cambiar su rotación. 
+                    Se usa para calcular cómo un proyectil se comportará al girar.
+                </div>
+                <div id="explanation-timeToTarget" class="explanation">
+                    <strong>Tiempo al objetivo</strong>: El tiempo que tarda una bala en llegar al objetivo depende de la distancia y la velocidad inicial.
+                </div>
+                <div id="explanation-force" class="explanation">
+                    <strong>Fuerza</strong>: La fuerza ejercida por una bala se calcula utilizando la masa y la aceleración. Se mide en Newtons (N).
+                </div>
+                <div id="explanation-acceleration" class="explanation">
+                    <strong>Aceleración</strong>: La aceleración de una bala es el cambio en la velocidad sobre el tiempo. Se mide en metros por segundo cuadrado (m/s²).
+                </div>
+                <div id="explanation-mass" class="explanation">
+                    <strong>Masa</strong>: La masa de la bala afecta su trayectoria y energía. Se mide en kilogramos (kg) o granos.
+                </div>
+                <div id="explanation-distance" class="explanation">
+                    <strong>Distancia</strong>: La distancia al objetivo afecta la caída y deriva de la bala. Se mide en yardas o metros.
+                </div>
+                <div id="explanation-velocity" class="explanation">
+                    <strong>Velocidad</strong>: La velocidad de la bala influye en su energía y tiempo de vuelo. Se mide en metros por segundo (m/s) o pies por segundo (fps).
+                </div>
+                <div id="explanation-gravity" class="explanation">
+                    <strong>Gravedad</strong>: La fuerza gravitacional entre dos cuerpos se calcula usando sus masas y la distancia que los separa. La fórmula es:
+                    F = G * (m1 * m2) / r², donde G es la constante gravitacional (6.67430 × 10^-11 N·m²/kg²).
+                    La distancia puede ingresarse en milímetros, centímetros, metros o kilómetros.
+                </div>
+                <div id="explanation-trajectory" class="explanation">
+                    <strong>Trayectoria del Proyectil</strong>: La trayectoria de un proyectil se describe mediante la siguiente ecuación:
+                    y = x * tan(θ) - (g * x²) / (2 * v² * cos²(θ)), donde g es la aceleración debida a la gravedad, v es la velocidad inicial y θ es el ángulo de lanzamiento.
+                </div>
+                <div id="explanation-elevationAngle" class="explanation">
+                    <strong>Ángulo de Elevación</strong>: El ángulo de elevación se puede calcular usando la fórmula:
+                    θ = atan(altura / distancia).
+                </div>
+                <div id="explanation-distanceCalculation" class="explanation">
+                    <strong>Cálculo de Distancia</strong>: Se puede calcular la distancia usando la altura y el ángulo de elevación con la fórmula:
+                    distancia = altura / tan(θ).
+                </div>
+                <div id="explanation-coriolisEffect" class="explanation">
+                    <strong>Efecto Coriolis</strong>: La rotación de la Tierra afecta la trayectoria del proyectil. 
+                    La fórmula para calcular la desviación es Δx = v * t + (1/2) * a * t², donde v es la velocidad del proyectil, t es el tiempo y a es la aceleración.
+                </div>
+                <div id="explanation-impactPoint" class="explanation">
+                    <strong>Punto de Impacto</strong>: El punto de impacto se calcula ajustando la puntería y teniendo en cuenta la distancia y el tipo de mira.
+                </div>
+                <div id="explanation-windCorrection" class="explanation">
+                    <strong>Correcciones por Viento</strong>: La corrección por viento puede calcularse usando la fórmula:
+                    corrección = distancia * coeficiente de viento.
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de navegación -->
+        <div class="button-container">
+            <a href="BibliasMaker.html" class="button-link">Empezar a escribir</a>
+            <a href="Calculadora_Científica.html" class="button-link">Volver a calculadora</a>
+        </div>
+    </div>
+
+    <script>
+
+        // Estado global para el sistema de unidades
+let unitSystem = localStorage.getItem('unitSystem') || 'imperial';
+document.getElementById('unitSystem').value = unitSystem;
+
+// Funciones de conversión
+const conversionFactors = {
+    length: {
+        nm: 1e-9, // nanómetros a metros
+        mm: 1e-3, // milímetros a metros
+        cm: 1e-2, // centímetros a metros
+        m: 1, // metros (base)
+        km: 1e3, // kilómetros a metros
+        in: 0.0254, // pulgadas a metros
+        ft: 0.3048, // pies a metros
+        yd: 0.9144, // yardas a metros
+        mi: 1609.34 // millas a metros
+    },
+    mass: {
+        kg: 1, // kilogramos (base)
+        g: 1e-3, // gramos a kg
+        mg: 1e-6, // miligramos a kg
+        gr: 0.00006479891 // granos a kg
+    },
+    velocity: {
+        'm/s': 1, // metros/segundo (base)
+        'km/s': 1e3, // kilómetros/segundo a m/s
+        'k/ns': 1e12, // kilómetros/nanosegundo a m/s
+        fps: 0.3048, // pies/segundo a m/s
+        mph: 0.44704, // millas/hora a m/s
+        c: 299792458 // velocidad de la luz a m/s
+    },
+    time: {
+        ns: 1e-9, // nanosegundos a segundos
+        ms: 1e-3, // milisegundos a segundos
+        s: 1 // segundos (base)
+    },
+    temperature: {
+        C: (value) => value, // Celsius (base)
+        F: (value) => (value * 9/5) + 32 // Celsius a Fahrenheit
+    },
+    pressure: {
+        Pa: 1, // Pascales (base)
+        inHg: 3386.39 // inHg a Pascales
+    },
+    acceleration: {
+        'm/s²': 1 // metros/segundo² (base)
+    }
+};
+
+// Unidades por sistema
+const unitLabels = {
+    metric: {
+        length: 'm',
+        mass: 'kg',
+        velocity: 'm/s',
+        time: 's',
+        temperature: '°C',
+        pressure: 'Pa',
+        acceleration: 'm/s²'
+    },
+    imperial: {
+        length: 'yd',
+        mass: 'gr',
+        velocity: 'fps',
+        time: 's',
+        temperature: '°F',
+        pressure: 'inHg',
+        acceleration: 'm/s²'
+    }
+};
+
+// Actualizar etiquetas de unidades
+function updateUnits() {
+    unitSystem = document.getElementById('unitSystem').value;
+    localStorage.setItem('unitSystem', unitSystem);
+
+    document.querySelectorAll('.unit-label').forEach(label => {
+        const type = label.getAttribute('data-type');
+        label.textContent = unitLabels[unitSystem][type];
+    });
+
+    // Convertir valores existentes en los campos
+    convertInputValues();
+}
+
+// Convertir valores de entrada al cambiar de sistema
+function convertInputValues() {
+    const inputs = document.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        const value = parseFloat(input.value);
+        if (!isNaN(value)) {
+            const label = input.previousElementSibling;
+            if (label && label.querySelector('.unit-label')) {
+                const type = label.querySelector('.unit-label').getAttribute('data-type');
+                if (type === 'length') {
+                    input.value = convertLength(value, unitSystem === 'metric' ? 'yd' : 'm', unitSystem === 'metric' ? 'm' : 'yd');
+                } else if (type === 'mass') {
+                    input.value = convertMass(value, unitSystem === 'metric' ? 'gr' : 'kg', unitSystem === 'metric' ? 'kg' : 'gr');
+                } else if (type === 'velocity') {
+                    input.value = convertVelocity(value, unitSystem === 'metric' ? 'fps' : 'm/s', unitSystem === 'metric' ? 'm/s' : 'fps');
+                } else if (type === 'temperature') {
+                    input.value = convertTemperature(value, unitSystem === 'metric' ? 'F' : 'C', unitSystem === 'metric' ? 'C' : 'F');
+                } else if (type === 'pressure') {
+                    input.value = convertPressure(value, unitSystem === 'metric' ? 'inHg' : 'Pa', unitSystem === 'metric' ? 'Pa' : 'inHg');
+                }
+            }
+        }
+    });
+}
+
+// Funciones de conversión
+function convertLength(value, fromUnit, toUnit) {
+    const meters = value * conversionFactors.length[fromUnit];
+    return meters / conversionFactors.length[toUnit];
+}
+
+function convertMass(value, fromUnit, toUnit) {
+    const kg = value * conversionFactors.mass[fromUnit];
+    return kg / conversionFactors.mass[toUnit];
+}
+
+function convertVelocity(value, fromUnit, toUnit) {
+    const mps = value * conversionFactors.velocity[fromUnit];
+    return mps / conversionFactors.velocity[toUnit];
+}
+
+function convertTime(value, fromUnit, toUnit) {
+    const seconds = value * conversionFactors.time[fromUnit];
+    return seconds / conversionFactors.time[toUnit];
+}
+
+function convertTemperature(value, fromUnit, toUnit) {
+    if (fromUnit === 'F' && toUnit === 'C') {
+        return (value - 32) * 5 / 9;
+    } else if (fromUnit === 'C' && toUnit === 'F') {
+        return (value * 9 / 5) + 32;
+    }
+    return value;
+}
+
+function convertPressure(value, fromUnit, toUnit) {
+    const pascal = value * conversionFactors.pressure[fromUnit];
+    return pascal / conversionFactors.pressure[toUnit];
+}
+
+function convertAcceleration(value, fromUnit, toUnit) {
+    return value; // Aceleración ya está en m/s²
+}
+        // Función para colapsar/expandir secciones
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+            const arrow = header.querySelector('span');
+            arrow.textContent = content.classList.contains('active') ? '▲' : '▼';
+        }
+
+        // Variables globales para la gráfica
+let zoomLevel = 1;
+let offsetX = 0;
+let isDragging = false;
+let startX;
+
+// Seleccionar unidad adecuada para la cuadrícula
+function selectUnitForDistance(distanceM) {
+    if (unitSystem === 'metric') {
+        if (distanceM < 0.001) return { unit: 'nm', factor: convertLength(1, 'm', 'nm') };
+        if (distanceM < 0.1) return { unit: 'mm', factor: convertLength(1, 'm', 'mm') };
+        if (distanceM < 1) return { unit: 'cm', factor: convertLength(1, 'm', 'cm') };
+        if (distanceM < 1000) return { unit: 'm', factor: 1 };
+        return { unit: 'km', factor: convertLength(1, 'm', 'km') };
+    } else {
+        const distanceYd = convertLength(distanceM, 'm', 'yd');
+        if (distanceYd < 0.0277778) return { unit: 'in', factor: convertLength(1, 'm', 'in') };
+        if (distanceYd < 0.333333) return { unit: 'ft', factor: convertLength(1, 'm', 'ft') };
+        return { unit: 'yd', factor: convertLength(1, 'm', 'yd') };
+    }
+}
+
+function calculateTrajectory(muzzleVelocity, distance, elevationAngle, unitSystem) {
+    if (isNaN(muzzleVelocity) || isNaN(distance) || isNaN(elevationAngle)) {
+        throw new Error('Datos inválidos para la gráfica.');
+    }
+
+    const g = 9.81;
+    const elevationAngleRad = elevationAngle * Math.PI / 180;
+    const muzzleVelocityMs = convertVelocity(muzzleVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+    const targetDistanceM = convertLength(distance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+
+    const vx = muzzleVelocityMs * Math.cos(elevationAngleRad);
+    const vy = muzzleVelocityMs * Math.sin(elevationAngleRad);
+
+    // Trayectoria hasta el objetivo
+    const points = [];
+    const step = targetDistanceM / 50;
+    for (let x = 0; x <= targetDistanceM; x += step) {
+        const t = vx !== 0 ? x / vx : 0; // Evitar división por 0
+        const y = vy * t - 0.5 * g * t * t;
+        points.push({
+            x: unitSystem === 'metric' ? x : convertLength(x, 'm', 'yd'),
+            y: unitSystem === 'metric' ? y : convertLength(y, 'm', 'in')
+        });
+    }
+
+    // Trayectoria extendida hasta y=0
+    let maxTime;
+    if (vy === 0) {
+        // Si el ángulo es 0, calcular el tiempo hasta que y=0 considerando solo la gravedad
+        maxTime = Math.sqrt(2 * 0 / g); // y inicial es 0, pero necesitamos un tiempo razonable
+        if (isNaN(maxTime) || maxTime === 0) {
+            // Usar un tiempo basado en la distancia máxima simulada
+            maxTime = targetDistanceM / vx * 2; // Doble del tiempo al objetivo
+        }
+    } else {
+        maxTime = (vy + Math.sqrt(vy * vy + 2 * g * 0)) / g;
+    }
+
+    const maxDistanceM = vx * maxTime;
+    const extendedPoints = [];
+    const extendedStep = maxDistanceM > 0 ? maxDistanceM / 100 : targetDistanceM / 100; // Evitar división por 0
+    for (let x = 0; x <= (maxDistanceM > 0 ? maxDistanceM : targetDistanceM * 2); x += extendedStep) {
+        const t = vx !== 0 ? x / vx : 0;
+        const y = vy * t - 0.5 * g * t * t;
+        if (y < 0 && x > targetDistanceM) break; // Parar cuando y<0 después del objetivo
+        extendedPoints.push({
+            x: unitSystem === 'metric' ? x : convertLength(x, 'm', 'yd'),
+            y: unitSystem === 'metric' ? y : convertLength(y, 'm', 'in')
+        });
+    }
+
+    return {
+        points,
+        extendedPoints,
+        impact: points[points.length - 1],
+        targetDistance: unitSystem === 'metric' ? targetDistanceM : convertLength(targetDistanceM, 'm', 'yd'),
+        maxDistance: unitSystem === 'metric' ? (maxDistanceM > 0 ? maxDistanceM : targetDistanceM * 2) : convertLength(maxDistanceM > 0 ? maxDistanceM : targetDistanceM * 2, 'm', 'yd')
+    };
+}
+
+function drawTrajectoryChart(muzzleVelocity, distance, elevationAngle, unitSystem) {
+    const canvas = document.getElementById('trajectoryChart');
+    const errorDiv = document.getElementById('chartError');
+    errorDiv.style.display = 'none';
+
+    if (!canvas || !canvas.getContext) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Error: Canvas no soportado.';
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    try {
+        const { points, extendedPoints, impact, targetDistance, maxDistance } = calculateTrajectory(muzzleVelocity, distance, elevationAngle, unitSystem);
+
+        // Validar datos
+        if (!points.length || !extendedPoints.length || !impact || isNaN(targetDistance) || isNaN(maxDistance)) {
+            throw new Error('No se pudieron calcular los puntos de la trayectoria.');
+        }
+
+        const padding = 40;
+        const w = canvas.width - 2 * padding;
+        const h = canvas.height - 2 * padding;
+
+        // Enfocar en la distancia al objetivo
+        let viewMaxX = targetDistance * 1.1;
+        const minY = Math.min(...[...points, ...extendedPoints].map(p => p.y));
+        const maxY = Math.max(...[...points, ...extendedPoints].map(p => p.y), 0);
+        const yRange = maxY - minY || 1;
+
+        // Ajustar con zoom y offset
+        viewMaxX /= zoomLevel;
+        const viewMinX = offsetX;
+        viewMaxX += offsetX;
+        const viewMaxY = maxY + yRange * 0.1 / zoomLevel;
+        const viewMinY = minY - yRange * 0.1 / zoomLevel;
+        const viewYRange = viewMaxY - viewMinY;
+
+        const scaleX = w / (viewMaxX - viewMinX);
+        const scaleY = h / viewYRange;
+
+        // Fondo
+        ctx.fillStyle = 'rgba(44, 44, 44, 0.7)';
+        ctx.fillRect(padding, padding, w, h);
+
+        // Cuadrícula
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        const xUnitInfo = selectUnitForDistance(convertLength(targetDistance, unitSystem === 'metric' ? 'm' : 'yd', 'm'));
+        const xStep = targetDistance / 5 / xUnitInfo.factor;
+        for (let i = Math.ceil(viewMinX / xStep); i <= Math.floor(viewMaxX / xStep); i++) {
+            const x = padding + (i * xStep - viewMinX) * scaleX;
+            ctx.moveTo(x, padding);
+            ctx.lineTo(x, padding + h);
+        }
+        const yStep = viewYRange / 5 / (unitSystem === 'metric' ? 1 : convertLength(1, 'm', 'in'));
+        for (let i = Math.ceil(viewMinY / yStep); i <= Math.floor(viewMaxY / yStep); i++) {
+            const y = padding + h - (i * yStep - viewMinY) * scaleY;
+            ctx.moveTo(padding, y);
+            ctx.lineTo(padding + w, y);
+        }
+        ctx.stroke();
+
+        // Ejes
+        ctx.beginPath();
+        ctx.strokeStyle = '#bdbdbd';
+        ctx.lineWidth = 2;
+        ctx.moveTo(padding, padding + h);
+        ctx.lineTo(padding + w, padding + h);
+        ctx.moveTo(padding, padding);
+        ctx.lineTo(padding, padding + h);
+        ctx.stroke();
+
+        // Etiquetas y números
+        ctx.fillStyle = '#bdbdbd';
+        ctx.font = '12px Lora, serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(unitSystem === 'metric' ? `Distancia (${xUnitInfo.unit})` : `Distancia (${xUnitInfo.unit})`, padding + w / 2, canvas.height - 10);
+        ctx.save();
+        ctx.translate(15, padding + h / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(unitSystem === 'metric' ? 'Caída (m)' : 'Caída (in)', 0, 0);
+        ctx.restore();
+
+        ctx.textAlign = 'right';
+        for (let i = Math.ceil(viewMinX / xStep); i <= Math.floor(viewMaxX / xStep); i++) {
+            const x = padding + (i * xStep - viewMinX) * scaleX;
+            const value = (i * xStep).toFixed(1);
+            ctx.fillText(value, x, padding + h + 15);
+        }
+        for (let i = Math.ceil(viewMinY / yStep); i <= Math.floor(viewMaxY / yStep); i++) {
+            const y = padding + h - (i * yStep - viewMinY) * scaleY;
+            const value = (i * yStep).toFixed(2);
+            ctx.fillText(value, padding - 10, y + 5);
+        }
+
+        // Trayectoria extendida (transparente)
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        extendedPoints.forEach((p, i) => {
+            const canvasX = padding + (p.x - viewMinX) * scaleX;
+            const canvasY = padding + h - (p.y - viewMinY) * scaleY;
+            if (i === 0) ctx.moveTo(canvasX, canvasY);
+            else ctx.lineTo(canvasX, canvasY);
+        });
+        ctx.stroke();
+
+        // Trayectoria principal
+        ctx.beginPath();
+        ctx.strokeStyle = '#e53935';
+        ctx.lineWidth = 3;
+        points.forEach((p, i) => {
+            const canvasX = padding + (p.x - viewMinX) * scaleX;
+            const canvasY = padding + h - (p.y - viewMinY) * scaleY;
+            if (i === 0) ctx.moveTo(canvasX, canvasY);
+            else ctx.lineTo(canvasX, canvasY);
+        });
+        ctx.stroke();
+
+        // Efecto de estallido en el impacto
+        const impactX = padding + (impact.x - viewMinX) * scaleX;
+        const impactY = padding + h - (impact.y - viewMinY) * scaleY;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255, 165, 0, 0.7)';
+        ctx.arc(impactX, impactY, 10, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = '#ffffff';
+        ctx.arc(impactX, impactY, 6, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Interactividad
+        canvas.onmousedown = (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            canvas.style.cursor = 'grabbing';
+        };
+        canvas.onmousemove = (e) => {
+            if (isDragging) {
+                const dx = (e.clientX - startX) / scaleX;
+                offsetX -= dx;
+                offsetX = Math.max(0, Math.min(offsetX, maxDistance * 10));
+                startX = e.clientX;
+                drawTrajectoryChart(muzzleVelocity, distance, elevationAngle, unitSystem);
+            }
+        };
+        canvas.onmouseup = () => {
+            isDragging = false;
+            canvas.style.cursor = 'grab';
+        };
+        canvas.onmouseleave = () => {
+            isDragging = false;
+            canvas.style.cursor = 'grab';
+        };
+    } catch (e) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Error: ' + e.message;
+    }
+}
+
+// Funciones de zoom
+function zoomIn() {
+    zoomLevel = Math.min(zoomLevel * 1.2, 5);
+    const inputs = JSON.parse(localStorage.getItem('lastInputs') || '{}');
+    if (inputs.muzzleVelocity) {
+        drawTrajectoryChart(inputs.muzzleVelocity, inputs.distance, inputs.elevationAngle, unitSystem);
+    }
+}
+
+function zoomOut() {
+    zoomLevel = Math.max(zoomLevel / 1.2, 0.5);
+    const inputs = JSON.parse(localStorage.getItem('lastInputs') || '{}');
+    if (inputs.muzzleVelocity) {
+        drawTrajectoryChart(inputs.muzzleVelocity, inputs.distance, inputs.elevationAngle, unitSystem);
+    }
+}
+
+// Función para cálculos básicos
+function calculateBasic(type) {
+    let result = '';
+    const resultDiv = document.getElementById('result');
+    const inputs = {};
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        if (input.value) inputs[input.id] = input.value;
+    });
+
+    try {
+        switch(type) {
+            case 'moa':
+                let moaDistance = parseFloat(document.getElementById('moaDistance').value);
+                let moaExtension = parseFloat(document.getElementById('moaExtension').value);
+                if (isNaN(moaDistance) || isNaN(moaExtension)) throw new Error('Todos los campos deben ser llenados');
+                moaDistance = convertLength(moaDistance, unitSystem === 'metric' ? 'm' : 'yd', 'yd');
+                moaExtension = convertLength(moaExtension, unitSystem === 'metric' ? 'm' : 'in', 'in');
+                result = `MOA: ${(moaExtension / moaDistance).toFixed(2)} MOA`;
+                break;
+
+            case 'bulletDrop':
+                let bulletDropVelocity = parseFloat(document.getElementById('bulletDropVelocity').value);
+                let bulletDropDistance = parseFloat(document.getElementById('bulletDropDistance').value);
+                if (isNaN(bulletDropVelocity) || isNaN(bulletDropDistance)) throw new Error('Todos los campos deben ser llenados');
+                bulletDropVelocity = convertVelocity(bulletDropVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'fps');
+                bulletDropDistance = convertLength(bulletDropDistance, unitSystem === 'metric' ? 'm' : 'yd', 'yd');
+                const dropInches = (bulletDropDistance * 0.1);
+                result = `Caída de bala: ${unitSystem === 'metric' ? convertLength(dropInches, 'in', 'm').toFixed(2) + ' m' : dropInches.toFixed(2) + ' pulgadas'}`;
+                break;
+
+            case 'windDrift':
+                let windDriftSpeed = parseFloat(document.getElementById('windDriftSpeed').value);
+                let windDriftDistance = parseFloat(document.getElementById('windDriftDistance').value);
+                if (isNaN(windDriftSpeed) || isNaN(windDriftDistance)) throw new Error('Todos los campos deben ser llenados');
+                windDriftSpeed = convertVelocity(windDriftSpeed, unitSystem === 'metric' ? 'm/s' : 'mph', 'mph');
+                windDriftDistance = convertLength(windDriftDistance, unitSystem === 'metric' ? 'm' : 'yd', 'yd');
+                const driftInches = (windDriftSpeed * windDriftDistance * 0.05);
+                result = `Deriva por viento: ${unitSystem === 'metric' ? convertLength(driftInches, 'in', 'm').toFixed(2) + ' m' : driftInches.toFixed(2) + ' pulgadas'}`;
+                break;
+
+            case 'energy':
+                let energyMass = parseFloat(document.getElementById('energyMass').value);
+                let energyVelocity = parseFloat(document.getElementById('energyVelocity').value);
+                if (isNaN(energyMass) || isNaN(energyVelocity)) throw new Error('Todos los campos deben ser llenados');
+                energyMass = convertMass(energyMass, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+                energyVelocity = convertVelocity(energyVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                result = `Energía cinética: ${(0.5 * energyMass * Math.pow(energyVelocity, 2)).toFixed(2)} Joules`;
+                break;
+
+            case 'penetration':
+                let penetrationVelocity = parseFloat(document.getElementById('penetrationVelocity').value);
+                const materialHardness = parseFloat(document.getElementById('materialHardness').value);
+                const projectileType = parseFloat(document.getElementById('projectileType').value);
+                if (isNaN(penetrationVelocity) || isNaN(materialHardness) || isNaN(projectileType)) throw new Error('Todos los campos deben ser llenados');
+                penetrationVelocity = convertVelocity(penetrationVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                const penetration = (penetrationVelocity * projectileType) / materialHardness;
+                result = `Penetración estimada: ${unitSystem === 'metric' ? penetration.toFixed(2) + ' mm' : convertLength(penetration, 'mm', 'in').toFixed(2) + ' pulgadas'}`;
+                break;
+
+            case 'momentOfInertia':
+                let momentMass = parseFloat(document.getElementById('momentMass').value);
+                let momentRadius = parseFloat(document.getElementById('momentRadius').value);
+                if (isNaN(momentMass) || isNaN(momentRadius)) throw new Error('Todos los campos deben ser llenados');
+                momentMass = convertMass(momentMass, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+                momentRadius = convertLength(momentRadius, unitSystem === 'metric' ? 'm' : 'in', 'm');
+                const momentOfInertia = (2 / 5) * momentMass * Math.pow(momentRadius, 2);
+                result = `Momento de inercia: ${momentOfInertia.toFixed(2)} kg*m²`;
+                break;
+
+            case 'timeToTarget':
+                let timeVelocity = parseFloat(document.getElementById('timeVelocity').value);
+                let timeDistance = parseFloat(document.getElementById('timeDistance').value);
+                if (isNaN(timeVelocity) || isNaN(timeDistance)) throw new Error('Todos los campos deben ser llenados');
+                timeVelocity = convertVelocity(timeVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'fps');
+                timeDistance = convertLength(timeDistance, unitSystem === 'metric' ? 'm' : 'yd', 'yd');
+                const time = (timeDistance / timeVelocity);
+                result = `Tiempo al objetivo: ${unitSystem === 'metric' ? convertTime(time, 's', 's').toFixed(2) + ' s' : time.toFixed(2) + ' s'}`;
+                break;
+
+            case 'force':
+                let forceMass = parseFloat(document.getElementById('forceMass').value);
+                let forceAcceleration = parseFloat(document.getElementById('forceAcceleration').value);
+                if (isNaN(forceMass) || isNaN(forceAcceleration)) throw new Error('Todos los campos deben ser llenados');
+                forceMass = convertMass(forceMass, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+                forceAcceleration = convertAcceleration(forceAcceleration, unitSystem === 'metric' ? 'm/s²' : 'm/s²', 'm/s²');
+                result = `Fuerza: ${(forceMass * forceAcceleration).toFixed(2)} Newtons`;
+                break;
+
+            case 'acceleration':
+                let accelInitialVelocity = parseFloat(document.getElementById('accelInitialVelocity').value);
+                let accelFinalVelocity = parseFloat(document.getElementById('accelFinalVelocity').value);
+                let accelTime = parseFloat(document.getElementById('accelTime').value);
+                if (isNaN(accelInitialVelocity) || isNaN(accelFinalVelocity) || isNaN(accelTime)) throw new Error('Todos los campos deben ser llenados');
+                accelInitialVelocity = convertVelocity(accelInitialVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                accelFinalVelocity = convertVelocity(accelFinalVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                accelTime = convertTime(accelTime, unitSystem === 'metric' ? 's' : 's', 's');
+                result = `Aceleración: ${((accelFinalVelocity - accelInitialVelocity) / accelTime).toFixed(2)} m/s²`;
+                break;
+
+            case 'mass':
+                const massForce = parseFloat(document.getElementById('massForce').value);
+                let massAcceleration = parseFloat(document.getElementById('massAcceleration').value);
+                if (isNaN(massForce) || isNaN(massAcceleration)) throw new Error('Todos los campos deben ser llenados');
+                massAcceleration = convertAcceleration(massAcceleration, unitSystem === 'metric' ? 'm/s²' : 'm/s²', 'm/s²');
+                const mass = (massForce / massAcceleration);
+                result = `Masa: ${unitSystem === 'metric' ? mass.toFixed(2) + ' kg' : convertMass(mass, 'kg', 'gr').toFixed(2) + ' granos'}`;
+                break;
+
+            case 'distance':
+                let distanceTime = parseFloat(document.getElementById('distanceTime').value);
+                let distanceVelocity = parseFloat(document.getElementById('distanceVelocity').value);
+                if (isNaN(distanceTime) || isNaN(distanceVelocity)) throw new Error('Todos los campos deben ser llenados');
+                distanceTime = convertTime(distanceTime, unitSystem === 'metric' ? 's' : 's', 's');
+                distanceVelocity = convertVelocity(distanceVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                const distance = (distanceVelocity * distanceTime);
+                result = `Distancia: ${unitSystem === 'metric' ? distance.toFixed(2) + ' m' : convertLength(distance, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            case 'velocity':
+                let velocityDistance = parseFloat(document.getElementById('velocityDistance').value);
+                let velocityTime = parseFloat(document.getElementById('velocityTime').value);
+                if (isNaN(velocityDistance) || isNaN(velocityTime)) throw new Error('Todos los campos deben ser llenados');
+                velocityDistance = convertLength(velocityDistance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                velocityTime = convertTime(velocityTime, unitSystem === 'metric' ? 's' : 's', 's');
+                const velocity = (velocityDistance / velocityTime);
+                result = `Velocidad: ${unitSystem === 'metric' ? velocity.toFixed(2) + ' m/s' : convertVelocity(velocity, 'm/s', 'fps').toFixed(2) + ' pies/segundo'}`;
+                break;
+
+            case 'gravity':
+                const G = 6.67430e-11;
+                let gravityMass1 = parseFloat(document.getElementById('gravityMass1').value);
+                let gravityMass2 = parseFloat(document.getElementById('gravityMass2').value);
+                let gravityDistance = parseFloat(document.getElementById('gravityDistance').value);
+                const gravityDistanceUnit = document.getElementById('gravityDistanceUnit').value;
+
+                gravityMass1 = convertMass(gravityMass1, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+                gravityMass2 = convertMass(gravityMass2, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+                gravityDistance = convertLength(gravityDistance, gravityDistanceUnit, 'm');
+
+                if (isNaN(gravityMass1) || isNaN(gravityMass2) || isNaN(gravityDistance) || gravityDistance <= 0) {
+                    throw new Error('Ingresa valores válidos para las masas y la distancia');
+                }
+
+                const gravityForce = (G * gravityMass1 * gravityMass2) / Math.pow(gravityDistance, 2);
+                result = `Fuerza gravitacional: ${gravityForce.toLocaleString('en-US', { minimumFractionDigits: 16, maximumFractionDigits: 16 })} N`;
+                break;
+
+            case 'trajectory':
+                const trajAngle = parseFloat(document.getElementById('trajAngle').value) * (Math.PI / 180);
+                let trajVelocity = parseFloat(document.getElementById('trajVelocity').value);
+                let trajDistanceX = parseFloat(document.getElementById('trajDistanceX').value);
+                if (isNaN(trajAngle) || isNaN(trajVelocity) || isNaN(trajDistanceX)) throw new Error('Todos los campos deben ser llenados');
+                trajVelocity = convertVelocity(trajVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                trajDistanceX = convertLength(trajDistanceX, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                const g = 9.81;
+                const trajY = (trajDistanceX * Math.tan(trajAngle)) - (g * Math.pow(trajDistanceX, 2)) / (2 * Math.pow(trajVelocity, 2) * Math.pow(Math.cos(trajAngle), 2));
+                result = `Altura del proyectil en x = ${unitSystem === 'metric' ? trajDistanceX.toFixed(2) + ' m' : convertLength(trajDistanceX, 'm', 'yd').toFixed(2) + ' yardas'}: ${unitSystem === 'metric' ? trajY.toFixed(2) + ' m' : convertLength(trajY, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            case 'elevationAngle':
+                let elevHeight = parseFloat(document.getElementById('elevHeight').value);
+                let elevDistance = parseFloat(document.getElementById('elevDistance').value);
+                if (isNaN(elevHeight) || isNaN(elevDistance)) throw new Error('Todos los campos deben ser llenados');
+                elevHeight = convertLength(elevHeight, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                elevDistance = convertLength(elevDistance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                const elevAngle = Math.atan(elevHeight / elevDistance) * (180 / Math.PI);
+                result = `Ángulo de elevación: ${elevAngle.toFixed(2)} grados`;
+                break;
+
+            case 'distanceCalculation':
+                let distCalcHeight = parseFloat(document.getElementById('distCalcHeight').value);
+                const distCalcAngle = parseFloat(document.getElementById('distCalcAngle').value) * (Math.PI / 180);
+                if (isNaN(distCalcHeight) || isNaN(distCalcAngle)) throw new Error('Todos los campos deben ser llenados');
+                distCalcHeight = convertLength(distCalcHeight, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                const distCalcDistance = distCalcHeight / Math.tan(distCalcAngle);
+                result = `Distancia al objetivo: ${unitSystem === 'metric' ? distCalcDistance.toFixed(2) + ' m' : convertLength(distCalcDistance, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            case 'coriolisEffect':
+                let coriolisVelocity = parseFloat(document.getElementById('coriolisVelocity').value);
+                let coriolisTime = parseFloat(document.getElementById('coriolisTime').value);
+                let coriolisAcceleration = parseFloat(document.getElementById('coriolisAcceleration').value);
+                if (isNaN(coriolisVelocity) || isNaN(coriolisTime) || isNaN(coriolisAcceleration)) throw new Error('Todos los campos deben ser llenados');
+                coriolisVelocity = convertVelocity(coriolisVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+                coriolisTime = convertTime(coriolisTime, unitSystem === 'metric' ? 's' : 's', 's');
+                coriolisAcceleration = convertAcceleration(coriolisAcceleration, unitSystem === 'metric' ? 'm/s²' : 'm/s²', 'm/s²');
+                const coriolisDeltaX = (coriolisVelocity * coriolisTime) + (0.5 * coriolisAcceleration * Math.pow(coriolisTime, 2));
+                result = `Desviación por efecto Coriolis: ${unitSystem === 'metric' ? coriolisDeltaX.toFixed(2) + ' m' : convertLength(coriolisDeltaX, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            case 'impactPoint':
+                let impactDistance = parseFloat(document.getElementById('impactDistance').value);
+                const impactAngle = parseFloat(document.getElementById('impactAngle').value) * (Math.PI / 180);
+                if (isNaN(impactDistance) || isNaN(impactAngle)) throw new Error('Todos los campos deben ser llenados');
+                impactDistance = convertLength(impactDistance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                const impactCorrection = impactDistance * Math.tan(impactAngle);
+                result = `Corrección para el punto de impacto: ${unitSystem === 'metric' ? impactCorrection.toFixed(2) + ' m' : convertLength(impactCorrection, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            case 'windCorrection':
+                let windCorrDistance = parseFloat(document.getElementById('windCorrDistance').value);
+                let windCorrCoefficient = parseFloat(document.getElementById('windCorrCoefficient').value);
+                if (isNaN(windCorrDistance) || isNaN(windCorrCoefficient)) throw new Error('Todos los campos deben ser llenados');
+                windCorrDistance = convertLength(windCorrDistance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                windCorrCoefficient = convertLength(windCorrCoefficient, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+                const windCorr = windCorrDistance * windCorrCoefficient;
+                result = `Corrección por viento: ${unitSystem === 'metric' ? windCorr.toFixed(2) + ' m' : convertLength(windCorr, 'm', 'yd').toFixed(2) + ' yardas'}`;
+                break;
+
+            default:
+                throw new Error('Selecciona un cálculo válido');
+        }
+    } catch (e) {
+        resultDiv.innerHTML = `Error: ${e.message}`;
+        return;
+    }
+
+    resultDiv.innerHTML = result;
+    saveToHistory(inputs, result);
+}
+
+function calculateAdvanced() {
+    // Obtener datos de entrada
+    let bulletMass = parseFloat(document.getElementById('bulletMass').value);
+    let bulletCaliber = parseFloat(document.getElementById('bulletCaliber').value);
+    const bulletBC = parseFloat(document.getElementById('bulletBC').value);
+    let bulletDiameter = parseFloat(document.getElementById('bulletDiameter').value);
+    let muzzleVelocity = parseFloat(document.getElementById('muzzleVelocity').value);
+    let barrelLength = parseFloat(document.getElementById('barrelLength').value);
+    let twistRate = parseFloat(document.getElementById('twistRate').value);
+    let temperature = parseFloat(document.getElementById('temperature').value);
+    let pressure = parseFloat(document.getElementById('pressure').value);
+    const humidity = parseFloat(document.getElementById('humidity').value);
+    let altitude = parseFloat(document.getElementById('altitude').value);
+    let windSpeed = parseFloat(document.getElementById('windSpeed').value);
+    const windDirection = parseFloat(document.getElementById('windDirection').value);
+    let distance = parseFloat(document.getElementById('advDistance').value);
+    const elevationAngle = parseFloat(document.getElementById('advElevationAngle').value);
+
+    // Validaciones
+    if (isNaN(bulletMass) || isNaN(bulletCaliber) || isNaN(bulletBC) || isNaN(bulletDiameter) ||
+        isNaN(muzzleVelocity) || isNaN(barrelLength) || isNaN(twistRate) ||
+        isNaN(temperature) || isNaN(pressure) || isNaN(humidity) || isNaN(altitude) ||
+        isNaN(windSpeed) || isNaN(windDirection) || isNaN(distance) || isNaN(elevationAngle)) {
+        document.getElementById('result').innerHTML = 'Por favor, ingresa todos los datos requeridos.';
+        document.getElementById('chartError').style.display = 'block';
+        document.getElementById('chartError').innerText = 'Error: Ingresa todos los datos.';
+        return;
+    }
+
+    // Conversiones a unidades base (métricas)
+    bulletMass = convertMass(bulletMass, unitSystem === 'metric' ? 'kg' : 'gr', 'kg');
+    bulletCaliber = convertLength(bulletCaliber, unitSystem === 'metric' ? 'm' : 'in', 'in');
+    bulletDiameter = convertLength(bulletDiameter, unitSystem === 'metric' ? 'm' : 'in', 'in');
+    muzzleVelocity = convertVelocity(muzzleVelocity, unitSystem === 'metric' ? 'm/s' : 'fps', 'm/s');
+    barrelLength = convertLength(barrelLength, unitSystem === 'metric' ? 'm' : 'in', 'in');
+    twistRate = convertLength(twistRate, unitSystem === 'metric' ? 'm' : 'in', 'in');
+    temperature = convertTemperature(temperature, unitSystem === 'metric' ? 'C' : 'F', 'C');
+    pressure = convertPressure(pressure, unitSystem === 'metric' ? 'Pa' : 'inHg', 'Pa');
+    altitude = convertLength(altitude, unitSystem === 'metric' ? 'm' : 'ft', 'm');
+    windSpeed = convertVelocity(windSpeed, unitSystem === 'metric' ? 'm/s' : 'mph', 'm/s');
+    distance = convertLength(distance, unitSystem === 'metric' ? 'm' : 'yd', 'm');
+
+    // Calcular densidad del aire
+    const saturationPressure = 610.78 * Math.exp((17.27 * temperature) / (temperature + 237.3));
+    const vaporPressure = (humidity / 100) * saturationPressure;
+    const dryAirPressure = pressure - vaporPressure;
+    const airDensity = (dryAirPressure * 0.0289644 + vaporPressure * 0.018016) / (287.05 * (temperature + 273.15));
+
+    // Calcular arrastre
+    const sectionalDensity = (bulletMass / 0.00006479891) / (7000 * Math.pow(bulletCaliber, 2));
+    const dragCoefficient = 0.5 * airDensity * bulletBC * Math.PI * Math.pow(bulletDiameter * 0.0254, 2) / 4;
+    const velocityLoss = dragCoefficient * distance / bulletMass;
+    const finalVelocity = muzzleVelocity - velocityLoss;
+
+    // Calcular tiempo de vuelo
+    const averageVelocity = (muzzleVelocity + finalVelocity) / 2;
+    const timeOfFlight = distance / averageVelocity;
+
+    // Calcular caída de bala
+    const g = 9.81;
+    const bulletDrop = 0.5 * g * Math.pow(timeOfFlight, 2);
+    const bulletDropDisplay = unitSystem === 'metric' ? bulletDrop.toFixed(2) + ' m' : convertLength(bulletDrop, 'm', 'in').toFixed(2) + ' pulgadas';
+
+    // Calcular deriva por viento
+    const windAngleRad = windDirection * Math.PI / 180;
+    const crosswind = windSpeed * Math.sin(windAngleRad);
+    const windDrift = crosswind * timeOfFlight * (distance / muzzleVelocity);
+    const windDriftDisplay = unitSystem === 'metric' ? windDrift.toFixed(2) + ' m' : convertLength(windDrift, 'm', 'in').toFixed(2) + ' pulgadas';
+
+    // Calcular energía de impacto
+    const impactEnergy = 0.5 * bulletMass * Math.pow(finalVelocity, 2);
+
+    // Calcular temperatura de la bala
+    const specificHeatBullet = 450;
+    const airFrictionHeat = 0.1 * dragCoefficient * Math.pow(muzzleVelocity, 2) * distance;
+    const temperatureIncrease = airFrictionHeat / (bulletMass * specificHeatBullet);
+    const bulletTemperature = temperature + temperatureIncrease;
+    const bulletTemperatureDisplay = unitSystem === 'metric' ? bulletTemperature.toFixed(2) + ' °C' : convertTemperature(bulletTemperature, 'C', 'F').toFixed(2) + ' °F';
+
+    // Calcular estabilidad giroscópica
+    const bulletLength = bulletCaliber * 4;
+    const stabilityFactor = (30 * (bulletMass / 0.00006479891)) / (Math.pow(twistRate, 2) * Math.pow(bulletCaliber, 3) * bulletLength * (1 + Math.pow(bulletLength / bulletCaliber, 2)));
+    const stabilityStatus = stabilityFactor > 1.5 ? "Estable" : stabilityFactor > 1 ? "Marginalmente estable" : "Inestable";
+
+    // Calcular trayectoria
+    const elevationAngleRad = elevationAngle * Math.PI / 180;
+    const initialVelocityX = muzzleVelocity * Math.cos(elevationAngleRad);
+    const initialVelocityY = muzzleVelocity * Math.sin(elevationAngleRad);
+    const trajectoryFunction = `y(x) = ${initialVelocityY / initialVelocityX}x - ${(g / (2 * Math.pow(initialVelocityX, 2))).toFixed(4)}x²`;
+
+    // Mostrar resultados
+    const finalVelocityDisplay = unitSystem === 'metric' ? finalVelocity.toFixed(2) + ' m/s' : convertVelocity(finalVelocity, 'm/s', 'fps').toFixed(2) + ' pies/segundo';
+    const result = `
+        <strong>Resultados avanzados:</strong><br>
+        - Caída de bala: ${bulletDropDisplay}<br>
+        - Deriva por viento: ${windDriftDisplay}<br>
+        - Tiempo de vuelo: ${timeOfFlight.toFixed(3)} segundos<br>
+        - Velocidad final: ${finalVelocityDisplay}<br>
+        - Energía de impacto: ${impactEnergy.toFixed(2)} Joules<br>
+        - Temperatura de la bala al impactar: ${bulletTemperatureDisplay}<br>
+        - Estabilidad giroscópica: ${stabilityStatus} (Factor: ${stabilityFactor.toFixed(2)})<br>
+        - Densidad del aire: ${airDensity.toFixed(4)} kg/m³<br>
+        - Ecuación de la trayectoria: ${trajectoryFunction}<br>
+    `;
+    document.getElementById('result').innerHTML = result;
+
+    // Dibujar gráfica
+    zoomLevel = 1;
+    offsetX = 0;
+    drawTrajectoryChart(muzzleVelocity, distance, elevationAngle, unitSystem);
+
+    // Guardar datos para zoom
+    const inputs = { muzzleVelocity, distance, elevationAngle };
+    localStorage.setItem('lastInputs', JSON.stringify(inputs));
+
+    // Guardar en el historial
+    const historyInputs = {
+        bulletMass, bulletCaliber, bulletBC, bulletDiameter, muzzleVelocity,
+        barrelLength, twistRate, temperature, pressure, humidity, altitude,
+        windSpeed, windDirection, distance, elevationAngle
+    };
+    saveToHistory(historyInputs, result);
+}
+
+// Cargar unidades e historial al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    updateUnits();
+    updateHistoryDisplay();
+    if (history.length > 0) {
+        loadHistory(0); // Cargar el último cálculo
+    }
+});
+
+    </script>
+</body>
+</html>

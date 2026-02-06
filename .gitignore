@@ -1,0 +1,43 @@
+# Node
+node_modules/
+
+# Capacitor
+android/
+ios/
+
+# Builds
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+node_modules/
+android/
+ios/
+
+dist/
+build/
+
+.DS_Store
+Thumbs.db
+
+git add \
+.gitignore \
+capacitor.config.json \
+package.json \
+package-lock.json \
+public \
+index.html \
+*.html \
+Estilos \
+Funciones \
+service-worker.js \
+manifest.json \
+vercel.json

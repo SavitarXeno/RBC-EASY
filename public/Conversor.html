@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversión de Datos</title>
+    <link rel="shortcut icon" href="ÍconoWeb.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then((registration) => {
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed: ', error);
+        });
+    });
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Poppins', sans-serif !important;
+    color: #fff;
+    background-color: #111;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    min-height: 100vh; 
+}
+
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('Estilos/Assest/TA.png');
+    background-size: 697px 1159px;
+    background-repeat: repeat; 
+    background-position: center center;
+    z-index: -1;
+    opacity: 0.6; 
+}
+
+@media (max-width: 768px) {
+    body::before {
+        background-attachment: scroll;
+        background-size: cover; 
+        background-position: center center;
+        background-repeat: no-repeat;
+        height: 100vh; 
+        position: fixed;
+    }
+}
+
+@media (min-width: 769px) {
+    body::before {
+        background-attachment: fixed; /* Static for premium feel */
+        background-size: 697px 1159px; /* Exact dimensions for sharpness */
+        background-repeat: repeat; /* Tiles horizontally and vertically */
+        background-position: center center;
+        image-rendering: -webkit-optimize-contrast; /* Enhances sharpness */
+        image-rendering: crisp-edges; /* Improves edge clarity */
+    }
+}
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px;
+        animation: fadeIn 1s ease-in-out; /* Fade-in animation */
+    }
+    
+/* Container for h1 */
+.h1-container {
+    display: inline-block; /* Fits snugly around h1 */
+    background: rgba(255, 255, 255, 0.1); /* Very transparent white */
+    backdrop-filter: blur(5px); /* Subtle glass effect */
+    border-radius: 12px; /* Smooth, modern corners */
+    padding: 15px 30px; /* Comfortable spacing around text */
+    margin: 40px auto; /* Centered with balanced spacing */
+    text-align: center; /* Ensures h1 stays centered */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Soft container shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover */
+}
+
+/* Hover effect for container */
+.h1-container:hover {
+    transform: translateY(-3px); /* Matches h1 lift */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); /* Slightly deeper shadow */
+}
+
+/* h1 styling */
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0; /* Reset margin to fit container */
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(45deg, #ff4d4d, #e60000); /* Matches buttons */
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 3px 6px rgba(0, 0, 0, 0.5); /* Sharper, elegant shadow */
+    transition: text-shadow 0.3s ease; /* Smooth shadow transition */
+}
+
+/* Hover effect for h1 */
+h1:hover {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.6); /* More defined on hover */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .h1-container {
+        padding: 10px 20px; /* Smaller padding for mobile */
+        margin: 30px 15px; /* Adjusted spacing */
+        border-radius: 10px; /* Slightly smaller corners */
+    }
+
+    h1 {
+        font-size: 2rem;
+        letter-spacing: 0.8px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Slightly lighter for mobile */
+    }
+
+    h1:hover {
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* Entrance animation */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.h1-container {
+    animation: slideIn 1s ease-out forwards; /* Applied to container */
+}
+    h2 {
+        color: #f00;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+    
+    .conversion-section {
+        margin-bottom: 40px;
+        padding: 30px;
+        border: 2px solid #f00;
+        border-radius: 12px;
+        background-color: #222;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .conversion-section:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(255, 0, 0, 0.2);
+    }
+    
+    .conversion-form {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .conversion-form label {
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .conversion-form select,
+    .conversion-form input {
+        margin-bottom: 20px;
+        font-size: 1rem;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid #444;
+        background-color: #333;
+        color: #fff;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .conversion-form select:focus,
+    .conversion-form input:focus {
+        outline: none;
+        border-color: #f00;
+        box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+    }
+    
+    .conversion-form button {
+        border: none;
+        background-color: #f00;
+        color: #fff;
+        padding: 12px;
+        font-size: 1.1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    .conversion-form button:hover {
+        background-color: #c00;
+        transform: scale(1.05);
+    }
+    
+    .conversion-form button:active {
+        transform: scale(0.95);
+    }
+    
+    .result {
+        font-size: 1.2rem;
+        color: #fff;
+        margin-top: 20px;
+    }
+    
+    .buttons {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .button-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    
+    .button-wrapper {
+    text-align: center;
+    margin-top: 40px; /* Slightly increased for better spacing */
+    padding: 0 15px; /* Prevents overflow on smaller screens */
+}
+
+.button-link {
+    background: linear-gradient(135deg, #ff4d4d, #e60000); /* Gradient for depth */
+    color: #ffffff;
+    padding: 14px 28px; /* Slightly larger for a premium feel */
+    text-decoration: none;
+    border-radius: 8px; /* Softer, modern corners */
+    border: 2px solid transparent; /* Subtle border with hover effect */
+    font-size: 1.1rem; /* Clear, professional typography */
+    font-weight: 600; /* Bold but not heavy */
+    letter-spacing: 0.5px; /* Improved readability */
+    text-transform: uppercase; /* Professional tone */
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease; /* Smooth transitions for all properties */
+    position: relative;
+    overflow: hidden; /* For ripple effect */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+}
+
+/* Hover effect */
+.button-link:hover {
+    background: linear-gradient(135deg, #e60000, #cc0000); /* Darker gradient */
+    border-color: #ff6666; /* Light border for contrast */
+    transform: translateY(-2px); /* Subtle lift */
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); /* Enhanced shadow */
+}
+
+/* Active state */
+.button-link:active {
+    background: linear-gradient(135deg, #cc0000, #b30000); /* Deeper gradient */
+    border-color: #cc0000;
+    transform: translateY(0); /* Reset lift */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); /* Reduced shadow */
+}
+
+/* Ripple effect on click */
+.button-link::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+}
+
+.button-link:active::after {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+}
+
+/* Remove pulse animation for a cleaner look */
+.button-link {
+    animation: none; /* Removed for professionalism */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .button-link {
+        padding: 12px 24px; /* Slightly smaller for mobile */
+        font-size: 1rem; /* Readable on smaller screens */
+        margin: 10px 0; /* Better spacing */
+    }
+
+    .button-wrapper {
+        margin-top: 30px; /* Adjusted for mobile */
+    }
+}
+    
+    @keyframes fadeIn {
+        0% { opacity: 0; transform: translateY(20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+        0% { opacity: 0; transform: translateX(-50px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+        100% { transform: scale(1); }
+    }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+    const title = document.querySelector('h1');
+    const text = title.textContent;
+    title.textContent = '';
+    let i = 0;
+
+    function type() {
+        if (i < text.length) {
+            title.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, 100);
+        }
+    }
+
+    type();
+});
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="h1-container">
+            <h1>CONVERSIÓN DE DATOS</h1>
+        </div>
+        
+        <div class="conversion-section">
+            <h2>Conversión de Fuerza</h2>
+            <div class="conversion-form">
+                <label for="force-from">De:</label>
+                <select id="force-from">
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="n">Newton (N)</option>
+                    <option value="dyn">Dina (dyn)</option>
+                    <option value="lb">Libras (lb)</option>
+                    <option value="mt">Megatoneladas (MT)</option>
+                    <option value="kt">Kilotoneladas (KT)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="mg">Miligramos (mg)</option>
+                    <option value="t">Toneladas (t)</option>
+                    <option value="oz">Onzas (oz)</option>
+                </select>
+                <label for="force-to">A:</label>
+                <select id="force-to">
+                    <option value="n">Newton (N)</option>
+                    <option value="dyn">Dina (dyn)</option>
+                    <option value="lb">Libras (lb)</option>
+                    <option value="mt">Megatoneladas (MT)</option>
+                    <option value="kt">Kilotoneladas (KT)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="mg">Miligramos (mg)</option>
+                    <option value="t">Toneladas (t)</option>
+                    <option value="oz">Onzas (oz)</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                </select>
+                <label for="force-input">Valor:</label>
+                <input type="number" id="force-input" placeholder="Ingrese valor" />
+                <button onclick="convertForce()">Convertir</button>
+                <div id="force-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+
+            function convertForce() {
+            
+                const fromUnit = document.getElementById('force-from').value;
+                const toUnit = document.getElementById('force-to').value;
+                const inputValue = parseFloat(document.getElementById('force-input').value);
+            
+            
+                if (isNaN(inputValue)) {
+                    document.getElementById('force-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+                    return;
+                }
+            
+            
+                function convert(value, fromUnit, toUnit) {
+            
+                    const conversionToNewton = {
+                        kg: 9.80665,   
+                        n: 1,          
+                        dyn: 0.00001,  
+                        lb: 4.44822,   
+                        mt: 9.80665e6, 
+                        kt: 9.80665e3, 
+                        g: 0.00980665, 
+                        mg: 9.80665e-6,
+                        t: 9806.65,
+                        oz: 0.2780139     
+                    };
+            
+                    const conversionFromNewton = {
+                        kg: 1 / 9.80665,   
+                        n: 1,              
+                        dyn: 100000,       
+                        lb: 0.2248089,     
+                        mt: 1e-6,          
+                        kt: 1e-3,          
+                        g: 101.9716213,    
+                        mg: 1.019716213e+6,
+                        t: 0.0001019716,
+                        oz: 3.596943    
+                    };
+            
+            
+                    const valueInNewton = value * conversionToNewton[fromUnit];
+                    return valueInNewton * conversionFromNewton[toUnit];
+                }
+            
+            
+                const result = convert(inputValue, fromUnit, toUnit);
+            
+            
+                document.getElementById('force-result').innerText = `Resultado: ${result.toFixed(4)} ${toUnit}`;
+            }
+            
+            
+                </script>
+
+        <div class="conversion-section">
+            <h2>Conversión de Temperatura</h2>
+            <div class="conversion-form">
+                <label for="temp-from">De:</label>
+                <select id="temp-from">
+                    <option value="c">Celsius (°C)</option>
+                    <option value="f">Fahrenheit (°F)</option>
+                    <option value="k">Kelvin (°K)</option>
+                    <option value="r">Rankine (°R)</option>
+                </select>
+                <label for="temp-to">A:</label>
+                <select id="temp-to">
+                    <option value="f">Fahrenheit (°F)</option>
+                    <option value="k">Kelvin (°K)</option>
+                    <option value="r">Rankine (°R)</option>
+                    <option value="c">Celsius (°C)</option>
+                </select>
+                <label for="temp-input">Valor:</label>
+                <input type="number" id="temp-input" placeholder="Ingrese valor" />
+                <button onclick="convertTemp()">Convertir</button>
+                <div id="temp-result" class="result"></div>
+            </div>
+        </div>
+<script>
+    function convertTemp() {
+
+    const fromUnit = document.getElementById('temp-from').value;
+    const toUnit = document.getElementById('temp-to').value;
+    const inputValue = parseFloat(document.getElementById('temp-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('temp-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    function convert(value, fromUnit, toUnit) {
+        let celsius;
+
+        switch (fromUnit) {
+            case 'c':
+                celsius = value;
+                break;
+            case 'f':
+                celsius = (value - 32) * 5 / 9;
+                break;
+            case 'k':
+                celsius = value - 273.15;
+                break;
+            case 'r':
+                celsius = (value - 491.67) * 5 / 9;
+                break;
+            default:
+                throw new Error('Unidad no soportada');
+        }
+
+        switch (toUnit) {
+            case 'c':
+                return celsius;
+            case 'f':
+                return (celsius * 9 / 5) + 32;
+            case 'k':
+                return celsius + 273.15;
+            case 'r':
+                return (celsius + 273.15) * 9 / 5;
+            default:
+                throw new Error('Unidad no soportada');
+        }
+    }
+
+    const result = convert(inputValue, fromUnit, toUnit);
+
+    document.getElementById('temp-result').innerText = `Resultado: ${result.toFixed(2)} ${toUnit}`;
+}
+
+</script>
+
+<div class="conversion-section">
+    <h2>Conversión de Velocidad</h2>
+    <div class="conversion-form">
+        <label for="speed-from">De:</label>
+        <select id="speed-from">
+            <option value="mps">Metros por segundo (m/s)</option>
+            <option value="kph">Kilómetros por hora (km/h)</option>
+            <option value="mph">Millas por hora (mph)</option>
+            <option value="mach">Mach (velocidad del sonido)</option>
+            <option value="kmps">Kilómetros por segundo (km/s)</option>
+            <option value="kmns">Kilómetros por nanosegundo (km/ns)</option>
+            <option value="percentc">Porcentaje de la velocidad de la luz (%c)</option>
+            <option value="c">Velocidad de la luz (c)</option>
+        </select>
+        <label for="speed-to">A:</label>
+        <select id="speed-to">
+            <option value="mps">Metros por segundo (m/s)</option>
+            <option value="kph">Kilómetros por hora (km/h)</option>
+            <option value="mph">Millas por hora (mph)</option>
+            <option value="mach">Mach (velocidad del sonido)</option>
+            <option value="kmps">Kilómetros por segundo (km/s)</option>
+            <option value="kmns">Kilómetros por nanosegundo (km/ns)</option>
+            <option value="percentc">Porcentaje de la velocidad de la luz (%c)</option>
+            <option value="c">Velocidad de la luz (c)</option>
+        </select>
+        <label for="speed-input">Valor:</label>
+        <input type="number" id="speed-input" placeholder="Ingrese valor" />
+        <button onclick="convertSpeed()">Convertir</button>
+        <div id="speed-result" class="result"></div>
+    </div>
+</div>
+
+<script>
+function convertSpeed() {
+    const fromUnit = document.getElementById('speed-from').value;
+    const toUnit = document.getElementById('speed-to').value;
+    const inputValue = parseFloat(document.getElementById('speed-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('speed-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const speedOfSound = 343.0; 
+    const speedOfLight = 299792458; 
+
+    function convert(value, fromUnit, toUnit) {
+        let mps; 
+
+
+        switch (fromUnit) {
+            case 'mps':
+                mps = value;
+                break;
+            case 'kph':
+                mps = value / 3.6;
+                break;
+            case 'mph':
+                mps = value * 0.44704;
+                break;
+            case 'mach':
+                mps = value * speedOfSound;
+                break;
+            case 'c':
+                mps = value * speedOfLight;
+                break;
+            case 'kmps':
+                mps = value * 1000;
+                break;
+            case 'kmns':
+                mps = value * 1e12;
+                break;
+            case 'percentc':
+                mps = (value / 100) * speedOfLight;
+                break;
+            default:
+                throw new Error('Unidad no soportada');
+        }
+
+        switch (toUnit) {
+            case 'mps':
+                return mps;
+            case 'kph':
+                return mps * 3.6;
+            case 'mph':
+                return mps / 0.44704;
+            case 'mach':
+                return mps / speedOfSound;
+            case 'c':
+                return mps / speedOfLight;
+            case 'kmps':
+                return mps / 1000;
+            case 'kmns':
+                return mps / 1e12; 
+            case 'percentc':
+                return (mps / speedOfLight) * 100;
+            default:
+                throw new Error('Unidad no soportada');
+        }
+    }
+
+    try {
+        const result = convert(inputValue, fromUnit, toUnit);
+
+        let formattedResult;
+        if (result < 0.01 || result > 1000) {
+            formattedResult = result.toExponential(2);
+        } else {
+            formattedResult = result.toFixed(2);
+        }
+
+        let exactResult = result.toPrecision(20);
+        if (exactResult.includes('.')) {
+            exactResult = exactResult.replace(/\.?0+$/, '');
+        }
+
+        document.getElementById('speed-result').innerHTML = `
+            Resultado (abreviado): ${formattedResult} ${toUnit}<br>
+            Resultado: ${exactResult} ${toUnit}
+        `;
+    } catch (error) {
+        document.getElementById('speed-result').innerText = 'Error en la conversión: ' + error.message;
+    }
+}
+</script>
+
+        <div class="conversion-section">
+            <h2>Conversión de Electricidad</h2>
+            <div class="conversion-form">
+                <label for="electricity-from">De:</label>
+                <select id="electricity-from">
+                    <option value="v">Voltios (V)</option>
+                    <option value="mv">Milivoltios (mV)</option>
+                    <option value="a">Amperios (A)</option>
+                    <option value="ma">Milamperios (mA)</option>
+                    <option value="w">Watts (W)</option>
+                    <option value="kw">Kilowatts (kW)</option>
+                </select>
+                <label for="electricity-to">A:</label>
+                <select id="electricity-to">
+                    <option value="mv">Milivoltios (mV)</option>
+                    <option value="a">Amperios (A)</option>
+                    <option value="ma">Milamperios (mA)</option>
+                    <option value="w">Watts (W)</option>
+                    <option value="kw">Kilowatts (kW)</option>
+                    <option value="v">Voltios (V)</option>
+                </select>
+                <label for="electricity-input">Valor:</label>
+                <input type="number" id="electricity-input" placeholder="Ingrese valor" />
+                <button onclick="convertElectricity()">Convertir</button>
+                <div id="electricity-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertElectricity() {
+    const fromUnit = document.getElementById('electricity-from').value;
+    const toUnit = document.getElementById('electricity-to').value;
+    const inputValue = parseFloat(document.getElementById('electricity-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('electricity-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    function convert(value, fromUnit, toUnit) {
+        let volts;
+
+        switch (fromUnit) {
+            case 'v':
+                volts = value;
+                break;
+            case 'mv':
+                volts = value / 1000;
+                break;
+            case 'a':
+                volts = value * 1; 
+                break;
+            case 'ma':
+                volts = value / 1000;
+                break;
+            case 'w':
+                volts = value; 
+                break;
+            case 'kw':
+                volts = value * 1000; 
+                break;
+            default:
+                throw new Error('Unidad no soportada');
+        }
+
+        switch (toUnit) {
+            case 'v':
+                return volts;
+            case 'mv':
+                return volts * 1000;
+            case 'a':
+                return volts; 
+            case 'ma':
+                return volts * 1000;
+            case 'w':
+                return volts; 
+            case 'kw':
+                return volts / 1000; 
+            default:
+                throw new Error('Unidad no soportada');
+        }
+    }
+
+    const result = convert(inputValue, fromUnit, toUnit);
+
+    document.getElementById('electricity-result').innerText = `Resultado: ${result.toFixed(2)} ${toUnit}`;
+}
+
+        </script>
+
+
+        <div class="conversion-section">
+            <h2>Conversión de Tiempo</h2>
+            <div class="conversion-form">
+                <label for="time-from">De:</label>
+                <select id="time-from">
+                    <option value="s">Segundos (s)</option>
+                    <option value="min">Minutos (min)</option>
+                    <option value="h">Horas (h)</option>
+                    <option value="d">Días (d)</option>
+                    <option value="ms">Milisegundos (ms)</option>
+                    <option value="us">Microsegundos (μs)</option>
+                    <option value="ns">Nanosegundos (ns)</option>
+                    <option value="ps">Picosegundos (ps)</option>
+                    <option value="yr">Años (yr)</option>
+                    <option value="myr">Milenios (myr)</option>
+                    <option value="eon">Eones (eon)</option>
+                    <option value="sem">Semanas (sem)</option>
+                    <option value="m">Meses (m)</option>
+                    <option value="sgl">Siglos (sgl)</option>
+                    <option value="dec">Decadas (dec)</option>
+                    <option value="as">Attosegundos (as)</option>
+                    <option value="fs">Femtosegundos (fs)</option>
+                </select>
+                <label for="time-to">A:</label>
+                <select id="time-to">
+                    <option value="min">Minutos (min)</option>
+                    <option value="h">Horas (h)</option>
+                    <option value="d">Días (d)</option>
+                    <option value="sem">Semanas (sem)</option>
+                    <option value="m">Meses (m)</option>
+                    <option value="sgl">Siglos (sgl)</option>
+                    <option value="dec">Decadas (dec)</option>
+                    <option value="lus">Lustro (lus)</option>
+                    <option value="as">Attosegundos (as)</option>
+                    <option value="fs">Femtosegundos (fs)</option>
+                    <option value="ms">Milisegundos (ms)</option>
+                    <option value="us">Microsegundos (μs)</option>
+                    <option value="ns">Nanosegundos (ns)</option>
+                    <option value="ps">Picosegundos (ps)</option>
+                    <option value="yr">Años (yr)</option>
+                    <option value="myr">Milenios (myr)</option>
+                    <option value="eon">Eones (eon)</option>
+                    <option value="s">Segundos (s)</option>
+                </select>
+                <label for="time-input">Valor:</label>
+                <input type="number" id="time-input" placeholder="Ingrese valor" />
+                <button onclick="convertTime()">Convertir</button>
+                <div id="time-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertTime() {
+    const fromUnit = document.getElementById('time-from').value;
+    const toUnit = document.getElementById('time-to').value;
+    const inputValue = parseFloat(document.getElementById('time-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('time-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const units = {
+        s: 1,
+        ms: 1e-3,
+        us: 1e-6,
+        ns: 1e-9,
+        ps: 1e-12,
+        min: 60,
+        h: 3600,
+        d: 86400,
+        sem: 604800,
+        m: 2.628e6,
+        sgl: 3.154e9,
+        dec: 3.154e10,
+        lus: 1.577e10,        
+        as: 1e-18,
+        fs: 1e-15,
+        yr: 3.154e7,
+        myr: 3.154e10,
+        eon: 3.154e18
+    };
+
+    const valueInSeconds = inputValue * units[fromUnit];
+    const result = valueInSeconds / units[toUnit];
+
+    document.getElementById('time-result').innerText = `Resultado: ${result.toFixed(2)} ${toUnit}`;
+}
+
+        </script>
+
+
+        <div class="conversion-section">
+            <h2>Conversión de Aceleración</h2>
+            <div class="conversion-form">
+                <label for="acc-from">De:</label>
+                <select id="acc-from">
+                    <option value="mps2">Metros por segundo cuadrado (m/s²)</option>
+                    <option value="cmps2">Centímetros por segundo cuadrado (cm/s²)</option>
+                    <option value="g">Gravedad (g=9,80665 m/s2)</option>
+                    <option value="C2">Acceleración Luminica FTL (C2)</option>
+                    <option value="ns2">Nanometros por nanosegundo cuadrado (ns²)</option>
+                </select>
+                <label for="acc-to">A:</label>
+                <select id="acc-to">
+                    <option value="cmps2">Centímetros por segundo cuadrado (cm/s²)</option>
+                    <option value="g">Gravedad (g=9,80665 m/s2)</option>
+                    <option value="C2">Acceleración Luminica FTL (C2)</option>
+                    <option value="ns2">Nanometros por nanosegundo cuadrado (ns²)</option>
+                    <option value="mps2">Metros por segundo cuadrado (m/s²)</option>
+                </select>
+                <label for="acc-input">Valor:</label>
+                <input type="number" id="acc-input" placeholder="Ingrese valor" />
+                <button onclick="convertAcceleration()">Convertir</button>
+                <div id="acc-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertAcceleration() {
+    const fromUnit = document.getElementById('acc-from').value;
+    const toUnit = document.getElementById('acc-to').value;
+    const inputValue = parseFloat(document.getElementById('acc-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('acc-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const units = {
+        mps2: 1,
+        cmps2: 1e-2,
+        g: 9.80665,
+        C2: 8.9875517923e16,  
+        ns2: 1e-18
+    };
+
+    const valueInMetersPerSecondSquared = inputValue * units[fromUnit];
+    const result = valueInMetersPerSecondSquared / units[toUnit];
+
+    document.getElementById('acc-result').innerText = `Resultado: ${result.toFixed(12)} ${toUnit}`;
+}
+
+        </script>
+
+
+        <div class="conversion-section">
+            <h2>Conversión de Densidad</h2>
+            <div class="conversion-form">
+                <label for="density-from">De:</label>
+                <select id="density-from">
+                    <option value="kgm3">Kilogramos por metro cúbico (kg/m³)</option>
+                    <option value="gcm3">Gramos por centímetro cúbico (g/cm³)</option>
+                    <option value="lbft3">Libras por pie cúbico (lb/ft³)</option>
+                </select>
+                <label for="density-to">A:</label>
+                <select id="density-to">
+                    <option value="gcm3">Gramos por centímetro cúbico (g/cm³)</option>
+                    <option value="lbft3">Libras por pie cúbico (lb/ft³)</option>
+                    <option value="kgm3">Kilogramos por metro cúbico (kg/m³)</option>
+                </select>
+                <label for="density-input">Valor:</label>
+                <input type="number" id="density-input" placeholder="Ingrese valor" />
+                <button onclick="convertDensity()">Convertir</button>
+                <div id="density-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertDensity() {
+    const fromUnit = document.getElementById('density-from').value;
+    const toUnit = document.getElementById('density-to').value;
+    const inputValue = parseFloat(document.getElementById('density-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('density-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const conversionFactors = {
+        kgm3: 1,
+        gcm3: 1e3,
+        lbft3: 16.018463
+    };
+
+    const valueInKgPerCubicMeter = inputValue * conversionFactors[fromUnit];
+    const result = valueInKgPerCubicMeter / conversionFactors[toUnit];
+
+    document.getElementById('density-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+        <div class="conversion-section">
+            <h2>Conversión de Dureza</h2>
+            <div class="conversion-form">
+                <label for="hardness-from">De:</label>
+                <select id="hardness-from">
+                    <option value="vickers">Vickers (HV)</option>
+                    <option value="rockwell">Rockwell (HR)</option>
+                    <option value="brinell">Brinell (HB)</option>
+                </select>
+                <label for="hardness-to">A:</label>
+                <select id="hardness-to">
+                    <option value="rockwell">Rockwell (HR)</option>
+                    <option value="brinell">Brinell (HB)</option>
+                    <option value="vickers">Vickers (HV)</option>
+                </select>
+                <label for="hardness-input">Valor:</label>
+                <input type="number" id="hardness-input" placeholder="Ingrese valor" />
+                <button onclick="convertHardness()">Convertir</button>
+                <div id="hardness-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertHardness() {
+    const fromUnit = document.getElementById('hardness-from').value;
+    const toUnit = document.getElementById('hardness-to').value;
+    const inputValue = parseFloat(document.getElementById('hardness-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('hardness-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+
+    const conversionFactors = {
+        vickers: { vickers: 1, rockwell: 0.00285, brinell: 0.00206 },
+        rockwell: { vickers: 350.0, rockwell: 1, brinell: 0.00072 },
+        brinell: { vickers: 485.0, rockwell: 1.3889, brinell: 1 }
+    };
+
+    const valueInVickers = inputValue / conversionFactors[fromUnit][fromUnit];
+    const result = valueInVickers * conversionFactors[toUnit][toUnit];
+
+    document.getElementById('hardness-result').innerText = `Resultado: ${result.toFixed(2)} ${toUnit}`;
+}
+
+        </script>
+
+        <div class="conversion-section">
+            <h2>Conversión de Radiación</h2>
+            <div class="conversion-form">
+                <label for="radiation-from">De:</label>
+                <select id="radiation-from">
+                    <option value="bq">Bequerel (Bq)</option>
+                    <option value="curie">Curie (Ci)</option>
+                    <option value="gray">Gray (Gy)</option>
+                    <option value="sievert">Sievert (Sv)</option>
+                </select>
+                <label for="radiation-to">A:</label>
+                <select id="radiation-to">
+                    <option value="curie">Curie (Ci)</option>
+                    <option value="gray">Gray (Gy)</option>
+                    <option value="sievert">Sievert (Sv)</option>
+                    <option value="bq">Bequerel (Bq)</option>
+                </select>
+                <label for="radiation-input">Valor:</label>
+                <input type="number" id="radiation-input" placeholder="Ingrese valor" />
+                <button onclick="convertRadiation()">Convertir</button>
+                <div id="radiation-result" class="result"></div>
+            </div>
+        </div>
+
+
+        <script>
+            function convertRadiation() {
+    const fromUnit = document.getElementById('radiation-from').value;
+    const toUnit = document.getElementById('radiation-to').value;
+    const inputValue = parseFloat(document.getElementById('radiation-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('radiation-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const conversionFactors = {
+        bq: { bq: 1, curie: 2.703e-11, gray: 1.0, sievert: 1.0 },
+        curie: { bq: 3.7e10, curie: 1, gray: 3.7e-11, sievert: 3.7e-11 },
+        gray: { bq: 1.0, curie: 2.703e10, gray: 1, sievert: 1 },
+        sievert: { bq: 1.0, curie: 2.703e10, gray: 1, sievert: 1 }
+    };
+
+    const valueInBecquerels = inputValue * conversionFactors[fromUnit].bq;
+    const result = valueInBecquerels / conversionFactors[toUnit].bq;
+
+    document.getElementById('radiation-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+       <div class="conversion-section">
+            <h2>Conversión de Energía</h2>
+            <div class="conversion-form">
+                <label for="energy-from">De:</label>
+                <select id="energy-from">
+                    <option value="j">Julios (J)</option>
+                    <option value="kj">Kilojulios (kJ)</option>
+                    <option value="cal">Calorías (cal)</option>
+                    <option value="kcal">Kilocalorías (kcal)</option>
+                    <option value="ev">Electronvoltios (eV)</option>
+                    <option value="wh">Watthoras (Wh)</option>
+                </select>
+                <label for="energy-to">A:</label>
+                <select id="energy-to">
+                    <option value="kj">Kilojulios (kJ)</option>
+                    <option value="cal">Calorías (cal)</option>
+                    <option value="kcal">Kilocalorías (kcal)</option>
+                    <option value="ev">Electronvoltios (eV)</option>
+                    <option value="wh">Watthoras (Wh)</option>
+                    <option value="j">Julios (J)</option>
+                </select>
+                <label for="energy-input">Valor:</label>
+                <input type="number" id="energy-input" placeholder="Ingrese valor" />
+                <button onclick="convertEnergy()">Convertir</button>
+                <div id="energy-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertEnergy() {
+    const fromUnit = document.getElementById('energy-from').value;
+    const toUnit = document.getElementById('energy-to').value;
+    const inputValue = parseFloat(document.getElementById('energy-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('energy-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const conversionFactors = {
+        j: { j: 1, kj: 1e-3, cal: 0.239006, kcal: 0.000239006, ev: 6.242e+18, wh: 2.7778e-4 },
+        kj: { j: 1000, kj: 1, cal: 239.006, kcal: 0.239006, ev: 6.242e+21, wh: 0.27778 },
+        cal: { j: 4.184, kj: 4.184e-3, cal: 1, kcal: 0.001, ev: 1.602e+19, wh: 0.001162 },
+        kcal: { j: 4184, kj: 4.184, cal: 1000, kcal: 1, ev: 1.602e+22, wh: 1.162 },
+        ev: { j: 1.602e-19, kj: 1.602e-22, cal: 4.184e-19, kcal: 4.184e-22, ev: 1, wh: 1.162e-22 },
+        wh: { j: 3600, kj: 3.6, cal: 860.421, kcal: 0.860421, ev: 5.605e+21, wh: 1 }
+    };
+
+    const valueInJoules = inputValue * conversionFactors[fromUnit].j;
+    const result = valueInJoules / conversionFactors[toUnit].j;
+
+    document.getElementById('energy-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+        <div class="conversion-section">
+            <h2>Conversión de Masa</h2>
+            <div class="conversion-form">
+                <label for="mass-from">De:</label>
+                <select id="mass-from">
+                    <option value="mg">Miligramos (mg)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="t">Toneladas (t)</option>
+                    <option value="lb">Libras (lb)</option>
+                    <option value="oz">Onzas (oz)</option>
+                </select>
+                <label for="mass-to">A:</label>
+                <select id="mass-to">
+                    <option value="g">Gramos (g)</option>
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="t">Toneladas (t)</option>
+                    <option value="lb">Libras (lb)</option>
+                    <option value="oz">Onzas (oz)</option>
+                    <option value="mg">Miligramos (mg)</option>
+                </select>
+                <label for="mass-input">Valor:</label>
+                <input type="number" id="mass-input" placeholder="Ingrese valor" />
+                <button onclick="convertMass()">Convertir</button>
+                <div id="mass-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertMass() {
+    const fromUnit = document.getElementById('mass-from').value;
+    const toUnit = document.getElementById('mass-to').value;
+    const inputValue = parseFloat(document.getElementById('mass-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('mass-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+
+    const conversionFactors = {
+        mg: { mg: 1, g: 1e-3, kg: 1e-6, t: 1e-9, lb: 2.20462e-6, oz: 3.5274e-5 },
+        g: { mg: 1000, g: 1, kg: 1e-3, t: 1e-6, lb: 0.00220462, oz: 0.035274 },
+        kg: { mg: 1e6, g: 1e3, kg: 1, t: 1e-3, lb: 2.20462, oz: 35.274 },
+        t: { mg: 1e9, g: 1e6, kg: 1e3, t: 1, lb: 2204.62, oz: 35274 },
+        lb: { mg: 4.536e6, g: 453.592, kg: 0.453592, t: 0.000453592, lb: 1, oz: 16 },
+        oz: { mg: 28349.5, g: 28.3495, kg: 0.0283495, t: 2.83495e-5, lb: 0.0625, oz: 1 }
+    };
+
+    const valueInGrams = inputValue * conversionFactors[fromUnit].g;
+    const result = valueInGrams / conversionFactors[toUnit].g;
+
+    document.getElementById('mass-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+
+
+        <div class="conversion-section">
+            <h2>Conversión de Longitud</h2>
+            <div class="conversion-form">
+                <label for="length-from">De:</label>
+                <select id="length-from">
+                    <option value="nm">Nanometros (nm)</option>
+                    <option value="mm">Milímetros (mm)</option>
+                    <option value="cm">Centímetros (cm)</option>
+                    <option value="m">Metros (m)</option>
+                    <option value="km">Kilómetros (km)</option>
+                    <option value="in">Pulgadas (in)</option>
+                    <option value="ft">Pies (ft)</option>
+                    <option value="yd">Yardas (yd)</option>
+                    <option value="mi">Millas (mi)</option>
+                </select>
+                <label for="length-to">A:</label>
+                <select id="length-to">
+                    <option value="mm">Milímetros (mm)</option>
+                    <option value="cm">Centímetros (cm)</option>
+                    <option value="m">Metros (m)</option>
+                    <option value="km">Kilómetros (km)</option>
+                    <option value="in">Pulgadas (in)</option>
+                    <option value="ft">Pies (ft)</option>
+                    <option value="yd">Yardas (yd)</option>
+                    <option value="mi">Millas (mi)</option>
+                    <option value="nm">Nanometros (nm)</option>
+                </select>
+                <label for="length-input">Valor:</label>
+                <input type="number" id="length-input" placeholder="Ingrese valor" />
+                <button onclick="convertLength()">Convertir</button>
+                <div id="length-result" class="result"></div>
+            </div>
+        </div>
+
+        <script>
+            function convertLength() {
+    const fromUnit = document.getElementById('length-from').value;
+    const toUnit = document.getElementById('length-to').value;
+    const inputValue = parseFloat(document.getElementById('length-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('length-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const conversionFactors = {
+        nm: { nm: 1, mm: 1e-6, cm: 1e-7, m: 1e-9, km: 1e-12, in: 3.937e-8, ft: 1.281e-9, yd: 4.269e-10, mi: 2.478e-13 },
+        mm: { nm: 1e6, mm: 1, cm: 1e-1, m: 1e-3, km: 1e-6, in: 0.03937, ft: 0.003281, yd: 0.001094, mi: 6.213e-7 },
+        cm: { nm: 1e7, mm: 10, cm: 1, m: 1e-2, km: 1e-5, in: 0.3937, ft: 0.03281, yd: 0.01094, mi: 6.2137e-6 },
+        m: { nm: 1e9, mm: 1e3, cm: 1e2, m: 1, km: 1e-3, in: 39.37, ft: 3.281, yd: 1.094, mi: 6.2137e-4 },
+        km: { nm: 1e12, mm: 1e6, cm: 1e5, m: 1e3, km: 1, in: 39370, ft: 3281, yd: 1094, mi: 0.62137 },
+        in: { nm: 2.54e10, mm: 25.4, cm: 2.54, m: 0.0254, km: 2.54e-5, in: 1, ft: 0.08333, yd: 0.02778, mi: 1.578e-5 },
+        ft: { nm: 3.048e10, mm: 304.8, cm: 30.48, m: 0.3048, km: 3.048e-4, in: 12, ft: 1, yd: 0.3333, mi: 1.893e-4 },
+        yd: { nm: 9.144e10, mm: 914.4, cm: 91.44, m: 0.9144, km: 9.144e-4, in: 36, ft: 3, yd: 1, mi: 5.681e-4 },
+        mi: { nm: 1.609e12, mm: 1.609e6, cm: 1.609e5, m: 1609, km: 1.609, in: 63360, ft: 5280, yd: 1760, mi: 1 }
+    };
+
+    const valueInMeters = inputValue * conversionFactors[fromUnit].m;
+    const result = valueInMeters / conversionFactors[toUnit].m;
+
+    document.getElementById('length-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+
+        <div class="conversion-section">
+            <h2>Conversión de Volumen</h2>
+            <div class="conversion-form">
+                <label for="volume-from">De:</label>
+                <select id="volume-from">
+                    <option value="ml">Mililitros (ml)</option>
+                    <option value="l">Litros (l)</option>
+                    <option value="cm3">Centímetros cúbicos (cm³)</option>
+                    <option value="m3">Metros cúbicos (m³)</option>
+                    <option value="ft3">Pies cúbicos (ft³)</option>
+                    <option value="gal">Galones (gal)</option>
+                </select>
+                <label for="volume-to">A:</label>
+                <select id="volume-to">
+                    <option value="l">Litros (l)</option>
+                    <option value="cm3">Centímetros cúbicos (cm³)</option>
+                    <option value="m3">Metros cúbicos (m³)</option>
+                    <option value="ft3">Pies cúbicos (ft³)</option>
+                    <option value="gal">Galones (gal)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                </select>
+                <label for="volume-input">Valor:</label>
+                <input type="number" id="volume-input" placeholder="Ingrese valor" />
+                <button onclick="convertVolume()">Convertir</button>
+                <div id="volume-result" class="result"></div>
+            </div>
+        </div>
+        <script>
+            function convertVolume() {
+    const fromUnit = document.getElementById('volume-from').value;
+    const toUnit = document.getElementById('volume-to').value;
+    const inputValue = parseFloat(document.getElementById('volume-input').value);
+
+    if (isNaN(inputValue)) {
+        document.getElementById('volume-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+        return;
+    }
+
+    const conversionFactors = {
+        ml: { ml: 1, l: 1e-3, cm3: 1, m3: 1e-6, ft3: 3.5315e-5, gal: 2.6417e-4 },
+        l: { ml: 1e3, l: 1, cm3: 1e3, m3: 1e-3, ft3: 0.035315, gal: 0.26417 },
+        cm3: { ml: 1, l: 1e-3, cm3: 1, m3: 1e-6, ft3: 3.5315e-5, gal: 2.6417e-4 },
+        m3: { ml: 1e6, l: 1e3, cm3: 1e6, m3: 1, ft3: 35.315, gal: 264.17 },
+        ft3: { ml: 2.8317e4, l: 28.317, cm3: 2.8317e4, m3: 0.028317, ft3: 1, gal: 7.4805 },
+        gal: { ml: 3.7854e3, l: 3.7854, cm3: 3.7854e3, m3: 3.7854e-3, ft3: 0.13368, gal: 1 }
+    };
+
+    const valueInLiters = inputValue * conversionFactors[fromUnit].l;
+    const result = valueInLiters / conversionFactors[toUnit].l;
+
+    document.getElementById('volume-result').innerText = `Resultado: ${result.toFixed(6)} ${toUnit}`;
+}
+
+        </script>
+
+<div class="conversion-section">
+    <h2>Conversión de Bits</h2>
+    <div class="conversion-form">
+        <label for="bits-from">De:</label>
+        <select id="bits-from">
+            <option value="binary">Binario (2)</option>
+            <option value="decimal">Decimal (10)</option>
+            <option value="hexadecimal">Hexadecimal (16)</option>
+            <option value="octal">Octal (8)</option>
+        </select>
+        <label for="bits-to">A:</label>
+        <select id="bits-to">
+            <option value="decimal">Decimal (10)</option>
+            <option value="hexadecimal">Hexadecimal (16)</option>
+            <option value="octal">Octal (8)</option>
+            <option value="binary">Binario (2)</option>
+        </select>
+        <label for="bits-input">Valor:</label>
+        <input type="text" id="bits-input" placeholder="Ingrese valor" />
+        <button onclick="convertBits()">Convertir</button>
+        <div id="bits-result" class="result"></div>
+    </div>
+</div>
+
+<script>
+function convertBits() {
+    const fromUnit = document.getElementById('bits-from').value;
+    const toUnit = document.getElementById('bits-to').value;
+    const inputValue = document.getElementById('bits-input').value;
+
+    if (!inputValue) {
+        document.getElementById('bits-result').innerText = 'Por favor, ingrese un valor válido.';
+        return;
+    }
+
+    let decimalValue;
+    
+
+    try {
+        if (fromUnit === 'binary') {
+            decimalValue = parseInt(inputValue, 2);
+        } else if (fromUnit === 'decimal') {
+            decimalValue = parseInt(inputValue, 10);
+        } else if (fromUnit === 'hexadecimal') {
+            decimalValue = parseInt(inputValue, 16);
+        } else if (fromUnit === 'octal') {
+            decimalValue = parseInt(inputValue, 8);
+        }
+
+        if (isNaN(decimalValue)) throw new Error("Valor inválido");
+
+        let result;
+        if (toUnit === 'binary') {
+            result = decimalValue.toString(2);
+        } else if (toUnit === 'decimal') {
+            result = decimalValue.toString(10);
+        } else if (toUnit === 'hexadecimal') {
+            result = decimalValue.toString(16).toUpperCase();
+        } else if (toUnit === 'octal') {
+            result = decimalValue.toString(8);
+        }
+
+        document.getElementById('bits-result').innerText = `Resultado: ${result} (${toUnit})`;
+
+    } catch (error) {
+        document.getElementById('bits-result').innerText = 'Error al convertir. Asegúrese de ingresar un valor válido en el sistema seleccionado.';
+    }
+}
+</script>
+
+<div class="conversion-section">
+    <h2>Conversión de Números Decimales y Notación Científica</h2>
+    <div class="conversion-form">
+        <label for="number-input">Valor:</label>
+        <input type="number" id="number-input" placeholder="Ingrese valor" step="any" />
+        
+        <label for="conversion-type">Conversión:</label>
+        <select id="conversion-type">
+            <option value="to-scientific">Decimal a Notación Científica</option>
+            <option value="to-decimal">Notación Científica a Decimal</option>
+        </select>
+
+        <button onclick="convertNumber()">Convertir</button>
+        <div id="number-result" class="result"></div>
+    </div>
+</div>
+
+<script>
+    function convertNumber() {
+        const inputValue = document.getElementById('number-input').value;
+        const conversionType = document.getElementById('conversion-type').value;
+
+
+        if (inputValue === '' || isNaN(inputValue)) {
+            document.getElementById('number-result').innerText = 'Por favor, ingrese un valor numérico válido.';
+            return;
+        }
+
+        let result;
+
+        if (conversionType === 'to-scientific') {
+
+            result = parseFloat(inputValue).toExponential();
+        } else {
+
+            try {
+                result = Number(inputValue).toLocaleString('en', { maximumFractionDigits: 20 });
+            } catch (error) {
+                document.getElementById('number-result').innerText = 'Error en la conversión. Asegúrese de que el formato es correcto.';
+                return;
+            }
+        }
+
+        document.getElementById('number-result').innerText = `Resultado: ${result}`;
+    }
+</script>
+
+<div class="conversion-section">
+    <h2>Calculadora de Propinas</h2>
+    <div class="conversion-form">
+        <label for="bill-amount">Monto de la cuenta:</label>
+        <input type="number" id="bill-amount" placeholder="Ingrese el monto de la cuenta" />
+
+        <label for="tip-percentage">Porcentaje de propina:</label>
+        <select id="tip-percentage">
+            <option value="10">10%</option>
+            <option value="15">15%</option>
+            <option value="20">20%</option>
+            <option value="custom">Otro</option>
+        </select>
+
+        <div id="custom-tip-container" style="display:none;">
+            <label for="custom-tip"> Porcentaje:</label>
+            <input type="number" id="custom-tip" placeholder="Ingrese porcentaje" />
+        </div>
+
+        <button onclick="calculateTip()">Convertir</button>
+        <div id="tip-result" class="result"></div>
+    </div>
+</div>
+
+<script>
+function calculateTip() {
+    const billAmount = parseFloat(document.getElementById('bill-amount').value);
+    const tipPercentage = document.getElementById('tip-percentage').value;
+    const customTip = parseFloat(document.getElementById('custom-tip').value);
+
+    if (isNaN(billAmount) || billAmount <= 0) {
+        document.getElementById('tip-result').innerText = 'Por favor, ingrese un monto válido para la cuenta.';
+        return;
+    }
+
+    let finalTipPercentage = tipPercentage === 'custom' ? customTip : parseFloat(tipPercentage);
+
+    if (isNaN(finalTipPercentage) || finalTipPercentage <= 0) {
+        document.getElementById('tip-result').innerText = 'Por favor, ingrese un porcentaje válido para la propina.';
+        return;
+    }
+
+    const tipAmount = (billAmount * finalTipPercentage) / 100;
+    const totalAmount = billAmount + tipAmount;
+
+    document.getElementById('tip-result').innerText = `Propina: $${tipAmount.toFixed(2)}\nTotal a pagar: $${totalAmount.toFixed(2)}`;
+}
+
+document.getElementById('tip-percentage').addEventListener('change', function() {
+    const customTipContainer = document.getElementById('custom-tip-container');
+    if (this.value === 'custom') {
+        customTipContainer.style.display = 'block';
+    } else {
+        customTipContainer.style.display = 'none';
+    }
+});
+</script>
+
+<div class="button-wrapper">
+    <a href="BibliasMaker.html" class="button-link">Empezar a escribir</a>
+    <a href="Calculadora_Científica.html" class="button-link">Volver a calculadora</a>
+</div>
+
+</div>
+
+
+
+
+</body>
+</html>
