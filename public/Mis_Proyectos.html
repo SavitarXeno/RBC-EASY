@@ -93,16 +93,20 @@
     
 .close-button {
   border: none;
-  color: #FF0000;
+  color: #FF0000 !important;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   padding: 4px 8px;
   transition: color 0.2s ease;
+  background: none !important;
+  background-color: none !important;
 }
 
 .close-button:hover {
-  box-shadow: 0 0 35px rgba(255,0,0,.9);
+  box-shadow: 0 0 35px rgba(255,0,0,.9) !important;
+  background: none !important;
+  background-color: none !important;
 }
 
     .file-list {
@@ -203,6 +207,16 @@
     bottom: 30px;
   }
 }
+
+.calculate-button:hover,
+.calculate-button:focus,
+.calculate-button:visited,
+.create-more-button:hover,
+.create-more-button:focus,
+.create-more-button:visited {
+  text-decoration: none !important;
+}
+
   </style>
   <title>Proyectos</title>
 </head>
