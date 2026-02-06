@@ -85,21 +85,24 @@
       cursor: pointer;
     }
     .sidebar button:hover {
-      background-color: #FF3333;
+      background-color: #e60000;
     }
-    .close-button {
-      margin-top: auto;
-      width: 80%;
-      padding: 8px;
-      background-color: #444;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .close-button:hover {
-      background-color: #666;
-    }
+    
+.close-button {
+  background: transparent;
+  border: none;
+  color: #FF0000;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s ease;
+}
+
+.close-button:hover {
+background-color: #e60000;
+}
+
     .file-list {
       margin-top: 20px;
       list-style-type: none;
@@ -151,7 +154,7 @@
 ================================================== */
 .action-btn {
   display: inline-block;
-  padding: 14px 38px;
+  padding: 12px 18px;
   background: #FF0000;
   color: white;
   border: none;
@@ -202,7 +205,7 @@
   <title>Proyectos</title>
 </head>
 <body>
-<!-- BOTÓN TOGGLE (el tuyo, mejorado) -->
+<!-- BOTÓN TOGGLE -->
 <button id="toggle-menu" class="menu-btn">
   📂 Cargar Proyectos
 </button>
@@ -233,9 +236,9 @@
   top: 15px;
   left: 15px;
   z-index: 1001;
-  background: #0a0f1f;
-  color: #00bfff;
-  border: 1px solid #00bfff;
+  background: #1f0a0a;
+  color: #ff0000;
+  border: 1px solid #ff0000;
   padding: 10px 14px;
   font-size: 20px;
   cursor: pointer;
@@ -302,7 +305,7 @@
 }
 
 .sidebar-content p:hover {
-  background: rgba(0, 191, 255, 0.15);
+  background: rgba(255, 0, 0, 0.15);
 }
 
 /* SCROLLBAR OSCURA */
@@ -315,7 +318,7 @@
 }
 
 .sidebar-content::-webkit-scrollbar-thumb {
-  background: #1c2340;
+  background: #373737;
   border-radius: 4px;
 }
 
@@ -353,6 +356,27 @@ body.sidebar-open #sidebar-overlay {
     <a href="Calculadora_Científica.html" class="calculate-button">Calcular</a>
     <a href="BibliasMaker.html" class="create-more-button">Escribir</a>
   </div>
+
+  <style>
+    .calculate-button,
+.create-more-button {
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: .08em;
+  box-shadow: 0 0 18px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+.calculate-button:hover,
+.create-more-button:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,0,0,.9);
+}
+
+  </style>
   <script>
 
     let db;
