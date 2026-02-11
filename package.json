@@ -1,7 +1,31 @@
 {
+  "name": "rbc-easy",
+  "version": "1.0.0",
+  "description": "RBC EASY Desktop App",
+  "author": "Savitar",
+  "main": "main.js",
+
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+
   "dependencies": {
     "@capacitor/android": "^8.0.2",
     "@capacitor/cli": "^8.0.2",
     "@capacitor/core": "^8.0.2"
+  },
+
+  "devDependencies": {
+    "electron": "^40.3.0",
+    "electron-builder": "^26.7.0"
+  },
+
+  "build": {
+    "appId": "com.savitar.rbc",
+    "productName": "RBC EASY",
+    "win": {
+      "target": "nsis"
+    }
   }
 }
