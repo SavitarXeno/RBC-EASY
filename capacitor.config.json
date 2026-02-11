@@ -1,6 +1,10 @@
 {
   "appId": "com.savitar.rbc",
-  "appName": "RBC Easy",
+  "appName": "RBC EASY",
   "webDir": "public",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://rbc-easy.vercel.app",
+    "cleartext": false
+  }
 }
