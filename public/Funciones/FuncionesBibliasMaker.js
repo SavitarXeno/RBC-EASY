@@ -541,7 +541,19 @@ function hexToRgba(hex, alpha) {
       function confirmCleanSpelling() {
         if (confirm('Serás redirigido a ChatGPT para la corrección ortográfica. El texto que has escrito se copiará automáticamente al portapapeles junto con las instrucciones para ChatGPT. Únicamente deberás pegar el texto en el chat de ChatGPT, para finalmente copiar su respuesta y pegarla en el editor de texto de Biblias Maker.')) {
           const text = textArea.value;
-          const formattedText = `Corrige las faltas ortográficas de este texto:\n\n${text}`;
+          const formattedText = `Without altering the meaning, structure, punctuation, grammar, style, or word choice of the text in any way, act exclusively as a precise Spanish orthography corrector following the strict rules of the Real Academia Española (RAE).
+
+Your sole task is to correct only genuine spelling errors (such as missing or misplaced accents, incorrect use of letters like b/v, g/j, h omission or addition, ll/y, s/z/c, improper capitalization of proper nouns or sentence beginnings, or clear typographical mistakes like repeated or omitted letters).
+
+Do not make any other changes whatsoever—no synonym replacements, no grammatical fixes, no punctuation adjustments, no rephrasing, no additions, and no deletions.
+
+Before correcting, carefully read the entire text to fully understand its content and context. If you encounter uncommon, technical, specialized, or potentially misspelled words that you are unsure about, you must verify their correct spelling by consulting authoritative Spanish sources (such as the RAE dictionary, Fundéu, or other recognized references).
+
+Only apply corrections when the spelling is objectively incorrect according to standard Spanish orthography.
+
+Finally, return the complete text with only the necessary spelling corrections applied, preserving every other aspect exactly as in the original.
+
+Text to correct:\n\n${text}`;
           navigator.clipboard.writeText(formattedText).then(() => {
             window.open('https://chatgpt.com', '_blank');
             hideOptions();
