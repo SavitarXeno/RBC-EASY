@@ -552,7 +552,7 @@ function hexToRgba(hex, alpha) {
       }
   
       function openCalculator() {
-        window.open('Calculadora_Científica.html', '_blank');
+    window.location.href = 'Calculadora_Científica.html';
       }
   
       function downloadText() {

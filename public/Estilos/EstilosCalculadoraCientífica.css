@@ -61,7 +61,7 @@ body {
     padding: 10px 20px;
     font-size: 16px;
     text-decoration: none;
-    z-index: 999;
+    z-index: 1200;
     box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -88,7 +88,7 @@ body {
     padding: 10px 20px;
     font-size: 16px;
     text-decoration: none;
-    z-index: 999;
+    z-index: 1100;
     box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -97,15 +97,18 @@ body {
 .mobile-button-left {
     left: 20px;
     transform: translateY(-50%);
+    z-index: 1100;
 }
 
 .mobile-button-right {
     right: 20px;
     transform: translateY(-50%);
+    z-index: 1100;
 }
 
 .mobile-view .buttons {
     grid-template-columns: repeat(4, 1fr);
+    z-index: 1100;
 }
 
 .mobile-view .sidebar,
@@ -193,6 +196,7 @@ body {
    padding: 10px 20px;
    font-size: 16px;
 text-decoration: none;
+z-index: 1099;
 }
 
 .guide-sidebar {
@@ -356,7 +360,7 @@ text-decoration: none;
     padding: 10px 20px;
     font-size: 16px;
     text-decoration: none;
-    z-index: 999;
+    z-index: 1999;
     box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
     cursor: pointer;
     transition: background-color 0.3s ease;
@@ -473,9 +477,25 @@ background-color: #f57c00;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.1s ease;
     position: fixed;
-    top: 10px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 📱 MÓVIL */
+@media (max-width: 768px) {
+    .start-writing-button {
+        top: calc(env(safe-area-inset-top) + 20px);
+        bottom: auto;
+    }
+}
+
+/* 🖥️ ESCRITORIO */
+@media (min-width: 769px) {
+    .start-writing-button {
+        bottom: 30px;
+        top: auto;
+    }
 }
 
 .start-writing-button:hover {
@@ -483,9 +503,8 @@ background-color: #f57c00;
 }
 
 .start-writing-button:active {
-    transform: translateX(-50%) translateY(2px); 
+    transform: translateX(-50%) translateY(2px);
 }
-
 
 
 .button[onclick="appendToScreen(')')"],
