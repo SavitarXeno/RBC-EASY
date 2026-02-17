@@ -162,6 +162,7 @@
   });
 })();
   </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Lora&family=Poppins&display=swap" rel="stylesheet">
 
@@ -220,6 +221,7 @@
   }
 }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
 </head>
 <body>
   <div class="particles"></div>
@@ -395,8 +397,631 @@
       <button class="button" onclick="revisarOrtografiaAvanzada()">Analizar ortografía</button>
       <button class="button" onclick="showOptions('clean-spelling')">Limpiar ortografía</button>
       <button class="button" onclick="openCalculator()">Calcular datos</button>
-      <button class="button" onclick="downloadText()">Descargar .txt</button>
+      <button class="button" onclick="openExportModal()">Descargar / Exportar</button>
     </div>
+
+<!-- jsPDF (una sola carga) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ===================================================
+   MODAL DE EXPORTACIÓN COMPLETO (reemplaza todo lo anterior)
+   =================================================== -->
+<div id="exportModal" class="action-container export-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="export-modal-inner">
+    <button class="close-action" aria-label="Cerrar" title="Cerrar">✕</button>
+    
+    <h2 class="modal-title">Exportar Biblia</h2>
+    
+    <div class="export-format-buttons" role="tablist">
+      <button class="format-btn" data-format="pdf" role="tab">PDF</button>
+      <button class="format-btn" data-format="txt" role="tab">TXT</button>
+      <button class="format-btn" data-format="mp3" role="tab">MP3</button>
+    </div>
+    
+    <div id="configPanel" class="config-panel"></div>
+    
+    <div id="loaderPanel" class="loader-panel hidden"></div>
+    
+    <div class="modal-actions">
+      <button class="btn-generate" id="generateBtn">Generar y Descargar</button>
+      <button class="btn-cancel">Cancelar</button>
+    </div>
+    
+    <div id="statusMessage" class="status-message">Selecciona un formato</div>
+  </div>
+</div>
+
+<style>
+
+  
+/* ================================================
+   ESTILOS FUTURISTAS NEÓN ROJO ULTRA AVANZADOS
+   ================================================ */
+/* ================================================
+   MODAL PROFESIONAL + NEÓN FUTURISTA MINIMALISTA
+   ================================================ */
+
+/* Fondo overlay oscuro y profesional */
+.export-modal {
+  all: unset;
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.export-modal.active {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* Contenedor principal: delgado, elegante y centrado */
+.export-modal-inner {
+  width: 82%;
+  max-width: 680px;               /* más compacto y profesional */
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid rgba(255, 0, 0, 0.6);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.7),
+    0 0 35px rgba(255, 0, 0, 0.25),
+    inset 0 0 25px rgba(255, 0, 0, 0.08);
+  animation: modalFadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  transform: scale(0.96);
+  opacity: 0;
+}
+
+/* Animación de entrada limpia y profesional */
+@keyframes modalFadeIn {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Título elegante con glow sutil */
+.modal-title {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  color: #ff1a1a;
+  letter-spacing: 0.8px;
+  margin: 0 0 28px;
+  text-shadow: 0 0 12px rgba(255, 26, 26, 0.7);
+  position: relative;
+}
+
+.modal-title::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff1a1a, transparent);
+  box-shadow: 0 0 15px rgba(255, 26, 26, 0.5);
+}
+
+/* Botones de formato: más delgados y premium */
+.export-format-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 0 32px;
+  flex-wrap: wrap;
+}
+
+.format-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 0, 0.7);
+  color: #ff4d4d;
+  padding: 10px 26px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.15);
+}
+
+.format-btn:hover,
+.format-btn.active {
+  background: rgba(255, 0, 0, 0.12);
+  color: #fff;
+  border-color: #ff1a1a;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.45);
+  transform: translateY(-3px);
+}
+
+/* Panel de configuración: limpio y profesional */
+.config-panel {
+  padding: 24px;
+  background: rgba(15, 15, 15, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.config-panel label {
+  display: block;
+  color: #ff6666;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+
+.config-panel select,
+.config-panel input[type="number"],
+.config-panel input[type="text"] {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.config-panel select:focus,
+.config-panel input:focus {
+  outline: none;
+  border-color: #ff1a1a;
+  box-shadow: 0 0 15px rgba(255, 26, 26, 0.4);
+}
+
+/* Botones de acción: más elegantes */
+.modal-actions {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn-generate {
+  background: linear-gradient(135deg, #ff1a1a, #cc0000);
+  color: white;
+  padding: 12px 34px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+.btn-generate:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(255, 0, 0, 0.7);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 0, 0.6);
+  color: #ff6666;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 0, 0, 0.08);
+  border-color: #ff1a1a;
+  color: #fff;
+}
+
+/* Status más discreto y profesional */
+.status-message {
+  margin-top: 20px;
+  text-align: center;
+  color: #ff9999;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* Loader ultra futurista */
+.loader-panel {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  z-index: 10;
+}
+
+.loader-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.loader-ring {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-top-color: #ff0000;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  box-shadow: 0 0 40px #ff0000;
+}
+
+.loader-ring:nth-child(1) { animation-delay: 0s; width: 100%; height: 100%; }
+.loader-ring:nth-child(2) { animation-delay: 0.2s; width: 80%; height: 80%; left: 10%; top: 10%; }
+.loader-ring:nth-child(3) { animation-delay: 0.4s; width: 60%; height: 60%; left: 20%; top: 20%; }
+
+.loader-core {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: #ff0000;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: corePulse 2s ease-in-out infinite;
+  box-shadow: 0 0 60px #ff0000;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes corePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+}
+
+.loader-text {
+  margin-top: 40px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff0000;
+  text-shadow: 0 0 20px #ff0000;
+  animation: textFlicker 2s infinite;
+}
+
+.loader-progress {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #ff6666;
+}
+
+@keyframes textFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Acciones */
+.modal-actions {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  z-index: 1;
+}
+
+.btn-generate {
+  background: linear-gradient(45deg, #ff0000, #ff3333);
+  color: #000;
+  padding: 16px 40px;
+  border: none;
+  border-radius: 50px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(255,0,0,0.7);
+  transition: all 0.3s;
+}
+
+.btn-generate:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 70px rgba(255,0,0,1);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 2px solid #ff0000;
+  color: #ff0000;
+  padding: 14px 36px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255,0,0,0.2);
+}
+
+.status-message {
+  margin-top: 20px;
+  text-align: center;
+  color: #ff6666;
+  font-size: 15px;
+}
+</style>
+
+<script>
+// ================================================
+// MÓDULO DE EXPORTACIÓN FINAL - MÁXIMA CALIDAD
+// Sin vista previa TTS, solo configuración + loader futurista
+// MP3 funcional con chunks y descarga directa
+// PDF con ~60 fuentes seleccionables
+// ================================================
+
+let selectedFormat = null;
+
+const PDF_FONTS = [
+  "Helvetica","Arial","Times New Roman","Courier New","Georgia","Verdana","Palatino","Garamond",
+  "Trebuchet MS","Impact","Comic Sans MS","Lucida Sans","Fira Sans","Roboto","Open Sans","Lora",
+  "Merriweather","Montserrat","Oswald","Raleway","PT Serif","Nunito","Source Sans Pro","Inter",
+  "Playfair Display","Noto Sans","Noto Serif","Ubuntu","Cantarell","Exo 2","Inconsolata","Cousine",
+  "Arvo","Bitter","Bree Serif","Cabin","Cardo","Comfortaa","Crimson Text","Fira Mono","Hind",
+  "Josefin Sans","Karla","Maven Pro","Mukta","Nanum Gothic","Overpass","Quicksand","Rubik",
+  "Saira","Signika","Spectral","Work Sans","Poppins","Dosis","Oxygen","Questrial"
+];
+
+const MP3_LANGUAGES = [
+  {code:"es-ES",name:"Español (España)"},
+  {code:"es-MX",name:"Español (México)"},
+  {code:"es-US",name:"Español (EE.UU.)"},
+  {code:"en-US",name:"Inglés (EE.UU.)"},
+  {code:"en-GB",name:"Inglés (Reino Unido)"},
+  {code:"en-AU",name:"Inglés (Australia)"},
+  {code:"fr-FR",name:"Francés (Francia)"},
+  {code:"de-DE",name:"Alemán"},
+  {code:"it-IT",name:"Italiano"},
+  {code:"pt-BR",name:"Portugués (Brasil)"},
+  {code:"pt-PT",name:"Portugués (Portugal)"},
+  {code:"ru-RU",name:"Ruso"},
+  {code:"ja-JP",name:"Japonés"},
+  {code:"ko-KR",name:"Coreano"},
+  {code:"zh-CN",name:"Chino (Simplificado)"},
+  {code:"zh-TW",name:"Chino (Tradicional)"},
+  {code:"ar-SA",name:"Árabe"},
+  {code:"hi-IN",name:"Hindi"},
+  {code:"nl-NL",name:"Holandés"},
+  {code:"sv-SE",name:"Sueco"}
+];
+
+const RATES = [0.75,0.9,1,1.1,1.25,1.5,1.75,2];
+
+function openExportModal() {
+  selectedFormat = null;
+  document.getElementById("exportModal").classList.add("active");
+  document.getElementById("configPanel").innerHTML = "";
+  document.getElementById("loaderPanel").classList.add("hidden");
+  document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("statusMessage").textContent = "Selecciona un formato";
+  document.querySelector(".close-action").focus();
+}
+
+function closeExportModal() {
+  document.getElementById("exportModal").classList.remove("active");
+  setTimeout(() => {
+    document.getElementById("loaderPanel").classList.add("hidden");
+    document.getElementById("configPanel").innerHTML = "";
+  }, 700);
+}
+
+document.querySelectorAll(".format-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectedFormat = btn.dataset.format;
+    document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    buildConfigPanel(selectedFormat);
+  });
+});
+
+document.querySelector(".close-action").addEventListener("click", closeExportModal);
+document.querySelector(".btn-cancel").addEventListener("click", closeExportModal);
+
+function buildConfigPanel(format) {
+  const panel = document.getElementById("configPanel");
+  panel.innerHTML = "";
+
+  if (format === "pdf") {
+    const fonts = PDF_FONTS.map(f => `<option value="${f}">${f}</option>`).join("");
+    panel.innerHTML = `
+      <label>Título opcional</label>
+      <input type="text" id="pdfTitle" placeholder="Título del documento">
+      
+      <label>Fuente (amplia selección)</label>
+      <select id="pdfFont">${fonts}</select>
+      
+      <label>Tamaño de letra (pt)</label>
+      <input type="number" id="pdfSize" value="14" min="8" max="32">
+      
+      <label>Interlineado</label>
+      <input type="number" step="0.1" id="pdfLine" value="1.6" min="1" max="3">
+      
+      <label>Margen (mm)</label>
+      <input type="number" id="pdfMargin" value="20" min="10" max="40">
+    `;
+  } else if (format === "txt") {
+    panel.innerHTML = `<p style="color:#ccc;">Descarga directa como texto plano con codificación UTF-8.</p>`;
+  } else if (format === "mp3") {
+    const langs = MP3_LANGUAGES.map(l => `<option value="${l.code}">${l.name}</option>`).join("");
+    const rates = RATES.map(r => `<option value="${r}">${r}x</option>`).join("");
+    panel.innerHTML = `
+      <label>Idioma / Voz (acento)</label>
+      <select id="mp3Lang">${langs}</select>
+      
+      <label>Velocidad aproximada</label>
+      <select id="mp3Rate">${rates}</select>
+      
+      <p style="color:#ff8888;font-size:14px;margin-top:20px;">
+        Nota: Google TTS ofrece alta calidad sin autenticación. La voz exacta depende del idioma seleccionado.
+      </p>
+    `;
+  }
+}
+
+async function handleGenerate() {
+  if (!selectedFormat) return alert("Selecciona un formato");
+  const text = document.getElementById("texto").value.trim();
+  if (!text) return alert("No hay texto para exportar");
+
+  const now = new Date();
+  const defaultName = `Biblia_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+  const name = prompt("Nombre del archivo:", defaultName) || defaultName;
+
+  if (selectedFormat === "txt") {
+    const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+    download(blob, `${name}.txt`);
+  } else if (selectedFormat === "pdf") {
+    // Capturamos TODAS las configs aquí (antes de cualquier cierre)
+    const pdfConfig = {
+      title: document.getElementById("pdfTitle")?.value.trim() || "",
+      font: document.getElementById("pdfFont")?.value || "Helvetica",
+      size: parseInt(document.getElementById("pdfSize")?.value) || 14,
+      lineH: parseFloat(document.getElementById("pdfLine")?.value) || 1.6,
+      margin: parseInt(document.getElementById("pdfMargin")?.value) || 20
+    };
+    generatePDF(text, name, pdfConfig); // pasamos las configs
+  } else if (selectedFormat === "mp3") {
+    await generateMP3(text, name);
+    setTimeout(closeExportModal, 1500);
+  }
+
+  // Solo cerramos al final (excepto MP3 que ya lo maneja)
+  if (selectedFormat !== "mp3") closeExportModal();
+}
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function generatePDF(text, name, config) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Mejor fallback de fuente (más preciso)
+  let pdfFont = "helvetica";
+  const lower = config.font.toLowerCase();
+  if (lower.includes("times") || lower.includes("georgia") || lower.includes("palatino") || lower.includes("garamond") || lower.includes("serif")) {
+    pdfFont = "times";
+  } else if (lower.includes("courier")) {
+    pdfFont = "courier";
+  }
+
+  doc.setFont(pdfFont);
+  doc.setFontSize(config.size);
+
+  let y = config.margin;
+
+  // Título opcional: grande y centrado en la primera página
+  if (config.title) {
+    doc.setFontSize(28);
+    doc.text(config.title, doc.internal.pageSize.getWidth() / 2, y + 10, { align: "center" });
+    doc.setFontSize(config.size);
+    y += 40; // espacio después del título
+  }
+
+  const lines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - config.margin * 2);
+
+  lines.forEach(line => {
+    if (y > doc.internal.pageSize.getHeight() - config.margin) {
+      doc.addPage();
+      y = config.margin;
+    }
+    doc.text(line, config.margin, y);
+    y += config.size * config.lineH * 0.3528; // interlineado preciso
+  });
+
+  doc.save(`${name}.pdf`);
+}
+
+async function generateMP3(text, name) {
+  document.getElementById("loaderPanel").classList.remove("hidden");
+  document.getElementById("loaderPanel").innerHTML = `
+    <div class="loader-container">
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-core"></div>
+    </div>
+    <div class="loader-text">Procesando audio de alta calidad...</div>
+    <div class="loader-progress" id="mp3Progress">0%</div>
+  `;
+
+  const lang = document.getElementById("mp3Lang").value.split("-")[0];
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const chunks = [];
+  let current = "";
+  
+  for (const s of sentences) {
+    if ((current + s).length > 190) {
+      chunks.push(current.trim());
+      current = s;
+    } else {
+      current += " " + s;
+    }
+  }
+  if (current) chunks.push(current.trim());
+
+  const buffers = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const q = encodeURIComponent(chunks[i]);
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${q}`;
+    
+    try {
+      const res = await fetch(url, {headers: {"Referer": "https://translate.google.com/"}});
+      if (!res.ok) throw new Error("Failed");
+      const buf = await res.arrayBuffer();
+      buffers.push(buf);
+      
+      const percent = Math.round(((i + 1) / chunks.length) * 100);
+      document.getElementById("mp3Progress").textContent = `${percent}%`;
+      
+      await new Promise(r => setTimeout(r, 300));
+    } catch (e) {
+      document.getElementById("loaderPanel").innerHTML = `<div style="color:#ff6666;">Error generando audio</div>`;
+      return;
+    }
+  }
+
+  const total = buffers.reduce((a,b) => a + b.byteLength, 0);
+  const full = new Uint8Array(total);
+  let offset = 0;
+  for (const b of buffers) {
+    full.set(new Uint8Array(b), offset);
+    offset += b.byteLength;
+  }
+
+  const blob = new Blob([full], {type: "audio/mpeg"});
+  download(blob, `${name}.mp3`);
+  
+  document.getElementById("loaderPanel").innerHTML = `<div style="color:#0f0;font-size:24px;">¡MP3 generado y descargado!</div>`;
+}
+
+// Asegura el listener del botón (por si no se cargó antes)
+document.addEventListener("DOMContentLoaded", () => {
+  const generateBtn = document.getElementById("generateBtn");
+  if (generateBtn) {
+    generateBtn.addEventListener("click", handleGenerate);
+  }
+});
+</script>
 
 <style>
         /* Forzar menú de botones siempre en columna y scrollable (incluso oculto) */
@@ -1107,7 +1732,6 @@
 </div>
 
 <script>
-  let voices = [];
   let utterance = null;
   let isSpeaking = false;
   let isBarVisible = false;
@@ -2530,25 +3154,6 @@ async function obtenerSignificadoSeguro(palabra) {
 
   return "Definición no encontrada, pero palabra lingüísticamente válida.";
 }
-
-
-/* ============================= */
-/* CORRECTOR ORTOGRÁFICO - VERSIÓN PASO A PASO: PRIMERO EL DICCIONARIO MEJORADO */
-/* 
-  En este paso nos enfocamos EXCLUSIVAMENTE en hacer que las sugerencias muestren 
-  definiciones REALES, precisas y útiles de la palabra sugerida.
-  
-  Mejoras clave del diccionario:
-  - Prioridad 1: FreeDictionary API (la más confiable y limpia para español)
-  - Prioridad 2: Wiktionary (definiciones completas y contextuales)
-  - Prioridad 3: Datamuse (bueno para sinónimos y definiciones rápidas)
-  - Fallback morfológico inteligente (nombres propios, adverbios -mente, sustantivos -ción/-sión, verbos infinitivos)
-  - Normalización robusta (tildes, mayúsculas, puntuación)
-  - Cache simple en memoria para evitar consultas repetidas en la misma sesión
-  - Definición truncada a ~300 caracteres para no saturar la UI
-  - Mensaje claro cuando no hay definición (pero siempre devuelve algo útil)
-*/
-/* ============================= */
 
 (() => {
   // === CACHE EN MEMORIA PARA DEFINICIONES (evita repetir consultas) ===
