@@ -1,4 +1,3 @@
-
   
       document.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'z') {
@@ -226,7 +225,105 @@ updateActionList();
       return output;
     }
   
-    const previewContent = applyPrefixes(text);
+let previewContent = applyPrefixes(text);
+
+/* ============================
+   RENDERIZAR FIGURAS
+============================ */
+
+figureStore.forEach(fig => {
+
+  let sizeStyle = "";
+
+  if (fig.orientation === "horizontal")
+    sizeStyle = "width:600px; height:340px;";
+
+  if (fig.orientation === "vertical")
+    sizeStyle = "width:340px; height:600px;";
+
+  if (fig.orientation === "square")
+    sizeStyle = "width:450px; height:450px;";
+
+  let mediaHTML = "";
+
+  if (fig.isVideo) {
+    mediaHTML = `
+      <div class="preview-figure">
+        <video controls style="${sizeStyle} object-fit:cover; border-radius:12px;">
+          <source src="${fig.src}">
+        </video>
+      </div>
+    `;
+  } else {
+    mediaHTML = `
+      <div class="preview-figure">
+        <img src="${fig.src}" style="${sizeStyle} object-fit:cover; border-radius:12px;">
+      </div>
+    `;
+  }
+
+  previewContent = previewContent.replace(fig.tag, mediaHTML);
+
+});
+
+// Código ``
+previewContent = previewContent.replace(/`([^`]+)`/g,
+  `<span class="wa-code">$1</span>`);
+
+// Tachado ~~
+previewContent = previewContent.replace(/~([^~]+)~/g,
+  `<span class="wa-strike">$1</span>`);
+
+// Negrita *
+previewContent = previewContent.replace(/\*([^*]+)\*/g,
+  `<b>$1</b>`);
+
+// Cursiva _
+previewContent = previewContent.replace(/_([^_]+)_/g,
+  `<i>$1</i>`);
+
+// Citas >
+previewContent = previewContent.replace(/^> (.*)$/gm,
+  `<div class="wa-quote">$1</div>`);
+
+// Lista numerada
+previewContent = previewContent.replace(/^\d+\.\s(.*)$/gm,
+  `<div class="wa-numbered">$&</div>`);
+
+// Lista con -
+previewContent = previewContent.replace(/^- (.*)$/gm,
+  `<div class="wa-bullet">$1</div>`);
+
+// Lista con *
+previewContent = previewContent.replace(/^\* (.*)$/gm,
+  `<div class="wa-bullet">$1</div>`);
+
+
+// Reemplazar figuras por imágenes
+figureStore.forEach(fig => {
+  let sizeStyle = "";
+
+  if (fig.orientation === "horizontal") {
+    sizeStyle = "width:600px; height:340px;";
+  }
+
+  if (fig.orientation === "vertical") {
+    sizeStyle = "width:340px; height:600px;";
+  }
+
+  if (fig.orientation === "square") {
+    sizeStyle = "width:450px; height:450px;";
+  }
+
+  const imgHTML = `
+    <div class="preview-figure">
+      <img src="${fig.src}" style="${sizeStyle} object-fit:cover; border-radius:12px;">
+    </div>
+  `;
+
+  previewContent = previewContent.replace(fig.tag, imgHTML);
+});
+
   
     if (previewContainer.style.display === 'none' || previewContainer.style.display === '') {
       previewContainer.style.display = 'block';
@@ -590,5 +687,38 @@ Text to correct:\n\n${text}`;
         prefixPopupContainer.classList.remove('active');
         setTimeout(() => prefixPopupContainer.style.display = 'none', 300);
       }
-      
-      
+
+      function insertImageIntoTextarea(file) {
+  const reader = new FileReader();
+
+  reader.onload = function () {
+    const img = new Image();
+    img.onload = function () {
+
+      let orientation = "square";
+
+      if (img.width > img.height) orientation = "horizontal";
+      if (img.height > img.width) orientation = "vertical";
+
+      const figureTag = `[Figura ${figureCounter}.0]`;
+
+      figureStore.push({
+        id: figureCounter,
+        tag: figureTag,
+        src: reader.result,
+        orientation: orientation
+      });
+
+      saveFigures();
+
+      const textarea = document.getElementById("texto");
+      textarea.value += "\n" + figureTag + "\n";
+
+      figureCounter++;
+    };
+
+    img.src = reader.result;
+  };
+
+  reader.readAsDataURL(file);
+}

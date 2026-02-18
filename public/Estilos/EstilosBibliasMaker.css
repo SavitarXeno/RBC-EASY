@@ -506,3 +506,41 @@ z-index: 1000;
 display: flex;
 gap: 3px;
 }
+
+.preview-figure {
+  text-align: center;
+  margin: 20px 0;
+}
+
+/* WhatsApp styles */
+
+.wa-code {
+  background: #2a2a2a;
+  color: #ccc;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-family: monospace;
+}
+
+.wa-strike {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+.wa-quote {
+  background: #2c2c2c;
+  border-left: 6px solid #555;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #ccc;
+  margin: 5px 0;
+}
+
+.wa-bullet::before {
+  content: "• ";
+  font-size: 18px;
+}
+
+.wa-numbered {
+  margin-left: 10px;
+}

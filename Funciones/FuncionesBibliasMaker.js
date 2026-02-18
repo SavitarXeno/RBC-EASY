@@ -1,3 +1,89 @@
+/* ============================
+   SISTEMA DE FIGURAS
+============================ */
+
+let figureStore = JSON.parse(localStorage.getItem("figureStore")) || [];
+let figureCounter = figureStore.length + 1;
+
+function saveFigures() {
+  localStorage.setItem("figureStore", JSON.stringify(figureStore));
+}
+
+function insertMedia() {
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*,video/*";
+
+  input.onchange = function (e) {
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function () {
+
+      const isVideo = file.type.startsWith("video");
+      const tag = `[Figura ${figureCounter}.0]`;
+
+      let orientation = "square";
+
+      if (!isVideo) {
+        const img = new Image();
+        img.onload = function () {
+
+          if (img.width > img.height) orientation = "horizontal";
+          if (img.height > img.width) orientation = "vertical";
+
+          saveFigure(tag, reader.result, isVideo, orientation);
+        };
+        img.src = reader.result;
+      } else {
+        orientation = "horizontal";
+        saveFigure(tag, reader.result, isVideo, orientation);
+      }
+
+      function saveFigure(tag, src, isVideo, orientation) {
+
+        figureStore.push({
+          id: figureCounter,
+          tag: tag,
+          src: src,
+          isVideo: isVideo,
+          orientation: orientation
+        });
+
+        saveFigures();
+
+        insertAtCursor(tag);
+
+        figureCounter++;
+      }
+
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  input.click();
+}
+
+function insertAtCursor(text) {
+
+  const textarea = document.getElementById("texto");
+  textarea.focus();
+
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+
+  const before = textarea.value.substring(0, start);
+  const after = textarea.value.substring(end);
+
+  textarea.value = before + text + after;
+
+  textarea.setSelectionRange(start + text.length, start + text.length);
+}
 
   
       document.addEventListener('keydown', function(event) {
@@ -226,7 +312,66 @@ updateActionList();
       return output;
     }
   
-    const previewContent = applyPrefixes(text);
+let previewContent = applyPrefixes(text);
+
+// Código ``
+previewContent = previewContent.replace(/`([^`]+)`/g,
+  `<span class="wa-code">$1</span>`);
+
+// Tachado ~~
+previewContent = previewContent.replace(/~([^~]+)~/g,
+  `<span class="wa-strike">$1</span>`);
+
+// Negrita *
+previewContent = previewContent.replace(/\*([^*]+)\*/g,
+  `<b>$1</b>`);
+
+// Cursiva _
+previewContent = previewContent.replace(/_([^_]+)_/g,
+  `<i>$1</i>`);
+
+// Citas >
+previewContent = previewContent.replace(/^> (.*)$/gm,
+  `<div class="wa-quote">$1</div>`);
+
+// Lista numerada
+previewContent = previewContent.replace(/^\d+\.\s(.*)$/gm,
+  `<div class="wa-numbered">$&</div>`);
+
+// Lista con -
+previewContent = previewContent.replace(/^- (.*)$/gm,
+  `<div class="wa-bullet">$1</div>`);
+
+// Lista con *
+previewContent = previewContent.replace(/^\* (.*)$/gm,
+  `<div class="wa-bullet">$1</div>`);
+
+
+// Reemplazar figuras por imágenes
+figureStore.forEach(fig => {
+  let sizeStyle = "";
+
+  if (fig.orientation === "horizontal") {
+    sizeStyle = "width:600px; height:340px;";
+  }
+
+  if (fig.orientation === "vertical") {
+    sizeStyle = "width:340px; height:600px;";
+  }
+
+  if (fig.orientation === "square") {
+    sizeStyle = "width:450px; height:450px;";
+  }
+
+  const imgHTML = `
+    <div class="preview-figure">
+      <img src="${fig.src}" style="${sizeStyle} object-fit:cover; border-radius:12px;">
+    </div>
+  `;
+
+  previewContent = previewContent.replace(fig.tag, imgHTML);
+});
+
   
     if (previewContainer.style.display === 'none' || previewContainer.style.display === '') {
       previewContainer.style.display = 'block';
@@ -590,3 +735,38 @@ Text to correct:\n\n${text}`;
         prefixPopupContainer.classList.remove('active');
         setTimeout(() => prefixPopupContainer.style.display = 'none', 300);
       }
+
+      function insertImageIntoTextarea(file) {
+  const reader = new FileReader();
+
+  reader.onload = function () {
+    const img = new Image();
+    img.onload = function () {
+
+      let orientation = "square";
+
+      if (img.width > img.height) orientation = "horizontal";
+      if (img.height > img.width) orientation = "vertical";
+
+      const figureTag = `[Figura ${figureCounter}.0]`;
+
+      figureStore.push({
+        id: figureCounter,
+        tag: figureTag,
+        src: reader.result,
+        orientation: orientation
+      });
+
+      saveFigures();
+
+      const textarea = document.getElementById("texto");
+      textarea.value += "\n" + figureTag + "\n";
+
+      figureCounter++;
+    };
+
+    img.src = reader.result;
+  };
+
+  reader.readAsDataURL(file);
+}
