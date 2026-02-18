@@ -566,7 +566,18 @@ Text to correct:\n\n${text}`;
       function openCalculator() {
     window.location.href = 'Calculadora_Científica.html';
       }
-
+  
+      function downloadText() {
+        const text = textArea.value;
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'texto.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
 
       function showPrefixPopup() {
         const prefixPopupContainer = document.getElementById('prefix-popup-container');
@@ -579,5 +590,3 @@ Text to correct:\n\n${text}`;
         prefixPopupContainer.classList.remove('active');
         setTimeout(() => prefixPopupContainer.style.display = 'none', 300);
       }
-      
-      

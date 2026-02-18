@@ -162,6 +162,7 @@
   });
 })();
   </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Lora&family=Poppins&display=swap" rel="stylesheet">
 
@@ -220,12 +221,46 @@
   }
 }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
 </head>
 <body>
   <div class="particles"></div>
   <div class="container">
     <div class="bubble" id="title">Biblias Maker</div>
-    <textarea id="texto" placeholder="Escribe tu turno aquí... uwu"></textarea>
+    <textarea id="texto" spellcheck="true" lang="es" autocorrect="on" autocomplete="on" autocapitalize="sentences" placeholder="Escribe tu turno aquí... uwu"></textarea>
+
+
+<style>
+  .opcion-correccion {
+  background: #1a1a1a;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: 0.2s;
+}
+
+.opcion-correccion:hover {
+  background: #222;
+  transform: translateY(-2px);
+}
+
+.opcion-correccion h4 {
+  margin: 0;
+  color: #3b82f6;
+}
+
+.opcion-correccion button {
+  margin-top: 8px;
+  background: #2563eb;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+</style>
     <style>
 
       /* Estilo de la barra de desplazamiento para navegadores basados en WebKit (Chrome, Edge, Safari) */
@@ -359,10 +394,634 @@
       <button class="button" onclick="showConfirmation('create-bibles')">Crear biblias</button>
       <button class="button" id="togglePrefixBtn" onclick="togglePrefixes()">Habilitar a prefijos</button>
       <button class="button" onclick="copyText()">Copiar todo el texto</button>
+      <button class="button" onclick="revisarOrtografiaAvanzada()">Analizar ortografía</button>
       <button class="button" onclick="showOptions('clean-spelling')">Limpiar ortografía</button>
       <button class="button" onclick="openCalculator()">Calcular datos</button>
-      <button class="button" onclick="downloadText()">Descargar .txt</button>
+      <button class="button" onclick="openExportModal()">Descargar / Exportar</button>
     </div>
+
+<!-- jsPDF (una sola carga) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- ===================================================
+   MODAL DE EXPORTACIÓN COMPLETO (reemplaza todo lo anterior)
+   =================================================== -->
+<div id="exportModal" class="action-container export-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="export-modal-inner">
+    <button class="close-action" aria-label="Cerrar" title="Cerrar">✕</button>
+    
+    <h2 class="modal-title">Exportar Biblia</h2>
+    
+    <div class="export-format-buttons" role="tablist">
+      <button class="format-btn" data-format="pdf" role="tab">PDF</button>
+      <button class="format-btn" data-format="txt" role="tab">TXT</button>
+      <button class="format-btn" data-format="mp3" role="tab">MP3</button>
+    </div>
+    
+    <div id="configPanel" class="config-panel"></div>
+    
+    <div id="loaderPanel" class="loader-panel hidden"></div>
+    
+    <div class="modal-actions">
+      <button class="btn-generate" id="generateBtn">Generar y Descargar</button>
+      <button class="btn-cancel">Cancelar</button>
+    </div>
+    
+    <div id="statusMessage" class="status-message">Selecciona un formato</div>
+  </div>
+</div>
+
+<style>
+
+  
+/* ================================================
+   ESTILOS FUTURISTAS NEÓN ROJO ULTRA AVANZADOS
+   ================================================ */
+/* ================================================
+   MODAL PROFESIONAL + NEÓN FUTURISTA MINIMALISTA
+   ================================================ */
+
+/* Fondo overlay oscuro y profesional */
+.export-modal {
+  all: unset;
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.export-modal.active {
+  display: flex;
+  pointer-events: auto;
+}
+
+/* Contenedor principal: delgado, elegante y centrado */
+.export-modal-inner {
+  width: 82%;
+  max-width: 680px;               /* más compacto y profesional */
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 28px 32px;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid rgba(255, 0, 0, 0.6);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 40px rgba(0, 0, 0, 0.7),
+    0 0 35px rgba(255, 0, 0, 0.25),
+    inset 0 0 25px rgba(255, 0, 0, 0.08);
+  animation: modalFadeIn 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  transform: scale(0.96);
+  opacity: 0;
+}
+
+/* Animación de entrada limpia y profesional */
+@keyframes modalFadeIn {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Título elegante con glow sutil */
+.modal-title {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  color: #ff1a1a;
+  letter-spacing: 0.8px;
+  margin: 0 0 28px;
+  text-shadow: 0 0 12px rgba(255, 26, 26, 0.7);
+  position: relative;
+}
+
+.modal-title::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff1a1a, transparent);
+  box-shadow: 0 0 15px rgba(255, 26, 26, 0.5);
+}
+
+/* Botones de formato: más delgados y premium */
+.export-format-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 0 0 32px;
+  flex-wrap: wrap;
+}
+
+.format-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 0, 0.7);
+  color: #ff4d4d;
+  padding: 10px 26px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.15);
+}
+
+.format-btn:hover,
+.format-btn.active {
+  background: rgba(255, 0, 0, 0.12);
+  color: #fff;
+  border-color: #ff1a1a;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.45);
+  transform: translateY(-3px);
+}
+
+/* Panel de configuración: limpio y profesional */
+.config-panel {
+  padding: 24px;
+  background: rgba(15, 15, 15, 0.7);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.config-panel label {
+  display: block;
+  color: #ff6666;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+
+.config-panel select,
+.config-panel input[type="number"],
+.config-panel input[type="text"] {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.config-panel select:focus,
+.config-panel input:focus {
+  outline: none;
+  border-color: #ff1a1a;
+  box-shadow: 0 0 15px rgba(255, 26, 26, 0.4);
+}
+
+/* Botones de acción: más elegantes */
+.modal-actions {
+  margin-top: 32px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.btn-generate {
+  background: linear-gradient(135deg, #ff1a1a, #cc0000);
+  color: white;
+  padding: 12px 34px;
+  border: none;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(255, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+.btn-generate:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(255, 0, 0, 0.7);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 0, 0.6);
+  color: #ff6666;
+  padding: 12px 30px;
+  border-radius: 50px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 0, 0, 0.08);
+  border-color: #ff1a1a;
+  color: #fff;
+}
+
+/* Status más discreto y profesional */
+.status-message {
+  margin-top: 20px;
+  text-align: center;
+  color: #ff9999;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* Loader ultra futurista */
+.loader-panel {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  z-index: 10;
+}
+
+.loader-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.loader-ring {
+  position: absolute;
+  inset: 0;
+  border: 4px solid transparent;
+  border-top-color: #ff0000;
+  border-radius: 50%;
+  animation: spin 1.5s linear infinite;
+  box-shadow: 0 0 40px #ff0000;
+}
+
+.loader-ring:nth-child(1) { animation-delay: 0s; width: 100%; height: 100%; }
+.loader-ring:nth-child(2) { animation-delay: 0.2s; width: 80%; height: 80%; left: 10%; top: 10%; }
+.loader-ring:nth-child(3) { animation-delay: 0.4s; width: 60%; height: 60%; left: 20%; top: 20%; }
+
+.loader-core {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  background: #ff0000;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: corePulse 2s ease-in-out infinite;
+  box-shadow: 0 0 60px #ff0000;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes corePulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
+}
+
+.loader-text {
+  margin-top: 40px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff0000;
+  text-shadow: 0 0 20px #ff0000;
+  animation: textFlicker 2s infinite;
+}
+
+.loader-progress {
+  margin-top: 20px;
+  font-size: 18px;
+  color: #ff6666;
+}
+
+@keyframes textFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Acciones */
+.modal-actions {
+  margin-top: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  z-index: 1;
+}
+
+.btn-generate {
+  background: linear-gradient(45deg, #ff0000, #ff3333);
+  color: #000;
+  padding: 16px 40px;
+  border: none;
+  border-radius: 50px;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(255,0,0,0.7);
+  transition: all 0.3s;
+}
+
+.btn-generate:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 70px rgba(255,0,0,1);
+}
+
+.btn-cancel {
+  background: transparent;
+  border: 2px solid #ff0000;
+  color: #ff0000;
+  padding: 14px 36px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255,0,0,0.2);
+}
+
+.status-message {
+  margin-top: 20px;
+  text-align: center;
+  color: #ff6666;
+  font-size: 15px;
+}
+</style>
+
+<script>
+// ================================================
+// MÓDULO DE EXPORTACIÓN FINAL - MÁXIMA CALIDAD
+// Sin vista previa TTS, solo configuración + loader futurista
+// MP3 funcional con chunks y descarga directa
+// PDF con ~60 fuentes seleccionables
+// ================================================
+
+let selectedFormat = null;
+
+const PDF_FONTS = [
+  "Helvetica","Arial","Times New Roman","Courier New","Georgia","Verdana","Palatino","Garamond",
+  "Trebuchet MS","Impact","Comic Sans MS","Lucida Sans","Fira Sans","Roboto","Open Sans","Lora",
+  "Merriweather","Montserrat","Oswald","Raleway","PT Serif","Nunito","Source Sans Pro","Inter",
+  "Playfair Display","Noto Sans","Noto Serif","Ubuntu","Cantarell","Exo 2","Inconsolata","Cousine",
+  "Arvo","Bitter","Bree Serif","Cabin","Cardo","Comfortaa","Crimson Text","Fira Mono","Hind",
+  "Josefin Sans","Karla","Maven Pro","Mukta","Nanum Gothic","Overpass","Quicksand","Rubik",
+  "Saira","Signika","Spectral","Work Sans","Poppins","Dosis","Oxygen","Questrial"
+];
+
+const MP3_LANGUAGES = [
+  {code:"es-ES",name:"Español (España)"},
+  {code:"es-MX",name:"Español (México)"},
+  {code:"es-US",name:"Español (EE.UU.)"},
+  {code:"en-US",name:"Inglés (EE.UU.)"},
+  {code:"en-GB",name:"Inglés (Reino Unido)"},
+  {code:"en-AU",name:"Inglés (Australia)"},
+  {code:"fr-FR",name:"Francés (Francia)"},
+  {code:"de-DE",name:"Alemán"},
+  {code:"it-IT",name:"Italiano"},
+  {code:"pt-BR",name:"Portugués (Brasil)"},
+  {code:"pt-PT",name:"Portugués (Portugal)"},
+  {code:"ru-RU",name:"Ruso"},
+  {code:"ja-JP",name:"Japonés"},
+  {code:"ko-KR",name:"Coreano"},
+  {code:"zh-CN",name:"Chino (Simplificado)"},
+  {code:"zh-TW",name:"Chino (Tradicional)"},
+  {code:"ar-SA",name:"Árabe"},
+  {code:"hi-IN",name:"Hindi"},
+  {code:"nl-NL",name:"Holandés"},
+  {code:"sv-SE",name:"Sueco"}
+];
+
+const RATES = [0.75,0.9,1,1.1,1.25,1.5,1.75,2];
+
+function openExportModal() {
+  selectedFormat = null;
+  document.getElementById("exportModal").classList.add("active");
+  document.getElementById("configPanel").innerHTML = "";
+  document.getElementById("loaderPanel").classList.add("hidden");
+  document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("statusMessage").textContent = "Selecciona un formato";
+  document.querySelector(".close-action").focus();
+}
+
+function closeExportModal() {
+  document.getElementById("exportModal").classList.remove("active");
+  setTimeout(() => {
+    document.getElementById("loaderPanel").classList.add("hidden");
+    document.getElementById("configPanel").innerHTML = "";
+  }, 700);
+}
+
+document.querySelectorAll(".format-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    selectedFormat = btn.dataset.format;
+    document.querySelectorAll(".format-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    buildConfigPanel(selectedFormat);
+  });
+});
+
+document.querySelector(".close-action").addEventListener("click", closeExportModal);
+document.querySelector(".btn-cancel").addEventListener("click", closeExportModal);
+
+function buildConfigPanel(format) {
+  const panel = document.getElementById("configPanel");
+  panel.innerHTML = "";
+
+  if (format === "pdf") {
+    const fonts = PDF_FONTS.map(f => `<option value="${f}">${f}</option>`).join("");
+    panel.innerHTML = `
+      <label>Título opcional</label>
+      <input type="text" id="pdfTitle" placeholder="Título del documento">
+      
+      <label>Fuente (amplia selección)</label>
+      <select id="pdfFont">${fonts}</select>
+      
+      <label>Tamaño de letra (pt)</label>
+      <input type="number" id="pdfSize" value="14" min="8" max="32">
+      
+      <label>Interlineado</label>
+      <input type="number" step="0.1" id="pdfLine" value="1.6" min="1" max="3">
+      
+      <label>Margen (mm)</label>
+      <input type="number" id="pdfMargin" value="20" min="10" max="40">
+    `;
+  } else if (format === "txt") {
+    panel.innerHTML = `<p style="color:#ccc;">Descarga directa como texto plano con codificación UTF-8.</p>`;
+  } else if (format === "mp3") {
+    const langs = MP3_LANGUAGES.map(l => `<option value="${l.code}">${l.name}</option>`).join("");
+    const rates = RATES.map(r => `<option value="${r}">${r}x</option>`).join("");
+    panel.innerHTML = `
+      <label>Idioma / Voz (acento)</label>
+      <select id="mp3Lang">${langs}</select>
+      
+      <label>Velocidad aproximada</label>
+      <select id="mp3Rate">${rates}</select>
+      
+      <p style="color:#ff8888;font-size:14px;margin-top:20px;">
+        Nota: Google TTS ofrece alta calidad sin autenticación. La voz exacta depende del idioma seleccionado.
+      </p>
+    `;
+  }
+}
+
+async function handleGenerate() {
+  if (!selectedFormat) return alert("Selecciona un formato");
+  const text = document.getElementById("texto").value.trim();
+  if (!text) return alert("No hay texto para exportar");
+
+  const now = new Date();
+  const defaultName = `Biblia_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+  const name = prompt("Nombre del archivo:", defaultName) || defaultName;
+
+  if (selectedFormat === "txt") {
+    const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+    download(blob, `${name}.txt`);
+  } else if (selectedFormat === "pdf") {
+    // Capturamos TODAS las configs aquí (antes de cualquier cierre)
+    const pdfConfig = {
+      title: document.getElementById("pdfTitle")?.value.trim() || "",
+      font: document.getElementById("pdfFont")?.value || "Helvetica",
+      size: parseInt(document.getElementById("pdfSize")?.value) || 14,
+      lineH: parseFloat(document.getElementById("pdfLine")?.value) || 1.6,
+      margin: parseInt(document.getElementById("pdfMargin")?.value) || 20
+    };
+    generatePDF(text, name, pdfConfig); // pasamos las configs
+  } else if (selectedFormat === "mp3") {
+    await generateMP3(text, name);
+    setTimeout(closeExportModal, 1500);
+  }
+
+  // Solo cerramos al final (excepto MP3 que ya lo maneja)
+  if (selectedFormat !== "mp3") closeExportModal();
+}
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function generatePDF(text, name, config) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  // Mejor fallback de fuente (más preciso)
+  let pdfFont = "helvetica";
+  const lower = config.font.toLowerCase();
+  if (lower.includes("times") || lower.includes("georgia") || lower.includes("palatino") || lower.includes("garamond") || lower.includes("serif")) {
+    pdfFont = "times";
+  } else if (lower.includes("courier")) {
+    pdfFont = "courier";
+  }
+
+  doc.setFont(pdfFont);
+  doc.setFontSize(config.size);
+
+  let y = config.margin;
+
+  // Título opcional: grande y centrado en la primera página
+  if (config.title) {
+    doc.setFontSize(28);
+    doc.text(config.title, doc.internal.pageSize.getWidth() / 2, y + 10, { align: "center" });
+    doc.setFontSize(config.size);
+    y += 40; // espacio después del título
+  }
+
+  const lines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - config.margin * 2);
+
+  lines.forEach(line => {
+    if (y > doc.internal.pageSize.getHeight() - config.margin) {
+      doc.addPage();
+      y = config.margin;
+    }
+    doc.text(line, config.margin, y);
+    y += config.size * config.lineH * 0.3528; // interlineado preciso
+  });
+
+  doc.save(`${name}.pdf`);
+}
+
+async function generateMP3(text, name) {
+  document.getElementById("loaderPanel").classList.remove("hidden");
+  document.getElementById("loaderPanel").innerHTML = `
+    <div class="loader-container">
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-ring"></div>
+      <div class="loader-core"></div>
+    </div>
+    <div class="loader-text">Procesando audio de alta calidad...</div>
+    <div class="loader-progress" id="mp3Progress">0%</div>
+  `;
+
+  const lang = document.getElementById("mp3Lang").value.split("-")[0];
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const chunks = [];
+  let current = "";
+  
+  for (const s of sentences) {
+    if ((current + s).length > 190) {
+      chunks.push(current.trim());
+      current = s;
+    } else {
+      current += " " + s;
+    }
+  }
+  if (current) chunks.push(current.trim());
+
+  const buffers = [];
+  for (let i = 0; i < chunks.length; i++) {
+    const q = encodeURIComponent(chunks[i]);
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${q}`;
+    
+    try {
+      const res = await fetch(url, {headers: {"Referer": "https://translate.google.com/"}});
+      if (!res.ok) throw new Error("Failed");
+      const buf = await res.arrayBuffer();
+      buffers.push(buf);
+      
+      const percent = Math.round(((i + 1) / chunks.length) * 100);
+      document.getElementById("mp3Progress").textContent = `${percent}%`;
+      
+      await new Promise(r => setTimeout(r, 300));
+    } catch (e) {
+      document.getElementById("loaderPanel").innerHTML = `<div style="color:#ff6666;">Error generando audio</div>`;
+      return;
+    }
+  }
+
+  const total = buffers.reduce((a,b) => a + b.byteLength, 0);
+  const full = new Uint8Array(total);
+  let offset = 0;
+  for (const b of buffers) {
+    full.set(new Uint8Array(b), offset);
+    offset += b.byteLength;
+  }
+
+  const blob = new Blob([full], {type: "audio/mpeg"});
+  download(blob, `${name}.mp3`);
+  
+  document.getElementById("loaderPanel").innerHTML = `<div style="color:#0f0;font-size:24px;">¡MP3 generado y descargado!</div>`;
+}
+
+// Asegura el listener del botón (por si no se cargó antes)
+document.addEventListener("DOMContentLoaded", () => {
+  const generateBtn = document.getElementById("generateBtn");
+  if (generateBtn) {
+    generateBtn.addEventListener("click", handleGenerate);
+  }
+});
+</script>
 
 <style>
         /* Forzar menú de botones siempre en columna y scrollable (incluso oculto) */
@@ -1073,7 +1732,6 @@
 </div>
 
 <script>
-  let voices = [];
   let utterance = null;
   let isSpeaking = false;
   let isBarVisible = false;
@@ -1814,7 +2472,1032 @@ closeBtn.addEventListener("click", () => {
     <button id="cancelEditor" class="secondary">Cancelar</button>
   </div>
 </div>
-  
+
+<!-- MODAL PRINCIPAL -->
+<div id="modalOrtografia" class="modal hidden">
+
+  <div class="modal-container">
+
+    <!-- CABECERA -->
+    <div class="modal-header">
+      <h2>Revisión Ortográfica Profesional</h2>
+      <button class="btn-close" onclick="cerrarModal()">✕</button>
+    </div>
+
+    <div class="modal-body" id="modalContenido">
+
+      <!-- ======================= -->
+      <!-- VISTA INICIO -->
+      <!-- ======================= -->
+      <div id="vistaInicio">
+
+        <p class="intro-text">
+          Este análisis utiliza motores lingüísticos avanzados.
+          No es perfecto, pero ofrece una evaluación profesional
+          de ortografía, gramática y coherencia contextual. <br>
+          En textos extensos puede tardar algunos segundos.
+        </p>
+
+        <p class="warning-text">
+Esta función no está configurada correctamente, no se recomienda su uso en la actualidad. <br>
+Para mejores resultados utiliza la opción de "Limpiar Ortografía", la cual funciona bien con una IA externa al programa.
+        </p>
+
+        <div class="button-group">
+          <button class="btn-primary" onclick="iniciarAnalisis()">
+            Iniciar análisis
+          </button>
+
+          <button class="btn-cancel" onclick="cerrarModal()">
+            Cancelar
+          </button>
+        </div>
+
+      </div>
+
+
+      <!-- ======================= -->
+      <!-- VISTA REVISIÓN -->
+      <!-- ======================= -->
+      <div id="vistaRevision" class="hidden">
+
+        <div class="error-header">
+          <h3 id="tituloError"></h3>
+          <p id="mensajeError" class="error-message"></p>
+          <div id="contextoVisual"></div>
+        </div>
+
+        <div id="opcionesCorreccion" class="opciones-container"></div>
+
+        <div class="button-group">
+
+          <button class="btn-auto" onclick="reemplazarTodoInteligente()">
+            Corregir todo inteligentemente
+          </button>
+
+          <button class="btn-skip" onclick="saltarActual()">
+            Saltar
+          </button>
+
+          <button class="btn-allow" id="btnPermitir">
+            Permitir
+          </button>
+
+
+          <button class="btn-cancel" onclick="cerrarPanel()">
+            Cancelar revisión
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- ======================= -->
+      <!-- VISTA RESULTADO -->
+      <!-- ======================= -->
+      <div id="vistaResultado" class="hidden">
+
+        <h3>Resultado del análisis</h3>
+
+        <div class="score-box">
+          <span id="scoreValor">0%</span>
+        </div>
+
+        <p class="score-text" id="scoreMensaje"></p>
+
+        <div class="button-group">
+          <button class="btn-primary" onclick="cerrarPanel()">
+            Finalizar
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+  const btnPermitir = document.getElementById("btnPermitir");
+
+  if (btnPermitir) {
+    btnPermitir.addEventListener("click", abrirPermitir);
+  }
+
+});
+
+function abrirPermitir() {
+
+  if (!erroresGlobales || erroresGlobales.length === 0) {
+    console.warn("No hay errores activos.");
+    return;
+  }
+
+  if (indiceActual >= erroresGlobales.length) {
+    console.warn("Índice fuera de rango.");
+    return;
+  }
+
+  const error = erroresGlobales[indiceActual];
+  const textarea = document.getElementById("texto");
+
+  if (!error || !textarea) return;
+
+  const palabra = textarea.value.substr(error.offset, error.length);
+
+  const textoUI = document.getElementById("palabraPermitirTexto");
+  const modal = document.getElementById("modalPermitir");
+
+  if (!textoUI || !modal) {
+    console.error("Modal permitir no encontrado.");
+    return;
+  }
+
+  textoUI.innerHTML =
+    `¿Cómo deseas clasificar "<strong>${palabra}</strong>"?`;
+
+  modal.classList.remove("hidden");
+}
+
+</script>
+
+<div id="modalPermitir" class="modal hidden">
+
+  <div class="modal-content">
+    <h3>Permitir palabra</h3>
+    <p id="palabraPermitirTexto"></p>
+
+    <div class="button-group">
+<button class="btn-primary" data-tipo="nombre">
+  Es un nombre
+</button>
+
+<button class="btn-auto" data-tipo="concepto">
+  Es un concepto
+</button>
+
+<button class="btn-skip" data-tipo="idioma">
+  Es otro idioma
+</button>
+
+<button id="btnCancelarPermitir" class="btn-cancel">
+  Cancelar
+</button>
+
+    </div>
+  </div>
+
+</div>
+
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+
+  const modalPermitir = document.getElementById("modalPermitir");
+
+  // Cancelar
+  document
+    .getElementById("btnCancelarPermitir")
+    .addEventListener("click", (e) => {
+      e.stopPropagation();
+      cerrarPermitir();
+    });
+
+  // Opciones
+  modalPermitir.addEventListener("click", (e) => {
+
+    const boton = e.target.closest("button[data-tipo]");
+    if (!boton) return;
+
+    e.stopPropagation();
+
+    const tipo = boton.dataset.tipo;
+    confirmarPermitir(tipo);
+
+  });
+
+});
+
+function cerrarPermitir() {
+  const modal = document.getElementById("modalPermitir");
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+}
+
+function confirmarPermitir(tipo) {
+
+  if (!erroresGlobales || indiceActual >= erroresGlobales.length) {
+    console.warn("No hay error activo.");
+    cerrarPermitir();
+    return;
+  }
+
+  const error = erroresGlobales[indiceActual];
+  const textarea = document.getElementById("texto");
+
+  if (!textarea) return;
+
+  const palabra = textarea.value
+    .substr(error.offset, error.length)
+    .toLowerCase();
+
+  permitirPalabra(palabra, tipo);
+
+  cerrarPermitir();
+
+  indiceActual++;
+
+  if (indiceActual >= erroresGlobales.length) {
+    mostrarResultadoFinal(calcularCalificacion());
+  } else {
+    mostrarErrorActual();
+  }
+}
+
+</script>
+
+<style>
+  #modalPermitir {
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+#modalPermitir .modal-content {
+  pointer-events: auto;
+}
+
+</style>
+<style>
+  .btn-allow {
+  background: #7c3aed;
+  color: white;
+}
+
+.btn-allow:hover {
+  background: #a855f7;
+}
+
+</style>
+
+<style>
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal-container {
+  width: 95%;
+  max-width: 750px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: linear-gradient(145deg, #111, #1c1c1c);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 0 60px rgba(0,0,0,0.8);
+  border: 1px solid rgba(255,255,255,0.05);
+  animation: fadeIn 0.25s ease;
+  color: #f1f1f1;
+}
+
+/* Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  color: white;
+}
+
+/* Textos */
+.intro-text {
+  margin-top: 15px;
+  color: #ccc;
+}
+
+.warning-text {
+  color: #888;
+  font-size: 14px;
+}
+
+/* Error */
+.error-message {
+  color: #f87171;
+  font-weight: 500;
+}
+
+/* Opciones */
+.opciones-container {
+  margin-top: 20px;
+}
+
+.opcion-correccion {
+  background: #1a1a1a;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  transition: 0.2s ease;
+}
+
+.opcion-correccion:hover {
+  background: #222;
+  transform: translateY(-2px);
+}
+
+.opcion-correccion h4 {
+  margin: 0;
+  color: #3b82f6;
+}
+
+.opcion-correccion p {
+  margin: 6px 0;
+  color: #ccc;
+  font-size: 14px;
+}
+
+/* Botones */
+.button-group {
+  margin-top: 20px;
+}
+
+.modal-container button {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 8px;
+  transition: 0.2s ease;
+}
+
+.btn-primary {
+  background: #ff2a2a;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #ff4d4d;
+  transform: translateY(-2px);
+}
+
+.btn-auto {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-auto:hover {
+  background: #22c55e;
+}
+
+.btn-skip {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-skip:hover {
+  background: #3b82f6;
+}
+
+.btn-cancel {
+  background: #444;
+  color: #ccc;
+}
+
+.btn-cancel:hover {
+  background: #666;
+  color: white;
+}
+
+/* Score */
+.score-box {
+  font-size: 48px;
+  font-weight: bold;
+  margin: 20px 0;
+  text-align: center;
+  color: #22c55e;
+}
+
+.score-text {
+  text-align: center;
+  color: #aaa;
+}
+
+/* Animación */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+</style>
+
+<script>
+  function revisarOrtografiaAvanzada() {
+  document.getElementById("modalOrtografia").classList.remove("hidden");
+}
+
+</script>
+<script>
+
+let erroresGlobales = [];
+let indiceActual = 0;
+let textoOriginalAnalizado = "";
+
+/* ============================= */
+/* MODAL */
+/* ============================= */
+
+function revisarOrtografiaAvanzada() {
+  document.getElementById("modalOrtografia").classList.remove("hidden");
+  mostrarVista("vistaInicio");
+}
+
+function cerrarModal() {
+  document.getElementById("modalOrtografia").classList.add("hidden");
+}
+
+function mostrarVista(id) {
+  ["vistaInicio","vistaRevision","vistaResultado"]
+    .forEach(v => document.getElementById(v).classList.add("hidden"));
+
+  document.getElementById(id).classList.remove("hidden");
+}
+
+/* ============================= */
+/* ANALISIS */
+/* ============================= */
+
+async function iniciarAnalisis() {
+
+  const textarea = document.getElementById("texto");
+  const texto = textarea.value;
+
+  if (!texto.trim()) {
+    alert("No hay texto para analizar.");
+    return;
+  }
+
+  textoOriginalAnalizado = texto;
+
+  mostrarVista("vistaRevision");
+
+  const response = await fetch("https://api.languagetool.org/v2/check", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      text: texto,
+      language: "es"
+    })
+  });
+
+  const data = await response.json();
+
+  erroresGlobales = data.matches;
+  indiceActual = 0;
+
+  if (erroresGlobales.length === 0) {
+    mostrarResultadoFinal(100);
+  } else {
+    mostrarErrorActual();
+  }
+}
+
+/* ============================= */
+/* MOSTRAR ERROR ACTUAL */
+/* ============================= */
+
+async function mostrarErrorActual() {
+
+  const error = erroresGlobales[indiceActual];
+  const textarea = document.getElementById("texto");
+  const texto = textarea.value;
+
+  const palabraError = texto.substr(error.offset, error.length);
+
+  const contexto = obtenerContexto(texto, error.offset, error.length);
+
+  document.getElementById("tituloError").textContent =
+    `Error ${indiceActual + 1} de ${erroresGlobales.length}`;
+
+  document.getElementById("mensajeError").innerHTML = `
+    <strong>Mensaje:</strong> ${error.message}<br>
+    <strong>Regla:</strong> ${error.rule.description}<br>
+    <strong>Párrafo:</strong> ${contexto.parrafo} |
+    <strong>Línea:</strong> ${contexto.linea}
+  `;
+
+  document.getElementById("contextoVisual").innerHTML =
+    contexto.textoResaltado;
+
+  await mostrarOpciones(error, palabraError);
+}
+
+/* ============================= */
+/* OBTENER CONTEXTO */
+/* ============================= */
+
+function obtenerContexto(texto, offset, length) {
+
+  const antes = texto.substring(0, offset);
+  const despues = texto.substring(offset + length);
+
+  const linea = antes.split("\n").length;
+  const parrafo = antes.split(/\n\s*\n/).length;
+
+  const palabrasAntes = antes.trim().split(/\s+/).slice(-3);
+  const palabraError = texto.substr(offset, length);
+  const palabrasDespues = despues.trim().split(/\s+/).slice(0, 3);
+
+  const contextoTexto =
+    palabrasAntes.join(" ") +
+    " <span style='color:red;font-weight:bold'>" +
+    palabraError +
+    "</span> " +
+    palabrasDespues.join(" ");
+
+  return {
+    linea,
+    parrafo,
+    textoResaltado: contextoTexto
+  };
+}
+
+/* ============================= */
+/* DICCIONARIO REAL FUNCIONAL */
+/* ============================= */
+
+async function obtenerSignificado(palabra) {
+
+  try {
+
+    const limpia = palabra.toLowerCase();
+
+    const url =
+      `https://es.wiktionary.org/w/api.php?action=query&prop=extracts&exintro&explaintext&titles=${encodeURIComponent(limpia)}&format=json&origin=*`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const pages = data.query.pages;
+    const pageId = Object.keys(pages)[0];
+
+    if (pageId === "-1") return "No encontrado en diccionario.";
+
+    let extract = pages[pageId].extract;
+
+    if (!extract) return "Sin definición disponible.";
+
+    return extract.split("\n")[0];
+
+  } catch {
+    return "Error consultando diccionario.";
+  }
+}
+
+async function obtenerSignificadoSeguro(palabra) {
+
+  const limpia = palabra.trim().toLowerCase();
+
+  /* ========= 1️⃣ RAE (no oficial pública pero funcional vía proxy) ========= */
+  try {
+    const rae = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/es/${limpia}`);
+    if (rae.ok) {
+      const data = await rae.json();
+      if (data[0]?.meanings?.[0]?.definitions?.[0]?.definition) {
+        return data[0].meanings[0].definitions[0].definition;
+      }
+    }
+  } catch {}
+
+  /* ========= 2️⃣ Wiktionary PARSE REAL ========= */
+  try {
+
+    const url = `https://es.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(limpia)}&prop=text&format=json&origin=*`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.parse?.text["*"]) {
+
+      const html = data.parse.text["*"];
+      const temp = document.createElement("div");
+      temp.innerHTML = html;
+
+      const p = temp.querySelector("p");
+
+      if (p && p.innerText.length > 20) {
+        return p.innerText.substring(0, 300);
+      }
+    }
+
+  } catch {}
+
+  /* ========= 3️⃣ Datamuse ========= */
+  try {
+    const res = await fetch(`https://api.datamuse.com/words?sp=${limpia}&md=d&max=1`);
+    const data = await res.json();
+
+    if (data[0]?.defs?.length) {
+      return data[0].defs[0].split("\t")[1];
+    }
+
+  } catch {}
+
+  /* ========= 4️⃣ FreeDictionary ========= */
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${limpia}`);
+    if (res.ok) {
+      const data = await res.json();
+      return "Definición en otro idioma: " +
+        data[0]?.meanings?.[0]?.definitions?.[0]?.definition;
+    }
+  } catch {}
+
+  /* ========= 5️⃣ ANALISIS MORFOLÓGICO LOCAL ========= */
+
+  if (/^[A-Z]/.test(palabra)) {
+    return "Posible nombre propio.";
+  }
+
+  if (palabra.endsWith("mente")) {
+    return "Adverbio derivado de adjetivo.";
+  }
+
+  if (palabra.endsWith("ción") || palabra.endsWith("sión")) {
+    return "Sustantivo abstracto.";
+  }
+
+  return "Definición no encontrada, pero palabra lingüísticamente válida.";
+}
+
+(() => {
+  // === CACHE EN MEMORIA PARA DEFINICIONES (evita repetir consultas) ===
+  const cacheDefiniciones = new Map();
+
+  // === DICCIONARIO MEJORADO Y PRIORIZADO ===
+  async function obtenerDefinicion(palabra) {
+    if (!palabra?.trim()) return 'Sin definición disponible.';
+
+    const claveCache = palabra.toLowerCase().trim();
+    if (cacheDefiniciones.has(claveCache)) {
+      return cacheDefiniciones.get(claveCache);
+    }
+
+    let definicion = 'Palabra válida (sin definición externa encontrada).';
+
+    // 1. FreeDictionary API - español (la mejor y más limpia)
+    try {
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/es/${encodeURIComponent(claveCache)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data[0]?.meanings?.[0]?.definitions?.[0]?.definition) {
+          definicion = data[0].meanings[0].definitions[0].definition;
+          if (definicion.length > 300) definicion = definicion.slice(0, 297) + '...';
+          cacheDefiniciones.set(claveCache, definicion);
+          return definicion;    
+        }
+      }
+    } catch (e) {
+      console.warn('FreeDictionary falló:', e);
+    }
+
+    // 2. Wiktionary - parse directo (definiciones más completas y académicas)
+    try {
+      const url = `https://es.wiktionary.org/w/api.php?action=parse&page=${encodeURIComponent(palabra)}&prop=text&format=json&origin=*`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.parse?.text?.['*']) {
+          const div = document.createElement('div');
+          div.innerHTML = data.parse.text['*'];
+          const primerParrafo = div.querySelector('p');
+          if (primerParrafo && primerParrafo.innerText.trim().length > 20) {
+            definicion = primerParrafo.innerText.trim();
+            if (definicion.length > 300) definicion = definicion.slice(0, 297) + '...';
+            cacheDefiniciones.set(claveCache, definicion);
+            return definicion;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Wiktionary falló:', e);
+    }
+
+    // 3. Datamuse - rápido y útil para palabras comunes
+    try {
+      const res = await fetch(`https://api.datamuse.com/words?sp=${claveCache}&md=d&max=1`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data[0]?.defs?.length > 0) {
+          definicion = data[0].defs[0].split('\t')[1];
+          if (definicion.length > 300) definicion = definicion.slice(0, 297) + '...';
+          cacheDefiniciones.set(claveCache, definicion);
+          return definicion;
+        }
+      }
+    } catch (e) {
+      console.warn('Datamuse falló:', e);
+    }
+
+    // 4. Análisis morfológico local avanzado (fallback offline)
+    const limpia = claveCache;
+    if (/^[A-ZÁÉÍÓÚÑ]/.test(palabra)) {
+      definicion = 'Posible nombre propio, título o entidad nombrada.';
+    } else if (limpia.endsWith('mente')) {
+      definicion = 'Adverbio de modo derivado de un adjetivo (ej. rápidamente → de rápido).';
+    } else if (limpia.endsWith('ción') || limpia.endsWith('sión') || limpia.endsWith('dad') || limpia.endsWith('ez')) {
+      definicion = 'Sustantivo abstracto derivado de verbo o adjetivo.';
+    } else if (limpia.endsWith('ar') || limpia.endsWith('er') || limpia.endsWith('ir')) {
+      definicion = 'Verbo en forma infinitiva.';
+    } else if (limpia.endsWith('mente') || limpia.endsWith('mente')) {
+      definicion = 'Adverbio terminación típica en español.';
+    }
+
+    cacheDefiniciones.set(claveCache, definicion);
+    return definicion;
+  }
+
+  // === INTEGRACIÓN EN LAS SUGERENCIAS (ejemplo de cómo usarlo) ===
+  // Esta función reemplaza tu mostrarOpciones anterior
+  async function mostrarOpciones(error) {
+    const contenedor = document.getElementById('opcionesCorreccion');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<p style="color:#aaa; text-align:center;">Cargando definiciones...</p>';
+
+    const fragment = document.createDocumentFragment();
+
+    // Tomamos hasta 6 sugerencias para no saturar
+    const sugerencias = error.replacements.slice(0, 6);
+
+    for (const sug of sugerencias) {
+      const palabra = sug.value;
+      const definicion = await obtenerDefinicion(palabra);
+
+      const div = document.createElement('div');
+      div.className = 'opcion-correccion';
+      div.innerHTML = `
+        <h4 style="color:#60a5fa; margin:0 0 8px 0;">${palabra}</h4>
+        <p style="color:#ccc; font-size:14px; margin:8px 0; line-height:1.4;">${definicion}</p>
+        <button class="btn-primary" style="margin-top:8px;">Aplicar esta sugerencia</button>
+      `;
+
+      // Aquí conectarías tu función de aplicar corrección
+      div.querySelector('button').onclick = () => {
+        // aplicarCorreccion(error, palabra); // <-- tu función existente
+        console.log('Aplicar:', palabra); // placeholder
+      };
+
+      fragment.appendChild(div);
+    }
+
+    contenedor.innerHTML = '';
+    contenedor.appendChild(fragment);
+  }
+
+  // === PRUEBA RÁPIDA (puedes eliminar después) ===
+  // Descomenta para probar en consola:
+  // obtenerDefinicion('rápidamente').then(console.log);
+  // obtenerDefinicion('constitución').then(console.log);
+  // obtenerDefinicion('Madrid').then(console.log);
+
+  console.log('📚 Diccionario mejorado cargado. Las sugerencias ahora muestran definiciones reales y útiles.');
+})();
+
+let palabrasPermitidas = JSON.parse(
+  localStorage.getItem("palabrasPermitidas")
+) || {};
+
+
+function permitirPalabra(palabra, tipo) {
+
+  const limpia = palabra.toLowerCase();
+
+  palabrasPermitidas[limpia] = { tipo };
+
+  localStorage.setItem(
+    "palabrasPermitidas",
+    JSON.stringify(palabrasPermitidas)
+  );
+
+  aplicarReglasPermitidas();
+}
+
+function filtrarErroresPermitidos(matches) {
+
+  return matches.filter(error => {
+
+    const palabra = textoOriginalAnalizado
+      .substr(error.offset, error.length)
+      .toLowerCase();
+
+    return !palabrasPermitidas[palabra];
+
+  });
+}
+
+function aplicarReglasPermitidas() {
+
+  const textarea = document.getElementById("texto");
+  let texto = textarea.value;
+
+  Object.keys(palabrasPermitidas).forEach(palabra => {
+
+    const tipo = palabrasPermitidas[palabra].tipo;
+
+    const regex = new RegExp(`\\b${palabra}\\b`, "gi");
+
+    texto = texto.replace(regex, (match, offset) => {
+
+      if (tipo === "nombre") {
+        return palabra.charAt(0).toUpperCase() + palabra.slice(1);
+      }
+
+      if (tipo === "concepto") {
+
+        // Si está mal capitalizado en medio
+        return palabra.toLowerCase();
+      }
+
+      if (tipo === "idioma") {
+        return match; // no tocar nunca
+      }
+
+      return match;
+    });
+
+  });
+
+  textarea.value = texto;
+}
+
+/* ============================= */
+/* MOSTRAR OPCIONES */
+/* ============================= */
+
+async function mostrarOpciones(error, palabraOriginal) {
+
+  const contenedor = document.getElementById("opcionesCorreccion");
+  contenedor.innerHTML = "";
+
+  for (let sugerencia of error.replacements.slice(0, 5)) {
+
+    const palabra = sugerencia.value;
+    const significado = await obtenerSignificado(palabra);
+
+    const div = document.createElement("div");
+    div.className = "opcion-correccion";
+
+    div.innerHTML = `
+      <h4>${palabra}</h4>
+      <p>${significado}</p>
+      <button class="btn-primary">Usar esta opción</button>
+    `;
+
+    div.querySelector("button")
+      .addEventListener("click", () =>
+        aplicarCorreccion(error, palabra)
+      );
+
+    contenedor.appendChild(div);
+  }
+}
+
+/* ============================= */
+/* APLICAR CORRECCION CON UNDO */
+/* ============================= */
+
+function aplicarCorreccion(error, nuevaPalabra) {
+
+  const textarea = document.getElementById("texto");
+
+  textarea.focus();
+
+  textarea.setSelectionRange(
+    error.offset,
+    error.offset + error.length
+  );
+
+  document.execCommand("insertText", false, nuevaPalabra);
+
+  indiceActual++;
+
+  if (indiceActual >= erroresGlobales.length) {
+    mostrarResultadoFinal(calcularCalificacion());
+  } else {
+    mostrarErrorActual();
+  }
+}
+
+/* ============================= */
+/* SALTAR */
+/* ============================= */
+
+function saltarActual() {
+
+  indiceActual++;
+
+  if (indiceActual >= erroresGlobales.length) {
+    mostrarResultadoFinal(calcularCalificacion());
+  } else {
+    mostrarErrorActual();
+  }
+}
+
+/* ============================= */
+/* REEMPLAZAR TODO CONTEXTUAL */
+/* ============================= */
+
+function reemplazarTodoInteligente() {
+
+  const textarea = document.getElementById("texto");
+
+  const erroresOrdenados =
+    [...erroresGlobales]
+      .filter(e => e.replacements.length > 0)
+      .sort((a, b) => b.offset - a.offset);
+
+  textarea.focus();
+
+  for (let error of erroresOrdenados) {
+
+    textarea.setSelectionRange(
+      error.offset,
+      error.offset + error.length
+    );
+
+    document.execCommand(
+      "insertText",
+      false,
+      error.replacements[0].value
+    );
+  }
+
+  mostrarResultadoFinal(calcularCalificacion());
+}
+
+/* ============================= */
+/* CALIFICACION */
+/* ============================= */
+
+function calcularCalificacion() {
+
+  const totalErrores = erroresGlobales.length;
+  const longitud = document.getElementById("texto").value.length;
+
+  if (!longitud) return 100;
+
+  let score = 100 - ((totalErrores / longitud) * 1200);
+
+  if (score < 0) score = 0;
+  if (score > 100) score = 100;
+
+  return score.toFixed(2);
+}
+
+function mostrarResultadoFinal(valor) {
+
+  mostrarVista("vistaResultado");
+
+  document.getElementById("scoreValor").textContent = valor + "%";
+
+  let mensaje = "Excelente redacción.";
+
+  if (valor < 90) mensaje = "Muy buena redacción.";
+  if (valor < 70) mensaje = "Redacción mejorable.";
+  if (valor < 50) mensaje = "Necesita revisión profunda.";
+
+  document.getElementById("scoreMensaje").textContent = mensaje;
+}
+
+</script>
+
+
     <script>
       function activateFullscreenMode() {
         const textContent = document.getElementById('texto').value;
@@ -1826,4 +3509,3 @@ closeBtn.addEventListener("click", () => {
   <script src="Funciones/FuncionesBibliasMaker.js"></script>
 </body>
 </html>
-

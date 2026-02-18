@@ -46,107 +46,1014 @@
     }
     .calculate-button, .create-more-button {
       display: inline-block;
-      padding: 10px 20px;
-      background-color: #FF0000;
+      padding: 12px 18px;
+      background: #FF0000;
       color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      letter-spacing: .08em;
+      box-shadow: 0 0 18px rgba(255,0,0,.6);
+      transition: all .25s ease;
+      text-decoration: none !important;
     }
     .calculate-button:hover, .create-more-button:hover {
-      background-color: #FF3333;
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 0 35px rgba(255,0,0,.9);
     }
-    .sidebar {
-      width: 200px;
-      background-color: rgba(0, 0, 0, 0.8);
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 100%;
-      padding: 20px;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
-      display: none;
-      flex-direction: column;
-      justify-content: flex-start;
-    }
-    .sidebar h2 {
-      color: #FF0000;
-      font-size: 18px;
-    }
-    .sidebar button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #FF0000;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .sidebar button:hover {
-      background-color: #FF3333;
-    }
-    .close-button {
-      margin-top: auto;
-      width: 80%;
-      padding: 8px;
-      background-color: #444;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .close-button:hover {
-      background-color: #666;
-    }
-    .file-list {
-      margin-top: 20px;
-      list-style-type: none;
-      padding: 0;
-    }
-    .file-list li {
-      padding: 10px;
-      background-color: #222;
-      margin-bottom: 5px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .file-list li:hover {
-      background-color: #333;
-    }
-    #toggle-menu {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #FF0000;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 10px;
-      cursor: pointer;
-    }
-    #toggle-menu:hover {
-      background-color: #FF3333;
-    }
+/* ==================================================
+   SIDEBAR IZQUIERDO - CYBERPUNK
+================================================== */
+
+.sidebar {
+  width: 260px;
+  background-color: rgba(0, 0, 0, 0.95);
+  position: fixed;
+  top: 0;
+  left: -260px;
+  height: 100%;
+  opacity: 75%;
+  padding: 20px;
+  box-shadow: 2px 0 20px rgba(255,0,0,.4);
+  transition: left .3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  backdrop-filter: blur(6px);
+}
+
+/* Cuando se abre */
+.sidebar.open {
+  left: 0;
+}
+
+/* Header */
+.sidebar h2 {
+  color: #FF0000;
+  font-size: 18px;
+  letter-spacing: .08em;
+  text-shadow: 0 0 10px rgba(255,0,0,.6);
+}
+
+/* Lista de archivos */
+.file-list {
+  margin-top: 20px;
+  list-style: none;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.file-list li {
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s ease;
+  border: 1px solid rgba(255,0,0,.15);
+}
+
+.file-list li:hover {
+  background: rgba(255,0,0,0.15);
+  box-shadow: 0 0 12px rgba(255,0,0,.4);
+  transform: translateX(4px);
+}
+
+/* ==================================================
+   OVERLAY IZQUIERDO
+================================================== */
+
+#sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all .3s ease;
+  z-index: 15;
+}
+
+#sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+</style>
+
+  <style>
+    /* ==================================================
+   BOTONES DE ACCIÓN
+================================================== */
+.file-actions button {
+  background: transparent;
+  border: none;
+  color: #FF0000;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+.file-actions button:hover {
+  text-shadow: 0 0 8px #FF0000;
+}
+
+/* ==================================================
+   CONTENEDOR CENTRAL
+================================================== */
+.container {
+  text-align: center;
+  z-index: 1;
+}
+
+.container h1 {
+  margin-bottom: 30px;
+}
+
+/* ==================================================
+   BOTONES PRINCIPALES
+================================================== */
+.action-btn {
+  display: inline-block;
+  padding: 12px 18px;
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: .08em;
+  box-shadow: 0 0 18px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,0,0,.9);
+}
+
+/* ==================================================
+   BOTÓN CARGAR PROYECTOS
+================================================== */
+#toggle-menu {
+  position: fixed;
+  left: 50px;
+  top: 18px;
+  z-index: 10;
+  padding: 12px 18px;
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: .08em;
+  box-shadow: 0 0 18px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+#toggle-menu:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,0,0,.9);
+}
+
+/* Móvil: baja el botón */
+@media (max-width: 768px) {
+  #toggle-menu {
+    top: auto;
+    bottom: 30px;
+  }
+}
+
+.calculate-button:hover,
+.calculate-button:focus,
+.calculate-button:visited,
+.create-more-button:hover,
+.create-more-button:focus,
+.create-more-button:visited {
+  text-decoration: none !important ;
+}
+
   </style>
   <title>Proyectos</title>
 </head>
 <body>
-  <button id="toggle-menu">Cargar Proyectos</button>
-  <div class="sidebar">
-    <h2>Cargar Proyectos</h2>
-    <button id="load-files">Subir turno .txt</button>
-    <ul id="file-list" class="file-list"></ul>
-    <button id="close-menu" class="close-button">Cerrar</button>
+
+  <!-- BOTÓN TOGGLE EXPORTACIÓN -->
+<button id="toggle-export" class="export-menu-btn">
+  💾 Datos
+</button>
+
+<!-- OVERLAY EXPORT -->
+<div id="export-overlay"></div>
+
+<!-- SIDEBAR EXPORT -->
+<aside id="export-sidebar" class="export-sidebar">
+  <div class="export-header">
+    <h2>Gestión Global</h2>
+    <button id="close-export" class="action-btn">Cerrar</button>
   </div>
-  <div class="container">
+
+  <div class="export-content">
+    <button onclick="exportAllData()" class="action-btn">
+      📤 Exportar Todo
+    </button>
+
+    <button onclick="importAllData()" class="action-btn">
+      📥 Importar Todo
+    </button>
+
+    <p>Esto te permitirá agregar tus datos desde otro dispositivo, el transplante es compatible entre aplicaciones y la versión web.<br><br>(Windows, Android, iOS, Mac, Linux; entre otros compatibles con RBC-EASY)<br><br><b>Importante: Importar nuevos datos reemplazará todas las biblias, borradores, calculos, y marcos actuales por los del archivo importado. </b></p>
+  </div>
+</aside>
+
+<style>
+  /* ==================================================
+   BOTÓN SUPERIOR DERECHO
+================================================== */
+.export-menu-btn {
+  position: fixed;
+  right: 50px;
+  top: 18px;
+  z-index: 10;
+  padding: 12px 18px;
+  background: #FF0000;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: .08em;
+  box-shadow: 0 0 18px rgba(255,0,0,.6);
+  transition: all .25s ease;
+}
+
+.export-menu-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 0 35px rgba(255,0,0,.9);
+}
+
+/* ==================================================
+   SIDEBAR DERECHO
+================================================== */
+.export-sidebar {
+  width: 260px;
+  background-color: rgba(0, 0, 0, 0.95);
+  position: fixed;
+  opacity: 75%;
+  top: 0;
+  right: -260px;
+  height: 100%;
+  padding: 20px;
+  box-shadow: -2px 0 20px rgba(255,0,0,.4);
+  transition: right .3s ease;
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+}
+
+.export-sidebar.open {
+  right: 0;
+}
+
+.export-header h2 {
+  color: #FF0000;
+  font-size: 18px;
+  letter-spacing: .08em;
+  text-shadow: 0 0 10px rgba(255,0,0,.6);
+}
+
+.export-content {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* OVERLAY */
+#export-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all .3s ease;
+  z-index: 15;
+}
+
+#export-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ==================================================
+   TEXTO INFORMATIVO EXPORTACIÓN
+================================================== */
+
+.export-content p {
+  margin-top: 20px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #FF0000;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255,0,0,.15);
+  animation: cyberPulse 3s infinite ease-in-out;
+}
+
+/* Efecto glow interno sutil */
+.export-content p::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,0,0,0.15),
+    transparent
+  );
+  animation: scanline 4s infinite;
+}
+
+/* Animación leve de pulso */
+@keyframes cyberPulse {
+  0% {
+    box-shadow: 0 0 10px rgba(255,0,0,.12);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255,0,0,.25);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(255,0,0,.12);
+  }
+}
+
+/* Animación tipo barrido */
+@keyframes scanline {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Móvil: baja el botón */
+@media (max-width: 768px) {
+  #toggle-export {
+    top: auto;
+    bottom: 30px;
+  }
+}
+
+</style>
+
+<script>
+  const toggleExport = document.getElementById("toggle-export");
+  const exportSidebar = document.getElementById("export-sidebar");
+  const closeExport = document.getElementById("close-export");
+  const exportOverlay = document.getElementById("export-overlay");
+
+  toggleExport.onclick = () => {
+    exportSidebar.classList.add("open");
+    exportOverlay.classList.add("active");
+  };
+
+  closeExport.onclick = () => {
+    exportSidebar.classList.remove("open");
+    exportOverlay.classList.remove("active");
+  };
+
+  exportOverlay.onclick = () => {
+    exportSidebar.classList.remove("open");
+    exportOverlay.classList.remove("active");
+  };
+</script>
+
+<script>
+
+/* ================================
+   EXPORTAR TODO
+================================ */
+
+async function exportAllData() {
+
+  if (!confirm("⚠️ Se exportará TODO el almacenamiento local (marcos, biblias, proyectos). ¿Continuar?")) return;
+
+  const exportObject = {
+    localStorage: {},
+    indexedDB: {}
+  };
+
+  /* ---------- LOCALSTORAGE ---------- */
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    exportObject.localStorage[key] = localStorage.getItem(key);
+  }
+
+  /* ---------- INDEXEDDB ---------- */
+  const db = await initDB();
+  const tx = db.transaction(["files"], "readonly");
+  const store = tx.objectStore("files");
+
+  const files = await new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+  exportObject.indexedDB.files = files;
+
+  /* ---------- CREAR ARCHIVO ---------- */
+  const blob = new Blob(
+    [JSON.stringify(exportObject, null, 2)],
+    { type: "application/json" }
+  );
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "RBC_EASY_BACKUP.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  alert("✅ Respaldo exportado correctamente.");
+}
+
+
+/* ================================
+   IMPORTAR TODO
+================================ */
+
+function importAllData() {
+
+  if (!confirm("⚠️ Esto BORRARÁ todo lo actual y lo reemplazará con el respaldo. ¿Continuar?")) return;
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+
+  input.onchange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = async function(e) {
+
+      const data = JSON.parse(e.target.result);
+
+      /* ---------- LIMPIAR LOCALSTORAGE ---------- */
+      localStorage.clear();
+
+      /* ---------- RESTAURAR LOCALSTORAGE ---------- */
+      for (let key in data.localStorage) {
+        localStorage.setItem(key, data.localStorage[key]);
+      }
+
+      /* ---------- LIMPIAR INDEXEDDB ---------- */
+      const db = await initDB();
+      const txClear = db.transaction(["files"], "readwrite");
+      txClear.objectStore("files").clear();
+
+      await new Promise(resolve => txClear.oncomplete = resolve);
+
+      /* ---------- RESTAURAR INDEXEDDB ---------- */
+      const tx = db.transaction(["files"], "readwrite");
+      const store = tx.objectStore("files");
+
+      data.indexedDB.files.forEach(file => {
+        store.put(file);
+      });
+
+      tx.oncomplete = function() {
+        alert("✅ Datos restaurados correctamente.\nLa página se recargará.");
+        location.reload();
+      };
+    };
+
+    reader.readAsText(file);
+  };
+
+  input.click();
+}
+
+</script>
+
+<!-- BOTÓN TOGGLE -->
+<button id="toggle-menu" class="menu-btn">
+  📂 Mis Biblias
+</button>
+
+<!-- OVERLAY -->
+<div id="sidebar-overlay"></div>
+
+<!-- SIDEBAR IZQUIERDO -->
+<aside id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <h2>Gestión de Biblias</h2>
+    <button id="close-menu" class="action-btn">Cerrar</button>
+<br><br>
+        <button id="load-files" class="action-btn">
+      📥 Subir Biblia
+    </button> 
+
+    <button id="edit-mode" class="action-btn">
+      🛠️ Editar
+    </button>
+  </div>
+
+  <div class="sidebar-content">
+
+    <p class="info-box">
+      Aquí puedes importar tus biblias en formato .txt o .pdf, también podrás personalizar el nombre de las biblias y su orden; al dar click en editar, deberás arrastra las biblias, o dar click para cambiar el nombre. Al cargarlos, serás redirigido al Biblias Maker con el texto importado.<br><br><b>Importante: si tienes un borrador en el Biblias Maker, se perderá al importar una biblia.</b>
+    </p>
+
+    <ul id="file-list" class="file-list"></ul>
+
+  </div>
+</aside>
+
+<style>
+  .info-box {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #FF0000;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(255,0,0,.15);
+  animation: cyberPulse 3s infinite ease-in-out;
+}
+
+/* Efecto glow interno sutil */
+.sidebar-content p::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,0,0,0.15),
+    transparent
+  );
+  animation: scanline 4s infinite;
+}
+
+/* Animación leve de pulso */
+@keyframes cyberPulse {
+  0% {
+    box-shadow: 0 0 10px rgba(255,0,0,.12);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255,0,0,.25);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(255,0,0,.12);
+  }
+}
+
+/* Animación tipo barrido */
+@keyframes scanline {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+  /* Scroll negro delgado */
+.file-list {
+  list-style: none;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.file-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-list::-webkit-scrollbar-track {
+  background: #000;
+}
+
+.file-list::-webkit-scrollbar-thumb {
+  background: #222;
+  border-radius: 4px;
+}
+
+.file-list::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+.file-list li {
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  margin-bottom: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255,0,0,.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* ================================
+   SCROLL ULTRA DELGADO - GENERAL
+================================ */
+
+.sidebar-content,
+.export-content,
+.file-list,
+#backup-list {
+  overflow-y: auto;
+}
+
+/* Chrome, Edge, Opera */
+.sidebar-content::-webkit-scrollbar,
+.export-content::-webkit-scrollbar,
+.file-list::-webkit-scrollbar,
+#backup-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar-content::-webkit-scrollbar-track,
+.export-content::-webkit-scrollbar-track,
+.file-list::-webkit-scrollbar-track,
+#backup-list::-webkit-scrollbar-track {
+  background: #000;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb,
+.export-content::-webkit-scrollbar-thumb,
+.file-list::-webkit-scrollbar-thumb,
+#backup-list::-webkit-scrollbar-thumb {
+  background: #111;
+  border-radius: 10px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover,
+.export-content::-webkit-scrollbar-thumb:hover,
+.file-list::-webkit-scrollbar-thumb:hover,
+#backup-list::-webkit-scrollbar-thumb:hover {
+  background: #222;
+}
+
+/* Firefox */
+.sidebar-content,
+.export-content,
+.file-list,
+#backup-list {
+  scrollbar-width: thin;
+  scrollbar-color: #111 #000;
+}
+
+</style>
+
+<script>
+  document.getElementById("load-files").addEventListener("click", function () {
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = ".txt,.pdf,image/*";
+  fileInput.multiple = true;
+
+  fileInput.onchange = async function (event) {
+
+    const files = event.target.files;
+
+    for (let file of files) {
+
+      const reader = new FileReader();
+
+      reader.onload = async function (e) {
+
+        let content;
+
+        if (file.type.startsWith("image/")) {
+          content = e.target.result; // base64 imagen
+        } 
+        else if (file.type === "application/pdf") {
+          content = e.target.result; // base64 pdf
+        } 
+        else {
+          content = e.target.result; // texto
+        }
+
+        await saveFile(file.name, content);
+        const updatedFiles = await loadFiles();
+        displayFiles(updatedFiles);
+      };
+
+      reader.readAsDataURL(file); // todo como base64 para compatibilidad
+    }
+  };
+
+  fileInput.click();
+});
+
+
+</script>
+<!-- SCRIPT CONTROL SIDEBAR -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const toggleMenu = document.getElementById("toggle-menu");
+  const closeMenu = document.getElementById("close-menu");
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  toggleMenu.addEventListener("click", () => {
+    sidebar.classList.add("open");
+    overlay.classList.add("active");
+  });
+
+  closeMenu.addEventListener("click", () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+  });
+
+  overlay.addEventListener("click", () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("active");
+  });
+
+});
+
+let editMode = false;
+
+document.getElementById("edit-mode").addEventListener("click", () => {
+
+  editMode = !editMode;
+
+  const button = document.getElementById("edit-mode");
+
+  if (editMode) {
+    button.textContent = "✅ Aplicar";
+    enableDragAndEdit();
+  } else {
+    button.textContent = "🛠️ Editar";
+    disableDragAndEdit();
+  }
+
+});
+
+
+function enableDragAndEdit() {
+
+  const items = document.querySelectorAll("#file-list li");
+
+  items.forEach(li => {
+
+    li.draggable = true;
+
+    li.addEventListener("dragstart", () => {
+      li.classList.add("dragging");
+    });
+
+    li.addEventListener("dragend", () => {
+      li.classList.remove("dragging");
+      saveNewOrder();
+    });
+
+    if (!li.dataset.renameBound) {
+
+      li.addEventListener("dblclick", async () => {
+
+        if (!editMode) return;
+
+        const oldName = li.dataset.filename;
+        const newName = prompt("Nuevo nombre:", oldName);
+
+        if (!newName || newName === oldName) return;
+
+        const content = li.dataset.filecontent;
+
+        const db = await initDB();
+        const tx = db.transaction(["files"], "readwrite");
+        const store = tx.objectStore("files");
+
+        store.delete(oldName);
+
+        store.put({
+          name: newName,
+          content: content,
+          timestamp: new Date()
+        });
+
+        tx.oncomplete = async () => {
+
+          let savedOrder = JSON.parse(localStorage.getItem("bibleOrder") || "[]");
+          savedOrder = savedOrder.map(name =>
+            name === oldName ? newName : name
+          );
+          localStorage.setItem("bibleOrder", JSON.stringify(savedOrder));
+
+          const updated = await loadFiles();
+          displayFiles(updated);
+        };
+
+      });
+
+      li.dataset.renameBound = "true";
+    }
+
+  });
+
+  const list = document.getElementById("file-list");
+
+  if (!list.dataset.dragBound) {
+
+    list.addEventListener("dragover", e => {
+      e.preventDefault();
+      const dragging = document.querySelector(".dragging");
+      const afterElement = [...list.children].find(child =>
+        e.clientY <= child.getBoundingClientRect().top + child.offsetHeight / 2
+      );
+      list.insertBefore(dragging, afterElement);
+    });
+
+    list.dataset.dragBound = "true";
+  }
+
+}
+
+
+const list = document.getElementById("file-list");
+
+if (!list.dataset.dragBound) {
+
+  list.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = document.querySelector(".dragging");
+    const afterElement = [...list.children].find(child =>
+      e.clientY <= child.getBoundingClientRect().top + child.offsetHeight / 2
+    );
+    list.insertBefore(dragging, afterElement);
+  });
+
+  list.dataset.dragBound = "true";
+}
+
+
+  list.addEventListener("dragover", e => {
+    e.preventDefault();
+    const dragging = document.querySelector(".dragging");
+    const afterElement = [...list.children].find(child =>
+      e.clientY <= child.getBoundingClientRect().top + child.offsetHeight / 2
+    );
+    list.insertBefore(dragging, afterElement);
+  });
+
+
+function disableDragAndEdit() {
+
+  const items = document.querySelectorAll("#file-list li");
+
+  items.forEach(li => {
+    li.draggable = false;
+  });
+
+}
+
+
+async function saveNewOrder() {
+
+  const items = document.querySelectorAll("#file-list li");
+  const order = [];
+
+  items.forEach(li => {
+    order.push(li.dataset.filename);
+  });
+
+  localStorage.setItem("bibleOrder", JSON.stringify(order));
+
+  // Refrescar visualmente con el nuevo orden
+  const updatedFiles = await loadFiles();
+  displayFiles(updatedFiles);
+}
+
+
+</script>
+<style>
+  .dragging {
+  opacity: 0.4;
+  box-shadow: 0 0 15px rgba(255,0,0,.6);
+}
+</style>
     <h1>Mis Proyectos</h1>
+  <div class="container">
     <a href="Calculadora_Científica.html" class="calculate-button">Calcular</a>
     <a href="BibliasMaker.html" class="create-more-button">Escribir</a>
   </div>
-  <script>
 
+  <style>
+/* =====================================
+   H1 CYBERPUNK NEÓN - FIJO ARRIBA CENTRADO
+===================================== */
+
+h1 {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 20px 30px 16px;
+  font-size: 38px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #ff1a1a;
+  text-shadow:
+    0 0 5px #ff0000,
+    0 0 10px #ff0000,
+    0 0 20px #ff0000,
+    0 0 40px #990000;
+  animation: glitchFlicker 3s infinite alternate;
+  z-index: 5;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Línea decorativa inferior */
+h1::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff0000, transparent);
+  box-shadow: 0 0 10px #ff0000;
+}
+
+/* Efecto glitch duplicado */
+h1::before {
+  content: "Mis Proyectos";
+  position: absolute;
+  left: 2px;
+  top: 0;
+  color: #ff0000;
+  opacity: 0.6;
+  z-index: -1;
+  animation: glitchShift 2s infinite linear alternate-reverse;
+}
+
+/* Animaciones */
+@keyframes glitchFlicker {
+  0% { opacity: 1; }
+  50% { opacity: 0.95; }
+  100% { opacity: 1; }
+}
+
+@keyframes glitchShift {
+  0%    { transform: translate(0px, 0px); }
+  25%   { transform: translate(-2px, 1px); }
+  50%   { transform: translate(2px, -1px); }
+  75%   { transform: translate(-1px, -1px); }
+  100%  { transform: translate(1px, 1px); }
+}
+
+/* =====================================
+   MODO CELULAR
+===================================== */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 24px;
+    letter-spacing: 0.12em;
+    padding: 16px 20px 12px;
+    text-shadow:
+      0 0 4px #ff0000,
+      0 0 8px #990000;
+    animation: none;           /* o déjalo si quieres mantenerlo */
+  }
+
+  h1::after {
+    height: 1px;
+    bottom: 6px;
+    box-shadow: 0 0 6px #ff0000;
+    width: 70%;
+  }
+}
+  </style>
+  <script>
     let db;
     const dbName = "FileStorageDB";
     const storeName = "files";
@@ -207,23 +1114,47 @@
       });
     }
   
-    function displayFiles(files) {
-      const fileList = document.getElementById("file-list");
-      fileList.innerHTML = "";
-  
-      files.forEach((file) => {
-        const listItem = document.createElement("li");
-        listItem.textContent = file.name;
-        listItem.dataset.filename = file.name;
-        listItem.dataset.filecontent = file.content;
-        listItem.addEventListener("click", function () {
-          localStorage.setItem("currentFileName", file.name);
-          localStorage.setItem("currentFileContent", file.content);
-          window.location.href = "BibliasMaker.html";
-        });
-        fileList.appendChild(listItem);
-      });
-    }
+function displayFiles(files) {
+
+  const fileList = document.getElementById("file-list");
+  fileList.innerHTML = "";
+
+  // Aplicar orden guardado
+  const savedOrder = JSON.parse(localStorage.getItem("bibleOrder") || "[]");
+
+  if (savedOrder.length > 0) {
+    files.sort((a, b) => {
+      return savedOrder.indexOf(a.name) - savedOrder.indexOf(b.name);
+    });
+  }
+
+  files.forEach((file) => {
+
+    const li = document.createElement("li");
+
+    li.textContent = file.name;
+
+    li.dataset.filename = file.name;
+    li.dataset.filecontent = file.content;
+
+    li.addEventListener("click", function () {
+      if (editMode) return; // No abrir si estamos editando
+
+      localStorage.setItem("currentFileName", file.name);
+      localStorage.setItem("currentFileContent", file.content);
+      window.location.href = "BibliasMaker.html";
+    });
+
+    fileList.appendChild(li);
+
+    if (editMode) {
+  enableDragAndEdit();
+}
+
+  });
+
+}
+
   
     document.addEventListener("DOMContentLoaded", async function () {
       try {
@@ -233,15 +1164,7 @@
       } catch (error) {
         console.error("Error al inicializar la página:", error);
       }
-  
 
-      document.getElementById("toggle-menu").addEventListener("click", function () {
-        document.querySelector(".sidebar").style.display = "flex";
-      });
-  
-      document.getElementById("close-menu").addEventListener("click", function () {
-        document.querySelector(".sidebar").style.display = "none";
-      });
   
       document.getElementById("load-files").addEventListener("click", function () {
         const fileInput = document.createElement("input");
