@@ -29,8 +29,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap" rel="stylesheet">
   <link href="Estilos/EstilosBibliasMaker.css" rel="stylesheet" type="text/css">
 
-  <script>
-    // AutoSave.js
+<script>
+// AutoSave.js
 (function () {
   // Variables únicas para evitar conflictos
   const AUTO_SAVE_KEY = 'biblias_maker_auto_save';
@@ -127,6 +127,9 @@
     }, 4000);
   }
 
+  // =============================================
+  //  CARGA SEGURA + PRIORIDAD A IMPORTACIÓN DESDE SIDEBAR
+  // =============================================
   document.addEventListener('DOMContentLoaded', async () => {
     autoSaveTextArea = document.getElementById(AUTO_SAVE_TEXTAREA_ID);
     if (!autoSaveTextArea) {
@@ -134,19 +137,79 @@
       return;
     }
 
-    try {
-      await initIndexedDB();
-      const savedText = await loadTextFromDB();
-      autoSaveTextArea.value = savedText;
-    } catch (err) {
-      console.error('Error al cargar texto guardado:', err);
+    // Bandera para detectar si estamos importando desde el sidebar
+    const isImporting = !!localStorage.getItem("currentFileContent");
+
+    // 1. Intentar cargar desde sidebar primero (prioridad)
+    let importedText = null;
+    if (isImporting) {
+      const rawContent = localStorage.getItem("currentFileContent");
+      const mime = localStorage.getItem("currentFileMime") || "text/plain";
+
+      // Limpiar storage inmediatamente
+      localStorage.removeItem("currentFileName");
+      localStorage.removeItem("currentFileContent");
+      localStorage.removeItem("currentFileMime");
+
+      if (rawContent) {
+        try {
+          if (rawContent.startsWith("data:")) {
+            const base64 = rawContent.split(",")[1] || "";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+              bytes[i] = binary.charCodeAt(i);
+            }
+
+            if (mime.startsWith("text/") || mime.includes("plain") || mime === "application/octet-stream") {
+              importedText = new TextDecoder("utf-8").decode(bytes);
+            } else {
+              importedText = `[${mime.toUpperCase()}] Contenido importado\n\n(visualización pendiente)`;
+            }
+          } else {
+            importedText = rawContent;
+          }
+        } catch (err) {
+          console.error("Error al decodificar importación:", err);
+          importedText = "[Error al importar]\n" + rawContent.slice(0, 300);
+        }
+      }
     }
 
-    // Configurar autoguardado
-    const debouncedAutoSave = debounceAutoSave(autoSaveText, 500);
-    autoSaveTextArea.addEventListener('input', debouncedAutoSave);
+    // 2. Inicializar DB y decidir qué cargar
+    try {
+      await initIndexedDB();
 
-    // Detectar cambios de conexión
+      if (importedText !== null) {
+        // Importación tiene prioridad → sobreescribimos
+        autoSaveTextArea.value = importedText;
+        // Guardamos inmediatamente en la DB para que sea el nuevo "estado base"
+        await saveTextToDB(importedText);
+        console.log("[Import] Contenido desde sidebar cargado y guardado como base");
+      } else {
+        // No hay importación → cargar el autoguardado normal
+        const savedText = await loadTextFromDB();
+        autoSaveTextArea.value = savedText;
+      }
+    } catch (err) {
+      console.error('Error al inicializar/cargar IndexedDB:', err);
+    }
+
+    // 3. Configurar autoguardado (siempre después de la carga)
+    const debouncedAutoSave = debounceAutoSave(autoSaveText, 500);
+
+    // Listener protegido: ignorar inputs durante los primeros 800 ms después de import
+    const importCooldown = isImporting ? Date.now() + 800 : 0;
+
+    autoSaveTextArea.addEventListener('input', function(e) {
+      if (Date.now() < importCooldown) {
+        console.log("[AutoSave] Input ignorado durante cooldown de importación");
+        return;
+      }
+      debouncedAutoSave();
+    });
+
+    // 4. Notificaciones de conexión (sin cambios)
     window.addEventListener('online', () => {
       showNotification('¡Conexión restaurada! Tu texto está seguro y sigue guardándose.', true);
     });
@@ -155,13 +218,14 @@
       showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
     });
 
-    // Verificar estado inicial
     if (!navigator.onLine) {
       showNotification('Estás trabajando sin conexión. ¡No te preocupes, tu texto se sigue guardando!', false);
     }
+    
   });
 })();
-  </script>
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Lora&family=Poppins&display=swap" rel="stylesheet">
@@ -232,8 +296,121 @@ function saveFigures() {
 }
 
 </script>
+
+<script>
+  window.addEventListener("load", async () => {
+  const fileId   = localStorage.getItem("currentFileId");
+  const fileName = localStorage.getItem("currentFileName");
+  const content  = localStorage.getItem("currentFileContent");
+  const mime     = localStorage.getItem("currentFileMime");
+
+  if (!content) return;
+
+  const textarea = document.getElementById("texto");
+
+  if (mime === "application/pdf") {
+    // Aquí deberías usar pdf.js para extraer texto + posiciones de imágenes
+    // Por simplicidad inicial solo mostramos el base64 y marcamos figuras
+    textarea.value = "(PDF cargado – implementación de extracción pendiente)\n\n" + content;
+
+    // Versión mínima deseada:
+    // 1. Extraer texto → ponerlo en textarea
+    // 2. Detectar imágenes → insertar [Figura N.M] en la posición aproximada
+    //    y guardar las imágenes en figureStore (ya existe en tu código)
+  }
+  else if (mime.startsWith("image/")) {
+    // Opción: insertar ![nombre](dataURL) o solo [Imagen]
+    textarea.value = `[Imagen: ${fileName}]\n\n` + content;
+  }
+  else {
+    // .txt → directo
+    textarea.value = content;
+  }
+
+  // Limpiar para no repetir al recargar
+  localStorage.removeItem("currentFileId");
+  localStorage.removeItem("currentFileName");
+  localStorage.removeItem("currentFileContent");
+  localStorage.removeItem("currentFileMime");
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.338/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
 </head>
 <body>
+  <script>
+// =============================================
+// CARGA PRIORITARIA DESDE SIDEBAR (anti-restore)
+// =============================================
+(function forceLoadFromSidebar() {
+  // Ejecutar lo antes posible
+  const textarea = document.getElementById("texto");
+  if (!textarea) return;
+
+  const fileName   = localStorage.getItem("currentFileName");
+  const rawContent = localStorage.getItem("currentFileContent");
+  const mime       = localStorage.getItem("currentFileMime") || "text/plain";
+
+  if (!rawContent) return;
+
+  // BLOQUEO TOTAL: marcar que estamos importando
+  window.importingFromSidebar = true;
+  window.preventRestore = true;
+
+  // Limpiar storage YA
+  localStorage.removeItem("currentFileName");
+  localStorage.removeItem("currentFileContent");
+  localStorage.removeItem("currentFileMime");
+
+  // Limpiar textarea
+  textarea.value = "";
+
+  // Decodificar
+  let finalText = "";
+  try {
+    if (rawContent.startsWith("data:")) {
+      const base64 = rawContent.split(",")[1] || "";
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+      if (/text|plain|octet/.test(mime)) {
+        finalText = new TextDecoder("utf-8").decode(bytes);
+      } else if (mime === "application/pdf") {
+        finalText = `[PDF] ${fileName || "PDF sin nombre"}\n\n(Extracción pendiente)`;
+      } else if (mime.startsWith("image/")) {
+        finalText = `[Imagen] ${fileName || "Imagen"}\n${mime}`;
+      } else {
+        finalText = rawContent.slice(0, 600);
+      }
+    } else {
+      finalText = rawContent;
+    }
+  } catch (e) {
+    finalText = "[Error]\n" + e.message + "\n\n" + rawContent.slice(0, 300);
+  }
+
+  // Colocar y forzar
+  textarea.value = finalText;
+  textarea.focus();
+  textarea.scrollTop = textarea.scrollHeight;
+
+  // Guardado inmediato en IndexedDB para que el autoguardado lo vea como "nuevo"
+  if (window.saveTextToDB) {
+    window.saveTextToDB(finalText).then(() => {
+      console.log("[Sidebar Import] Guardado forzado en IndexedDB");
+    }).catch(e => console.warn(e));
+  }
+
+  // Desbloquear después de 800 ms (tiempo suficiente para que el DOM estabilice)
+  setTimeout(() => {
+    window.importingFromSidebar = false;
+    window.preventRestore = false;
+    console.log("[Sidebar Import] Carga completada y desbloqueada");
+  }, 800);
+})();
+</script>
   <div class="particles"></div>
   <div class="container">
     <div class="bubble" id="title">Biblias Maker</div>
@@ -512,9 +689,6 @@ document.getElementById("mediaInput").addEventListener("change", function (e) {
       <button class="button" onclick="openCalculator()">Calcular datos</button>
       <button class="button" onclick="openExportModal()">Descargar / Exportar</button>
     </div>
-
-<!-- jsPDF (una sola carga) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <!-- ===================================================
    MODAL DE EXPORTACIÓN COMPLETO (reemplaza todo lo anterior)
@@ -3610,6 +3784,135 @@ function mostrarResultadoFinal(valor) {
 
 </script>
 
+<script>
+// Bandera global para bloquear autoguardado durante carga crítica
+window.bibleLoadInProgress = false;
+
+// Guardamos referencia al textarea y al listener original (si existe)
+let originalInputListener = null;
+
+document.addEventListener("DOMContentLoaded", async function loadBibleContentSafely() {
+  const textarea = document.getElementById("texto");
+  if (!textarea) return console.warn("No se encontró #texto");
+
+  const fileName   = localStorage.getItem("currentFileName");
+  const rawContent = localStorage.getItem("currentFileContent");
+  const mime       = localStorage.getItem("currentFileMime") || "text/plain";
+
+  // Limpiar inmediatamente el almacenamiento para evitar recargas fantasma
+  localStorage.removeItem("currentFileName");
+  localStorage.removeItem("currentFileContent");
+  localStorage.removeItem("currentFileMime");
+
+  if (!rawContent) {
+    console.log("No hay biblia para cargar desde sidebar");
+    return;
+  }
+
+  console.log("[Load] Iniciando carga segura de biblia:", fileName || "sin nombre");
+
+  // BLOQUEO FUERTE: desactivar temporalmente el autoguardado
+  window.bibleLoadInProgress = true;
+
+  // Intentar desconectar listener de input (si usas addEventListener('input'))
+  if (textarea._inputHandler) {
+    textarea.removeEventListener("input", textarea._inputHandler);
+  } else if (window.debouncedAutoSave) {
+    // Si tienes una función global debounced
+    textarea.removeEventListener("input", window.debouncedAutoSave);
+  }
+
+  // 1. Limpiar completamente el textarea
+  textarea.value = "";
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+
+  await new Promise(r => setTimeout(r, 50)); // micro respiro para que el DOM reaccione
+
+  // 2. Decodificar y preparar texto
+  let finalText = "[Error al procesar contenido]";
+
+  try {
+    if (rawContent.startsWith("data:")) {
+      const parts = rawContent.split(",");
+      const base64 = parts[1] || "";
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      if (mime.startsWith("text/") || mime.includes("plain") || mime === "application/octet-stream") {
+        finalText = new TextDecoder("utf-8").decode(bytes);
+      } else if (mime === "application/pdf") {
+        finalText = `[PDF] ${fileName || "Documento PDF"}\n\n(Visualización/texto pendiente de implementación con pdf.js)`;
+      } else if (mime.startsWith("image/")) {
+        finalText = `[Imagen] ${fileName || "Imagen"}\nTipo: ${mime}`;
+      } else {
+        finalText = rawContent.substring(0, 800) + "\n\n(Formato no reconocido)";
+      }
+    } else {
+      // Ya era texto plano
+      finalText = rawContent;
+    }
+  } catch (err) {
+    console.error("Error decodificando:", err);
+    finalText = "[Fallo al leer]\n" + err.message + "\n\n" + rawContent.slice(0, 400);
+  }
+
+  // 3. Colocar el texto nuevo
+  textarea.value = finalText;
+
+  // 4. Forzar actualización y estabilidad
+  textarea.setSelectionRange(0, 0);
+  textarea.blur();
+  await new Promise(r => setTimeout(r, 80));
+  textarea.focus();
+  textarea.scrollTop = textarea.scrollHeight;
+
+  // Disparar evento input manualmente (pero ya con bandera de protección)
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+
+  // 5. Guardado inmediato y forzado del nuevo contenido (para sobreescribir caché vieja)
+  if (window.saveTextToDB) {
+    try {
+      await window.saveTextToDB(finalText);
+      console.log("[Load] Guardado forzado exitoso después de carga");
+    } catch (err) {
+      console.warn("[Load] Falló guardado forzado:", err);
+    }
+  }
+
+  // 6. Reactivar autoguardado después de 1.2 segundos (tiempo conservador)
+  setTimeout(() => {
+    window.bibleLoadInProgress = false;
+    console.log("[Load] Autoguardado reactivado");
+
+    // Reconectar listener si fue desconectado
+    if (originalInputListener) {
+      textarea.addEventListener("input", originalInputListener);
+    }
+  }, 1200);
+});
+
+// Proteger el autoguardado (debe estar en tu código de auto-save)
+const originalAutoSave = window.autoSaveText || function() {};
+window.autoSaveText = function protectedAutoSave() {
+  if (window.bibleLoadInProgress) {
+    console.log("[AutoSave] Bloqueado durante carga desde sidebar");
+    return;
+  }
+  originalAutoSave.apply(this, arguments);
+};
+
+// Si usas debounce, protégelo también
+if (window.debouncedAutoSave) {
+  const originalDebounced = window.debouncedAutoSave;
+  window.debouncedAutoSave = function(...args) {
+    if (window.bibleLoadInProgress) return;
+    originalDebounced(...args);
+  };
+}
+</script>
 
     <script>
       function activateFullscreenMode() {

@@ -38,7 +38,7 @@
       overflow: hidden;
     }
     .container {
-      text-align: center;
+      text-align: center !important;
     }
     h1 {
       color: #FF0000;
@@ -238,7 +238,153 @@
   <title>Proyectos</title>
 </head>
 <body>
+  <script>
+    
+    const dbName = "FileStorageDB";
+    const storeName = "files";
+  
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(dbName, 1);
+  
+        request.onupgradeneeded = function (event) {
+          db = event.target.result;
+          db.createObjectStore(storeName, { keyPath: "name" });
+        };
+  
+        request.onsuccess = function (event) {
+          db = event.target.result;
+          resolve(db);
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al abrir IndexedDB:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+    function saveFile(fileName, fileContent) {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readwrite");
+        const store = transaction.objectStore(storeName);
+        const fileData = { name: fileName, content: fileContent, timestamp: new Date() };
+        const request = store.put(fileData);
+  
+        request.onsuccess = function () {
+          resolve();
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al guardar archivo:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+    function loadFiles() {
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+  
+        request.onsuccess = function (event) {
+          resolve(event.target.result);
+        };
+  
+        request.onerror = function (event) {
+          console.error("Error al cargar archivos:", event.target.error);
+          reject(event.target.error);
+        };
+      });
+    }
+  
+function displayFiles(files) {
 
+  const fileList = document.getElementById("file-list");
+  fileList.innerHTML = "";
+
+  // Aplicar orden guardado
+  const savedOrder = JSON.parse(localStorage.getItem("bibleOrder") || "[]");
+
+  if (savedOrder.length > 0) {
+    files.sort((a, b) => {
+      return savedOrder.indexOf(a.name) - savedOrder.indexOf(b.name);
+    });
+  }
+
+  files.forEach((file) => {
+
+    const li = document.createElement("li");
+
+    li.textContent = file.name;
+
+    li.dataset.filename = file.name;
+    li.dataset.filecontent = file.content;
+
+    li.addEventListener("click", function () {
+      if (editMode) return; // No abrir si estamos editando
+
+      localStorage.setItem("currentFileName", file.name);
+      localStorage.setItem("currentFileContent", file.content);
+      window.location.href = "BibliasMaker.html";
+    });
+
+    fileList.appendChild(li);
+
+    if (editMode) {
+  enableDragAndEdit();
+}
+
+  });
+
+}
+
+  
+    document.addEventListener("DOMContentLoaded", async function () {
+      try {
+        await initDB();
+        const files = await loadFiles();
+        displayFiles(files);
+      } catch (error) {
+        console.error("Error al inicializar la página:", error);
+      }
+
+  
+      document.getElementById("load-files").addEventListener("click", function () {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".txt";
+        fileInput.multiple = true;
+        fileInput.style.display = "none";
+  
+        fileInput.addEventListener("change", async function (event) {
+          const files = event.target.files;
+  
+          for (let file of files) {
+            if (file.name.endsWith(".txt")) {
+              const reader = new FileReader();
+              reader.onload = async function (e) {
+                try {
+                  await saveFile(file.name, e.target.result);
+                  const updatedFiles = await loadFiles();
+                  displayFiles(updatedFiles);
+                } catch (error) {
+                  console.error("Error al procesar archivo:", file.name, error);
+                }
+              };
+              reader.readAsText(file);
+            }
+          }
+        });
+  
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+      });
+    });
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.338/pdf.min.js"></script>
   <!-- BOTÓN TOGGLE EXPORTACIÓN -->
 <button id="toggle-export" class="export-menu-btn">
   💾 Datos
@@ -565,13 +711,20 @@ function importAllData() {
     <h2>Gestión de Biblias</h2>
     <button id="close-menu" class="action-btn">Cerrar</button>
 <br><br>
-        <button id="load-files" class="action-btn">
+        <button id="btn-upload" style="padding: 10px;" class="action-btn">
       📥 Subir Biblia
     </button> 
 
-    <button id="edit-mode" class="action-btn">
+    <button id="edit-mode" style="padding: 10px;" class="action-btn">
       🛠️ Editar
+    </button> <br> <br>
+    <button style="padding: 10px;" id="btn-new-folder"  class="action-btn">
+      ✚ Crear Rol
     </button>
+    <button id="btn-search"  style="padding: 10px;"    class="action-btn">
+      🔍 Buscar
+    </button>
+    
   </div>
 
   <div class="sidebar-content">
@@ -580,12 +733,831 @@ function importAllData() {
       Aquí puedes importar tus biblias en formato .txt o .pdf, también podrás personalizar el nombre de las biblias y su orden; al dar click en editar, deberás arrastra las biblias, o dar click para cambiar el nombre. Al cargarlos, serás redirigido al Biblias Maker con el texto importado.<br><br><b>Importante: si tienes un borrador en el Biblias Maker, se perderá al importar una biblia.</b>
     </p>
 
+    <div class="sidebar-content">
+    <p class="info-box">
+      Organiza tus turnos por partida.<br>
+      Crea carpetas (roles), arrastra archivos entre ellas.<br>
+      Mantén presionado un ítem para renombrar o eliminar.
+    </p>
+
+    <!-- BREADCRUMB CYBERPUNK -->
+    <div id="breadcrumb" class="breadcrumb"></div>
+
+    <!-- BUSCADOR -->
+    <div id="search-container" class="hidden" style="margin:12px 0;">
+      <input type="text" id="search-input" placeholder="Buscar rol o biblia..." style="width:90%; padding:10px; border-radius:6px; border:1px solid #ff4444; background:#111; color:white;">
+    </div>
+
+    <ul id="file-list" class="file-list"></ul>
+  </div>
+
+  
+<!-- CONTEXT MENU (flotante cyberpunk) -->
+<div id="context-menu" class="context-menu hidden">
+  <button data-action="rename">✏️ Renombrar</button>
+  <button data-action="delete">🗑️ Eliminar</button>
+  <button data-action="enter">📋 Entrar</button>
+  <button data-action="cancel">Cancelar</button>
+
+</div>
+
+    <div id="breadcrumb" style="padding:8px; color:#ff2a2a; font-size:0.9em;"></div>
+
+    <ul id="file-list" class="file-list"></ul>
+
     <ul id="file-list" class="file-list"></ul>
 
   </div>
 </aside>
 
+</aside>
+
 <style>
+/* ==================== BREADCRUMB CYBERPUNK ==================== */
+.breadcrumb {
+  padding: 12px 16px;
+  background: rgba(255, 0, 0, 0.08);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 10px;
+  margin: 8px 0 12px;
+  font-size: 13.5px;
+  color: #ff6666;
+  text-shadow: 0 0 8px #ff0000;
+  letter-spacing: 0.6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.breadcrumb span {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.breadcrumb span:hover {
+  color: #ffffff;
+  text-shadow: 0 0 18px #ff0000;
+  transform: translateY(-1px);
+}
+
+.breadcrumb span:not(:last-child)::after {
+  content: " → ";
+  color: #ff4444;
+  margin: 0 4px;
+}
+
+/* ==================== CONTEXT MENU ==================== */
+.context-menu {
+  position: fixed;
+  background: rgba(15, 15, 15, 0.98);
+  border: 2px solid #ff0000;
+  border-radius: 12px;
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.7);
+  z-index: 99999;
+  padding: 6px 0;
+  min-width: 180px;
+  display: none;
+}
+
+.context-menu button {
+  width: 100%;
+  padding: 12px 18px;
+  background: transparent;
+  border: none;
+  color: #ff8888;
+  text-align: left;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.context-menu button:hover {
+  background: rgba(255, 0, 0, 0.25);
+  color: #fff;
+  padding-left: 24px;
+}
+
+/* ==================== VIBRACIÓN AL MANTENER ==================== */
+@keyframes cyberVibrate {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+.vibrating {
+  animation: cyberVibrate 0.4s linear 3;
+  box-shadow: 0 0 25px #ff0000 !important;
+}
+
+/* Pequeño ajuste al file-list para que las carpetas se vean diferentes */
+.file-list li.folder {
+  background: rgba(255, 80, 80, 0.12);
+  border-left: 4px solid #ff0000;
+}
+</style>
+
+<script>
+// ==================== BASE DE DATOS (ya con carpetas) ====================
+const DB_NAME = "RpgStorage";
+let db;
+
+async function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 3);
+    req.onupgradeneeded = e => {
+      db = e.target.result;
+      if (!db.objectStoreNames.contains("items")) {
+        db.createObjectStore("items", { keyPath: "id" });
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(); };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+function generateId(prefix) {
+  return prefix + Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
+}
+
+// ==================== RENDER ====================
+let currentFolderId = null;
+
+async function renderCurrentFolder() {
+  const all = await getAllItems();
+  const list = document.getElementById("file-list");
+  list.innerHTML = "";
+
+  // Breadcrumb cyberpunk
+  let bcHTML = `<span onclick="goToFolder(null)">Raíz</span>`;
+  let temp = currentFolderId;
+  const path = [];
+  while (temp) {
+    const f = all.find(i => i.id === temp && i.type === "folder");
+    if (!f) break;
+    path.unshift(f);
+    temp = f.parentId;
+  }
+  path.forEach(f => {
+    bcHTML += ` <span onclick="goToFolder('${f.id}')">${f.name}</span>`;
+  });
+  document.getElementById("breadcrumb").innerHTML = bcHTML;
+
+  // Mostrar items
+  const itemsHere = all.filter(i => i.parentId === currentFolderId);
+
+  // Carpetas primero
+  itemsHere.filter(i => i.type === "folder").forEach(folder => {
+    const li = createListItem(folder);
+    li.classList.add("folder");
+    li.onclick = (e) => { if (!e.target.closest('.drag-handle')) goToFolder(folder.id); };
+    list.appendChild(li);
+  });
+
+  // Archivos
+  itemsHere.filter(i => i.type === "file").forEach(file => {
+    const li = createListItem(file);
+    li.onclick = (e) => { if (!e.target.closest('.drag-handle')) openBible(file.id); };
+    list.appendChild(li);
+  });
+}
+
+function createListItem(item) {
+  const li = document.createElement("li");
+  li.dataset.id = item.id;
+  li.dataset.type = item.type;
+  li.draggable = true;
+  li.innerHTML = `
+    ${item.type === "folder" ? "📁" : (item.mime?.includes("pdf") ? "📄" : "📝")} 
+    <span class="item-name">${item.name}</span>
+  `;
+  return li;
+}
+
+// ==================== NAVEGACIÓN ====================
+window.goToFolder = async (id) => {
+  currentFolderId = id;
+  await renderCurrentFolder();
+};
+
+// ==================== ACCIONES ====================
+document.getElementById("btn-new-folder").onclick = async () => {
+  const name = prompt("Nombre del Rol / Partida:");
+  if (!name?.trim()) return;
+  const folder = {
+    id: generateId("folder-"),
+    type: "folder",
+    name: name.trim(),
+    parentId: currentFolderId,
+    createdAt: new Date().toISOString()
+  };
+  await saveItem(folder);
+  renderCurrentFolder();
+};
+
+document.getElementById("btn-upload").onclick = () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.multiple = true;
+  input.accept = ".txt,.pdf,image/*";
+  input.onchange = async e => {
+    for (let file of e.target.files) {
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        const newFile = {
+          id: generateId("file-"),
+          type: "file",
+          name: file.name,
+          mime: file.type,
+          content: ev.target.result,
+          parentId: currentFolderId,
+          createdAt: new Date().toISOString()
+        };
+        await saveItem(newFile);
+        renderCurrentFolder();
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  input.click();
+};
+
+// ==================== EDIT MODE + LONG PRESS + DRAG & DROP ====================
+let editMode = false;
+let longPressTimer = null;
+let currentContextId = null;
+
+document.getElementById("edit-mode").addEventListener("click", () => {
+
+  editMode = !editMode;
+
+  const button = document.getElementById("edit-mode");
+
+  if (editMode) {
+    button.textContent = "✅ Aplicar";
+    enableDragAndEdit();
+  } else {
+    button.textContent = "🛠️ Editar";
+    disableDragAndEdit();
+  }
+
+});
+
+
+document.getElementById("edit-mode").onclick = () => {
+  editMode = !editMode;
+  document.getElementById("edit-mode").textContent = editMode ? "✅ Aplicar" : "🛠️ Editar";
+  renderCurrentFolder(); // refresca draggable
+};
+
+// LONG PRESS (mouse + touch)
+function startLongPress(e, itemId) {
+  if (!editMode) return;
+  e.preventDefault();
+  longPressTimer = setTimeout(() => {
+    currentContextId = itemId;
+    const rect = e.currentTarget.getBoundingClientRect();
+    showContextMenu(rect.left + 30, rect.top + 40);
+    e.currentTarget.classList.add("vibrating");
+    setTimeout(() => e.currentTarget.classList.remove("vibrating"), 1200);
+  }, 420);
+}
+
+function cancelLongPress() {
+  clearTimeout(longPressTimer);
+}
+
+// CONTEXT MENU
+function showContextMenu(x, y) {
+  const menu = document.getElementById("context-menu");
+  menu.style.left = x + "px";
+  menu.style.top = y + "px";
+  menu.style.display = "block";
+
+  menu.querySelectorAll("button").forEach(btn => {
+    btn.onclick = () => handleContextAction(btn.dataset.action);
+  });
+}
+
+function hideContextMenu() {
+  document.getElementById("context-menu").style.display = "none";
+}
+
+async function handleContextAction(action) {
+  hideContextMenu();
+  if (!currentContextId) return;
+
+  const all = await getAllItems();
+  const item = all.find(i => i.id === currentContextId);
+
+  if (action === "rename") {
+    const newName = prompt("Nuevo nombre:", item.name);
+    if (newName && newName.trim() !== item.name) {
+      item.name = newName.trim();
+      await saveItem(item);
+      renderCurrentFolder();
+    }
+  }
+
+  if (action === "delete") {
+    if (item.type === "folder") {
+      const choice = confirm(`¿Qué quieres hacer con la carpeta "${item.name}"?\n\nOK = Borrar TODO (incluye archivos)\nCancelar = Mover contenido a Raíz`);
+      if (choice) {
+        // BORRAR TODO
+        await deleteFolderRecursive(item.id);
+      } else {
+        // MOVER A RAÍZ
+        await moveChildrenToRoot(item.id);
+        await deleteItem(item.id);
+      }
+    } else {
+      if (confirm(`¿Eliminar "${item.name}"?`)) {
+        await deleteItem(item.id);
+      }
+    }
+    renderCurrentFolder();
+  }
+}
+
+// DRAG & DROP ENTRE CARPETAS
+document.addEventListener("dragstart", e => {
+  if (!editMode) return;
+  const li = e.target.closest("li");
+  if (li) e.dataTransfer.setData("text/plain", li.dataset.id);
+});
+
+document.addEventListener("dragover", e => {
+  if (!editMode) return;
+  e.preventDefault();
+  const li = e.target.closest("li.folder");
+  if (li) li.style.borderColor = "#00ff00";
+});
+
+document.addEventListener("dragleave", e => {
+  const li = e.target.closest("li.folder");
+  if (li) li.style.borderColor = "";
+});
+
+document.addEventListener("drop", async e => {
+  if (!editMode) return;
+  e.preventDefault();
+  const draggedId = e.dataTransfer.getData("text/plain");
+  const targetLi = e.target.closest("li.folder");
+  if (!targetLi || draggedId === targetLi.dataset.id) return;
+
+  const targetFolderId = targetLi.dataset.id;
+
+  const tx = db.transaction("items", "readwrite");
+  const store = tx.objectStore("items");
+  const item = await new Promise(r => {
+    store.get(draggedId).onsuccess = ev => r(ev.target.result);
+  });
+
+  if (item) {
+    item.parentId = targetFolderId;
+    await new Promise(r => store.put(item).onsuccess = r);
+  }
+  renderCurrentFolder();
+});
+
+// ==================== HELPERS DB ====================
+async function getAllItems() {
+  const tx = db.transaction("items", "readonly");
+  return new Promise(r => tx.objectStore("items").getAll().onsuccess = e => r(e.target.result));
+}
+
+async function saveItem(item) {
+  const tx = db.transaction("items", "readwrite");
+  tx.objectStore("items").put(item);
+  return new Promise(r => tx.oncomplete = r);
+}
+
+async function deleteItem(id) {
+  const tx = db.transaction("items", "readwrite");
+  tx.objectStore("items").delete(id);
+  return new Promise(r => tx.oncomplete = r);
+}
+
+async function deleteFolderRecursive(folderId) {
+  const all = await getAllItems();
+  const toDelete = all.filter(i => i.parentId === folderId || i.id === folderId);
+  const tx = db.transaction("items", "readwrite");
+  const store = tx.objectStore("items");
+  for (let item of toDelete) await new Promise(r => store.delete(item.id).onsuccess = r);
+}
+
+async function moveChildrenToRoot(folderId) {
+  const all = await getAllItems();
+  const children = all.filter(i => i.parentId === folderId);
+  const tx = db.transaction("items", "readwrite");
+  const store = tx.objectStore("items");
+  for (let child of children) {
+    child.parentId = null;
+    await new Promise(r => store.put(child).onsuccess = r);
+  }
+}
+
+// ==================== ABRIR BIBLIA (igual que antes) ====================
+async function openBible(fileId) {
+  const tx = db.transaction("items", "readonly");
+  const item = await new Promise(r => {
+    tx.objectStore("items").get(fileId).onsuccess = e => r(e.target.result);
+  });
+  if (!item) return;
+
+  localStorage.setItem("currentFileId", item.id);
+  localStorage.setItem("currentFileName", item.name);
+  localStorage.setItem("currentFileContent", item.content);
+  localStorage.setItem("currentFileMime", item.mime || "text/plain");
+  window.location.href = "BibliasMaker.html";
+}
+
+// ==================== INICIO ====================
+document.addEventListener("DOMContentLoaded", async () => {
+  await initDB();
+
+  // Eventos del sidebar
+  document.getElementById("toggle-menu").onclick = () => {
+    document.getElementById("sidebar").classList.add("open");
+    document.getElementById("sidebar-overlay").classList.add("active");
+  };
+  document.getElementById("close-menu").onclick = () => {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("sidebar-overlay").classList.remove("active");
+  };
+  document.getElementById("sidebar-overlay").onclick = () => {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("sidebar-overlay").classList.remove("active");
+  };
+
+  // Long press (mouse + touch)
+  document.getElementById("file-list").addEventListener("mousedown", e => {
+    const li = e.target.closest("li");
+    if (li) {
+      startLongPress(e, li.dataset.id);
+      li.addEventListener("mouseup", cancelLongPress, {once: true});
+      li.addEventListener("mouseleave", cancelLongPress, {once: true});
+    }
+  });
+
+  document.getElementById("file-list").addEventListener("touchstart", e => {
+    const li = e.target.closest("li");
+    if (li) startLongPress(e, li.dataset.id);
+  }, {passive: false});
+
+  document.getElementById("file-list").addEventListener("touchend", cancelLongPress);
+  document.getElementById("file-list").addEventListener("touchmove", cancelLongPress);
+
+  // Cerrar menú al hacer clic fuera
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#context-menu")) hideContextMenu();
+  });
+
+  // Primer render
+  renderCurrentFolder();
+});
+</script>
+<script>
+  // Buscador simple (puedes mejorarlo con fuzzy matching después)
+document.getElementById("btn-search")?.addEventListener("click", () => {
+  const cont = document.getElementById("search-container");
+  cont.classList.toggle("hidden");
+  if (!cont.classList.contains("hidden")) {
+    document.getElementById("search-input").focus();
+  }
+});
+
+document.getElementById("search-input")?.addEventListener("input", async e => {
+  const term = e.target.value.toLowerCase().trim();
+  if (!term) {
+    renderCurrentFolder();
+    return;
+  }
+
+  const all = await getAllItems();
+  const matches = all.filter(item =>
+    item.name.toLowerCase().includes(term)
+  );
+
+  // Renderizar resultados planos con indicador de ubicación
+  const list = document.getElementById("file-list");
+  list.innerHTML = "<li style='color:#ff9999'>Resultados de búsqueda:</li>";
+  matches.forEach(m => {
+    const li = document.createElement("li");
+    li.textContent = `${m.type === "folder" ? "📁" : "📄"} ${m.name}`;
+    if (m.parentId) {
+      const parent = all.find(p => p.id === m.parentId);
+      if (parent) li.textContent += `  (en ${parent.name})`;
+    }
+    li.onclick = () => {
+      if (m.type === "file") openBible(m.id);
+      else goToFolder(m.id);
+    };
+    list.appendChild(li);
+  });
+});
+</script>
+<script>
+// ============================================================================
+// MODO EDICIÓN ULTRA-AGRESIVO – SOBREESCRIBE TODO LO ANTERIOR
+// Ejecuta inmediatamente y toma control total del botón #edit-mode
+// ============================================================================
+
+(function aggressiveEditModeOverride() {
+
+  // ─── Variables de estado ────────────────────────────────────────────────
+  let isEditMode = false;
+  let draggedItem = null;
+  let autoNavigateTimer = null;
+  let currentFolder = null;   // null = raíz
+
+  // ─── Forzar limpieza del botón y sobreescribir ──────────────────────────
+  const originalButton = document.getElementById("edit-mode");
+  if (!originalButton) return console.warn("No se encontró #edit-mode");
+
+  // Clonar y reemplazar para eliminar todos los eventos previos
+  const cleanButton = originalButton.cloneNode(true);
+  originalButton.parentNode.replaceChild(cleanButton, originalButton);
+
+  // Ahora escuchamos solo nosotros
+  cleanButton.addEventListener("click", toggleEditMode);
+  cleanButton.textContent = "🛠️ Editar";
+
+  function toggleEditMode() {
+    isEditMode = !isEditMode;
+
+    cleanButton.textContent = isEditMode ? "✅ Aplicar" : "🛠️ Editar";
+    cleanButton.style.background = isEditMode ? "#cc0000" : "#FF0000";
+    cleanButton.style.boxShadow = isEditMode ? "0 0 25px #ff4444" : "0 0 18px rgba(255,0,0,.6)";
+
+    document.body.classList.toggle("ultra-edit-mode", isEditMode);
+
+    if (isEditMode) {
+      activateUltraEdit();
+    } else {
+      deactivateUltraEdit();
+      // Aquí puedes guardar los cambios definitivos si lo deseas
+      console.log("[UltraEdit] Modo edición desactivado → aplicar cambios");
+    }
+  }
+
+  function activateUltraEdit() {
+    const container = document.getElementById("file-list");
+    if (!container) return;
+
+    // Limpiar cualquier listener previo (agresivo)
+    const freshContainer = container.cloneNode(true);
+    container.parentNode.replaceChild(freshContainer, container);
+
+    freshContainer.querySelectorAll("li").forEach(item => {
+      item.draggable = true;
+
+      item.addEventListener("dragstart", e => {
+        draggedItem = item;
+        item.classList.add("being-dragged");
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      item.addEventListener("dragend", () => {
+        item.classList.remove("being-dragged");
+        draggedItem = null;
+        clearAutoNavigate();
+      });
+
+      // Click → menú contextual (solo en modo edición)
+      item.addEventListener("click", e => {
+        if (!isEditMode) return;
+        e.preventDefault();
+        e.stopPropagation();
+        showUltraContextMenu(e.clientX, e.clientY, item);
+      });
+    });
+
+    // Eventos de arrastre en el contenedor
+    freshContainer.addEventListener("dragover", handleDragOver);
+    freshContainer.addEventListener("dragleave", handleDragLeave);
+    freshContainer.addEventListener("drop", handleDrop);
+  }
+
+  function deactivateUltraEdit() {
+    const container = document.getElementById("file-list");
+    if (!container) return;
+
+    container.querySelectorAll("li").forEach(li => {
+      li.draggable = false;
+      li.classList.remove("being-dragged", "drag-target");
+    });
+
+    clearAutoNavigate();
+  }
+
+  // ─── Auto-navegación al mantener sobre carpeta ───────────────────────────
+  function handleDragOver(e) {
+    e.preventDefault();
+    const target = e.target.closest("li");
+
+    if (!target || !draggedItem) return;
+
+    // Resaltar
+    document.querySelectorAll("li.drag-target").forEach(el => el.classList.remove("drag-target"));
+    if (target.dataset.type === "folder") {
+      target.classList.add("drag-target");
+    }
+
+    // Auto-entrar si se mantiene 900–1200 ms
+    clearAutoNavigate();
+    if (target.dataset.type === "folder") {
+      autoNavigateTimer = setTimeout(() => {
+        enterFolder(target.dataset.id || target.dataset.folderId);
+      }, 1100);
+    }
+  }
+
+  function handleDragLeave(e) {
+    const target = e.target.closest("li");
+    if (target) target.classList.remove("drag-target");
+    clearAutoNavigate();
+  }
+
+  function clearAutoNavigate() {
+    if (autoNavigateTimer) {
+      clearTimeout(autoNavigateTimer);
+      autoNavigateTimer = null;
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    clearAutoNavigate();
+
+    if (!draggedItem) return;
+
+    const target = e.target.closest("li");
+
+    if (target && target.dataset.type === "folder") {
+      // Soltado en carpeta → mover dentro
+      moveToFolder(draggedItem, target.dataset.id || target.dataset.folderId);
+    } else {
+      // Soltado en raíz o misma carpeta → reordenar
+      const after = getDropPosition(document.getElementById("file-list"), e.clientY);
+      if (after) {
+        document.getElementById("file-list").insertBefore(draggedItem, after);
+      } else {
+        document.getElementById("file-list").appendChild(draggedItem);
+      }
+      saveOrder();
+    }
+
+    draggedItem.classList.remove("being-dragged");
+    draggedItem = null;
+  }
+
+  function getDropPosition(container, mouseY) {
+    const items = [...container.querySelectorAll("li:not(.being-dragged)")];
+    return items.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = mouseY - box.top - box.height / 2;
+      if (offset < 0 && offset > closest.offset) {
+        return { offset, element: child };
+      }
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+  }
+
+  // ─── Menú contextual al hacer click ─────────────────────────────────────
+  function showUltraContextMenu(x, y, targetItem) {
+    let menu = document.getElementById("context-menu");
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.id = "context-menu";
+      menu.className = "context-menu";
+      document.body.appendChild(menu);
+    }
+
+    // Construir según tipo
+    const isFolder = targetItem.dataset.type === "folder";
+    menu.innerHTML = `
+      <button data-action="rename">✏️ Renombrar</button>
+      <button data-action="delete">🗑️ Eliminar</button>
+      ${isFolder ? '<button data-action="enter">📂 Entrar</button>' : ''}
+      <button data-action="cancel">Cancelar</button>
+    `;
+
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+    menu.classList.remove("hidden");
+
+    // Limpiar listeners previos reemplazando
+    const freshMenu = menu.cloneNode(true);
+    menu.parentNode.replaceChild(freshMenu, menu);
+    menu = freshMenu;
+
+    menu.querySelectorAll("button").forEach(b => {
+      b.onclick = () => {
+        const action = b.dataset.action;
+        menu.classList.add("hidden");
+
+        if (action === "cancel") return;
+
+        const name = targetItem.textContent.trim();
+        const id = targetItem.dataset.id || targetItem.dataset.filename;
+
+        if (action === "rename") {
+          const nuevo = prompt("Nuevo nombre:", name);
+          if (nuevo && nuevo.trim() !== name) renameItem(id || name, nuevo.trim());
+        }
+
+        if (action === "delete") {
+          if (confirm(`¿Eliminar "${name}"?`)) deleteItem(id || name);
+        }
+
+        if (action === "enter" && isFolder) {
+          enterFolder(id);
+        }
+      };
+    });
+  }
+
+  // ─── Funciones placeholder – aquí conectas tu lógica real ────────────────
+  function enterFolder(folderId) {
+    console.log("[UltraEdit] Entrando a carpeta:", folderId);
+    currentFolder = folderId;
+    // Aquí llamas a tu función que recarga la lista con los hijos de folderId
+    // renderCurrentFolder(folderId);
+  }
+
+  function moveToFolder(itemElement, folderId) {
+    console.log("[UltraEdit] Moviendo → carpeta", folderId);
+    // Lógica real: actualizar parentId en IndexedDB y refrescar
+  }
+
+  function renameItem(oldKey, newName) {
+    console.log("[UltraEdit] Renombrar:", oldKey, "→", newName);
+    // Lógica real: renombrar en IndexedDB y actualizar orden si aplica
+  }
+
+  function deleteItem(key) {
+    console.log("[UltraEdit] Eliminar:", key);
+    // Lógica real: delete en IndexedDB y refrescar lista
+  }
+
+  function saveOrder() {
+    const order = [...document.querySelectorAll("#file-list li")].map(li =>
+      li.dataset.filename || li.dataset.id || li.textContent.trim()
+    );
+    console.log("[UltraEdit] Orden actual guardado:", order);
+    // localStorage.setItem("bibleOrder", JSON.stringify(order));
+  }
+
+  // ─── Estilos mínimos agresivos ──────────────────────────────────────────
+  const css = document.createElement("style");
+  css.textContent = `
+    .ultra-edit-mode li {
+      cursor: grab !important;
+      user-select: none !important;
+    }
+    .ultra-edit-mode li.being-dragged {
+      opacity: 0.65;
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #ff1a1a;
+    }
+    .ultra-edit-mode li.drag-target {
+      background: rgba(255,30,30,0.35) !important;
+      border: 2px dashed #ff6666 !important;
+    }
+    .context-menu {
+      position: fixed;
+      background: rgba(8,8,8,0.97);
+      border: 2px solid #ff1a1a;
+      border-radius: 9px;
+      box-shadow: 0 0 35px rgba(255,0,0,0.65);
+      z-index: 9999999;
+      padding: 5px 0;
+      min-width: 170px;
+    }
+    .context-menu button {
+      display: block;
+      width: 100%;
+      padding: 11px 18px;
+      background: transparent;
+      border: none;
+      color: #ffaaaa;
+      text-align: left;
+      font-size: 14.5px;
+      cursor: pointer;
+    }
+    .context-menu button:hover {
+      background: rgba(255,40,40,0.4);
+      color: white;
+    }
+  `;
+  document.head.appendChild(css);
+
+  console.log("[UltraEdit] Modo agresivo cargado y tomando control de #edit-mode");
+})();
+</script>
+
+  <style>
   .info-box {
   padding: 14px 16px;
   font-size: 13px;
@@ -796,25 +1768,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
-
-let editMode = false;
-
-document.getElementById("edit-mode").addEventListener("click", () => {
-
-  editMode = !editMode;
-
-  const button = document.getElementById("edit-mode");
-
-  if (editMode) {
-    button.textContent = "✅ Aplicar";
-    enableDragAndEdit();
-  } else {
-    button.textContent = "🛠️ Editar";
-    disableDragAndEdit();
-  }
-
-});
-
 
 function enableDragAndEdit() {
 
@@ -1053,151 +2006,6 @@ h1::before {
   }
 }
   </style>
-  <script>
-    let db;
-    const dbName = "FileStorageDB";
-    const storeName = "files";
-  
-    function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(dbName, 1);
-  
-        request.onupgradeneeded = function (event) {
-          db = event.target.result;
-          db.createObjectStore(storeName, { keyPath: "name" });
-        };
-  
-        request.onsuccess = function (event) {
-          db = event.target.result;
-          resolve(db);
-        };
-  
-        request.onerror = function (event) {
-          console.error("Error al abrir IndexedDB:", event.target.error);
-          reject(event.target.error);
-        };
-      });
-    }
-  
-    function saveFile(fileName, fileContent) {
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], "readwrite");
-        const store = transaction.objectStore(storeName);
-        const fileData = { name: fileName, content: fileContent, timestamp: new Date() };
-        const request = store.put(fileData);
-  
-        request.onsuccess = function () {
-          resolve();
-        };
-  
-        request.onerror = function (event) {
-          console.error("Error al guardar archivo:", event.target.error);
-          reject(event.target.error);
-        };
-      });
-    }
-  
-    function loadFiles() {
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], "readonly");
-        const store = transaction.objectStore(storeName);
-        const request = store.getAll();
-  
-        request.onsuccess = function (event) {
-          resolve(event.target.result);
-        };
-  
-        request.onerror = function (event) {
-          console.error("Error al cargar archivos:", event.target.error);
-          reject(event.target.error);
-        };
-      });
-    }
-  
-function displayFiles(files) {
 
-  const fileList = document.getElementById("file-list");
-  fileList.innerHTML = "";
-
-  // Aplicar orden guardado
-  const savedOrder = JSON.parse(localStorage.getItem("bibleOrder") || "[]");
-
-  if (savedOrder.length > 0) {
-    files.sort((a, b) => {
-      return savedOrder.indexOf(a.name) - savedOrder.indexOf(b.name);
-    });
-  }
-
-  files.forEach((file) => {
-
-    const li = document.createElement("li");
-
-    li.textContent = file.name;
-
-    li.dataset.filename = file.name;
-    li.dataset.filecontent = file.content;
-
-    li.addEventListener("click", function () {
-      if (editMode) return; // No abrir si estamos editando
-
-      localStorage.setItem("currentFileName", file.name);
-      localStorage.setItem("currentFileContent", file.content);
-      window.location.href = "BibliasMaker.html";
-    });
-
-    fileList.appendChild(li);
-
-    if (editMode) {
-  enableDragAndEdit();
-}
-
-  });
-
-}
-
-  
-    document.addEventListener("DOMContentLoaded", async function () {
-      try {
-        await initDB();
-        const files = await loadFiles();
-        displayFiles(files);
-      } catch (error) {
-        console.error("Error al inicializar la página:", error);
-      }
-
-  
-      document.getElementById("load-files").addEventListener("click", function () {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = ".txt";
-        fileInput.multiple = true;
-        fileInput.style.display = "none";
-  
-        fileInput.addEventListener("change", async function (event) {
-          const files = event.target.files;
-  
-          for (let file of files) {
-            if (file.name.endsWith(".txt")) {
-              const reader = new FileReader();
-              reader.onload = async function (e) {
-                try {
-                  await saveFile(file.name, e.target.result);
-                  const updatedFiles = await loadFiles();
-                  displayFiles(updatedFiles);
-                } catch (error) {
-                  console.error("Error al procesar archivo:", file.name, error);
-                }
-              };
-              reader.readAsText(file);
-            }
-          }
-        });
-  
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        document.body.removeChild(fileInput);
-      });
-    });
-  </script>
 </body>
 </html>
